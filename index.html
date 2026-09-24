@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>⚙️ لوحة الأدمن</title>
+<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+<style>
+  *{box-sizing:border-box;font-family:'Cairo','Segoe UI',Tahoma,sans-serif}
+  body{margin:0;background:linear-gradient(135deg,#0a0a0f 0%,#14141f 50%,#0a0a0f 100%);
+       background-size:400% 400%;animation:bgMove 15s ease infinite;
+       color:#fff;padding:15px;min-height:100vh}
+  @keyframes bgMove{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+
+  h1{text-align:center;color:#ffd700;margin:0 0 5px;font-size:24px;
+     text-shadow:0 0 20px rgba(255,215,0,.4)}
+  .sub{text-align:center;color:#888;margin-bottom:20px;font-size:13px}
+
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+         gap:12px;margin-bottom:20px}
+  .stat-card{background:linear-gradient(135deg,#1a1a2e,#252540);padding:18px;
+             border-radius:14px;border:1px solid #2d2d44;text-align:center;
+             box-shadow:0 8px 25px rgba(0,0,0,.4)}
+  .stat-card .num{font-size:32px;font-weight:900;color:#4caf50;
+                  text-shadow:0 0 15px rgba(76,175,80,.5)}
+  .stat-card .lbl{font-size:12px;color:#888;margin-top:5px}
+
+  .section{background:linear-gradient(135deg,#1a1a22,#20202c);
+           border-radius:14px;padding:18px;margin-bottom:18px;
+           border:1px solid #252530;box-shadow:0 8px 30px rgba(0,0,0,.3)}
+  .section h2{color:#ffd700;margin:0 0 15px;font-size:17px;
+              display:flex;align-items:center;gap:8px}
+
+  .match-card{background:linear-gradient(135deg,#252530,#2d2d3e);padding:14px;
+              border-radius:12px;margin-bottom:12px;border:1px solid #333;
+              border-right:4px solid #ffd700}
+  .match-header{display:flex;justify-content:space-between;align-items:center;
+                margin-bottom:10px;flex-wrap:wrap;gap:8px}
+  .match-header .badge{background:#ffd700;color:#000;padding:3px 12px;
+                       border-radius:20px;font-size:11px;font-weight:bold}
+  .match-header .badge.live{background:#e53935;color:#fff;animation:blink 1.5s infinite}
+  @keyframes blink{50%{opacity:.5}}
+  .match-header .badge.off{background:#555;color:#ccc}
+
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+  .field-row.full{grid-template-columns:1fr}
+  .field-row label{display:block;font-size:11px;color:#888;margin-bottom:4px}
+  .field-row input{width:100%;background:#0f0f18;border:1px solid #333;color:#fff;
+                   padding:9px;border-radius:8px;font-size:13px}
+  .field-row input[type="time"]{max-width:100%}
+  .field-row input[type="url"]{direction:ltr;font-size:12px}
+  .field-row input:focus{outline:none;border-color:#ffd700}
+
+  .match-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .btn{background:#ffd700;color:#000;border:none;padding:9px 18px;border-radius:8px;
+       font-weight:bold;cursor:pointer;font-size:13px;transition:.2s}
+  .btn:hover{transform:translateY(-2px);box-shadow:0 5px 15px rgba(255,215,0,.4)}
+  .btn.play{background:#4caf50;color:#fff}
+  .btn.stop{background:#e53935;color:#fff}
+  .btn.danger{background:#c62828;color:#fff}
+  .btn.ghost{background:transparent;color:#ffd700;border:1px solid #ffd700}
+  .btn.ghost:hover{background:#ffd700;color:#000}
+  .btn.full{width:100%}
+
+  .add-btn{background:linear-gradient(135deg,#4caf50,#2e7d32);color:#fff;
+           padding:14px;border:none;border-radius:12px;width:100%;
+           font-weight:bold;font-size:15px;cursor:pointer;margin-top:10px}
+  .add-btn:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(76,175,80,.4)}
+
+  .status{padding:10px;border-radius:8px;font-size:13px;margin-top:10px;
+          text-align:center;font-weight:bold}
+  .status.ok{background:rgba(76,175,80,.15);color:#4caf50;border:1px solid #4caf50}
+  .status.err{background:rgba(229,57,53,.15);color:#e53935;border:1px solid #e53935}
+  .conn{text-align:center;font-size:12px;padding:8px;border-radius:8px;
+        background:#0f0f18;margin-bottom:15px}
+  .conn.online{color:#4caf50;border:1px solid #4caf50}
+  .conn.offline{color:#e53935;border:1px solid #e53935}
+</style>
+</head>
+<body>
+
+  <h1>⚙️ لوحة التحكم</h1>
+  <div class="sub">إدارة البث والمباريات والمشاهدين</div>
+  <div class="conn offline" id="connStatus">🔄 جاري الاتصال بالسيرفر...</div>
+
+  <!-- الإحصائيات -->
+  <div class="stats">
+    <div class="stat-card">
+      <div class="num" id="viewerCount">0</div>
+      <div class="lbl">👥 مشاهدين الآن</div>
+    </div>
+    <div class="stat-card">
+      <div class="num" id="liveCount">0</div>
+      <div class="lbl">🔴 بث مباشر</div>
+    </div>
+    <div class="stat-card">
+      <div class="num" id="matchCount">0</div>
+      <div class="lbl">⚽ إجمالي المباريات</div>
+    </div>
+  </div>
+
+  <!-- المباريات والبث -->
+  <div class="section">
+    <h2>📺 القنوات / المباريات</h2>
+    <div id="matchesList"></div>
+    <button class="add-btn" onclick="addMatch()">+ إضافة قناة / مباراة جديدة</button>
+  </div>
+
+<script>
+  // ========= إعدادات MQTT =========
+  const BROKER = 'wss://broker.emqx.io:8084/mqtt';
+  const TOPIC_CMD = 'kwtspta_9f3a2b1c/cmd';       // أوامر التشغيل/الإيقاف
+  const TOPIC_DATA = 'kwtspta_9f3a2b1c/data';     // بيانات المباريات (retained)
+  const TOPIC_HEARTBEAT = 'kwtspta_9f3a2b1c/hb';  // نبضات المشاهدين
+
+  const client = mqtt.connect(BROKER, {
+    clientId: 'admin_' + Math.random().toString(16).slice(2,10)
+  });
+
+  const connStatus = document.getElementById('connStatus');
+  const viewers = new Map(); // id -> timestamp
+
+  client.on('connect', ()=>{
+    connStatus.textContent = '✅ متصل - التحكم يعمل على كل الأجهزة';
+    connStatus.className = 'conn online';
+    client.subscribe(TOPIC_HEARTBEAT);
+    // نشر البيانات الحالية فوراً
+    publishData();
+  });
+
+  client.on('error', ()=>{
+    connStatus.textContent = '❌ فشل الاتصال - تأكد من الإنترنت';
+    connStatus.className = 'conn offline';
+  });
+
+  // استقبال نبضات المشاهدين
+  client.on('message', (topic, message)=>{
+    if(topic === TOPIC_HEARTBEAT){
+      try{
+        const d = JSON.parse(message.toString());
+        viewers.set(d.id, Date.now());
+      }catch(e){}
+    }
+  });
+
+  // كل 5 ثواني نحسب عدد المشاهدين النشطين (اللي بعتوا نبضة خلال 15 ثانية)
+  setInterval(()=>{
+    const now = Date.now();
+    for(const [id, t] of viewers){
+      if(now - t > 15000) viewers.delete(id);
+    }
+    document.getElementById('viewerCount').textContent = viewers.size;
+  }, 5000);
+
+  // ========= المباريات =========
+  let matches = [];
+  const saved = localStorage.getItem('matches_data');
+  if(saved){
+    try{ matches = JSON.parse(saved); }catch(e){ matches = []; }
+  }
+  if(matches.length === 0){
+    matches = [
+      {
+        id: 'm' + Date.now() + '_1',
+        title: 'القناة الرياضية 1',
+        time: '20:00',
+        team1: 'الأهلي', team1Img: 'https://via.placeholder.com/80/ff0000/fff?text=AH',
+        team2: 'الزمالك', team2Img: 'https://via.placeholder.com/80/ffffff/000?text=ZM',
+        streamUrl: 'https://kwtspta.cdn.mangomolo.com/sp/smil:sp.stream.smil/chunklist_b900000_t64MzYwcA==.m3u8',
+        live: false
+      },
+      {
+        id: 'm' + Date.now() + '_2',
+        title: 'القناة الرياضية 2',
+        time: '22:00',
+        team1: 'ريال مدريد', team1Img: 'https://via.placeholder.com/80/ffffff/000?text=RM',
+        team2: 'برشلونة', team2Img: 'https://via.placeholder.com/80/a50044/fff?text=FCB',
+        streamUrl: '',
+        live: false
+      }
+    ];
+  }
+
+  function render(){
+    const c = document.getElementById('matchesList');
+    c.innerHTML = '';
+    matches.forEach((m, i)=>{
+      const badge = m.live ? '<span class="badge live">🔴 مباشر الآن</span>' 
+                          : '<span class="badge off">⏸ متوقف</span>';
+      const div = document.createElement('div');
+      div.className = 'match-card';
+      div.innerHTML = `
+        <div class="match-header">
+          <span class="badge">${m.title || 'قناة'}</span>
+          ${badge}
+        </div>
+        <div class="field-row">
+          <div>
+            <label>اسم الفريق 1</label>
+            <input value="${m.team1||''}" onchange="update(${i},'team1',this.value)">
+          </div>
+          <div>
+            <label>اسم الفريق 2</label>
+            <input value="${m.team2||''}" onchange="update(${i},'team2',this.value)">
+          </div>
+        </div>
+        <div class="field-row">
+          <div>
+            <label>رابط صورة الفريق 1</label>
+            <input type="url" value="${m.team1Img||''}" onchange="update(${i},'team1Img',this.value)">
+          </div>
+          <div>
+            <label>رابط صورة الفريق 2</label>
+            <input type="url" value="${m.team2Img||''}" onchange="update(${i},'team2Img',this.value)">
+          </div>
+        </div>
+        <div class="field-row">
+          <div>
+            <label>وقت المباراة</label>
+            <input type="time" value="${m.time||'00:00'}" onchange="update(${i},'time',this.value)">
+          </div>
+          <div>
+            <label>اسم القناة / العنوان</label>
+            <input value="${m.title||''}" onchange="update(${i},'title',this.value)">
+          </div>
+        </div>
+        <div class="field-row full">
+          <div>
+            <label>🔗 رابط البث (m3u8)</label>
+            <input type="url" value="${m.streamUrl||''}" onchange="update(${i},'streamUrl',this.value)"
+                   placeholder="https://example.com/stream.m3u8">
+          </div>
+        </div>
+        <div class="match-actions">
+          <button class="btn play" onclick="setLive(${i}, true)">🚀 تشغيل مباشر</button>
+          <button class="btn stop" onclick="setLive(${i}, false)">⏹ إيقاف</button>
+          <button class="btn danger" onclick="removeMatch(${i})">🗑 حذف</button>
+        </div>
+      `;
+      c.appendChild(div);
+    });
+    document.getElementById('matchCount').textContent = matches.length;
+    document.getElementById('liveCount').textContent = matches.filter(x=>x.live).length;
+    localStorage.setItem('matches_data', JSON.stringify(matches));
+  }
+
+  function update(i, k, v){
+    matches[i][k] = v;
+    localStorage.setItem('matches_data', JSON.stringify(matches));
+    publishData();
+  }
+
+  function addMatch(){
+    matches.push({
+      id: 'm' + Date.now(),
+      title: 'قناة جديدة',
+      time: '00:00',
+      team1: 'فريق 1', team1Img: '',
+      team2: 'فريق 2', team2Img: '',
+      streamUrl: '',
+      live: false
+    });
+    render();
+    publishData();
+  }
+
+  function removeMatch(i){
+    if(!confirm('متأكد من حذف هذه القناة؟')) return;
+    matches.splice(i, 1);
+    render();
+    publishData();
+  }
+
+  function setLive(i, status){
+    if(status && !matches[i].streamUrl){
+      alert('❌ لازم تحط رابط البث (m3u8) أولاً!');
+      return;
+    }
+    // نوقف كل القنوات التانية ونسيب بس اللي اتضغط عليها
+    matches.forEach(m => m.live = false);
+    matches[i].live = status;
+    render();
+    publishData();
+
+    // نبعت أمر للجميع
+    client.publish(TOPIC_CMD, JSON.stringify({
+      action: status ? 'play' : 'stop',
+      matchId: matches[i].id,
+      url: matches[i].streamUrl,
+      title: matches[i].title
+    }));
+  }
+
+  function publishData(){
+    client.publish(TOPIC_DATA, JSON.stringify(matches), { retain: true });
+  }
+
+  render();
+  // نشر أولي
+  setTimeout(publishData, 1000);
+</script>
+</body>
+</html>
