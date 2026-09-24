@@ -3,165 +3,297 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>⚙️ لوحة الأدمن</title>
+<title>لوحة التحكم - Alankaboot Sport</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 <style>
-  *{box-sizing:border-box;font-family:'Cairo','Segoe UI',Tahoma,sans-serif}
-  body{margin:0;background:linear-gradient(135deg,#0a0a0f 0%,#14141f 50%,#0a0a0f 100%);
-       background-size:400% 400%;animation:bgMove 15s ease infinite;
-       color:#fff;padding:15px;min-height:100vh}
+  *{box-sizing:border-box;font-family:'Cairo',sans-serif;margin:0;padding:0}
+  body{background:linear-gradient(135deg,#0a0405 0%,#1a0507 50%,#0a0405 100%);
+       background-size:400% 400%;animation:bgMove 20s ease infinite;
+       color:#fff;padding:16px;min-height:100vh}
   @keyframes bgMove{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
 
-  h1{text-align:center;color:#ffd700;margin:0 0 5px;font-size:24px;
-     text-shadow:0 0 20px rgba(255,215,0,.4)}
-  .sub{text-align:center;color:#888;margin-bottom:20px;font-size:13px}
+  h1{text-align:center;color:#fff;font-size:22px;font-weight:900;
+     margin-bottom:6px;letter-spacing:1.5px;
+     text-shadow:0 0 20px rgba(220,20,30,.6)}
+  .sub{text-align:center;color:#8a5b5e;font-size:12px;margin-bottom:16px}
 
-  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
-         gap:12px;margin-bottom:20px}
-  .stat-card{background:linear-gradient(135deg,#1a1a2e,#252540);padding:18px;
-             border-radius:14px;border:1px solid #2d2d44;text-align:center;
-             box-shadow:0 8px 25px rgba(0,0,0,.4)}
-  .stat-card .num{font-size:32px;font-weight:900;color:#4caf50;
+  /* حالة الاتصال */
+  .conn{text-align:center;font-size:12px;padding:10px;border-radius:10px;
+        background:rgba(0,0,0,.4);margin-bottom:16px;font-weight:700;
+        backdrop-filter:blur(8px)}
+  .conn.online{color:#4caf50;border:1px solid rgba(76,175,80,.5);
+               box-shadow:0 0 20px rgba(76,175,80,.2)}
+  .conn.offline{color:#e53935;border:1px solid rgba(229,57,53,.5)}
+  .conn.saving{color:#ffd700;border:1px solid rgba(255,215,0,.5);
+               animation:savePulse 1s infinite}
+  @keyframes savePulse{50%{opacity:.6}}
+
+  /* إحصائيات */
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+         gap:12px;margin-bottom:18px}
+  .stat-card{
+    background:linear-gradient(135deg,rgba(24,5,7,.85),rgba(35,10,14,.85));
+    padding:16px;border-radius:14px;
+    border:1px solid rgba(220,20,30,.3);text-align:center;
+    backdrop-filter:blur(10px);
+    box-shadow:0 8px 25px rgba(0,0,0,.4)}
+  .stat-card .num{font-size:30px;font-weight:900;color:#4caf50;
                   text-shadow:0 0 15px rgba(76,175,80,.5)}
-  .stat-card .lbl{font-size:12px;color:#888;margin-top:5px}
+  .stat-card .lbl{font-size:11px;color:#b89fa1;margin-top:5px;font-weight:600}
+  .stat-card.live .num{color:#dc1420;
+                       text-shadow:0 0 15px rgba(220,20,30,.7)}
 
-  .section{background:linear-gradient(135deg,#1a1a22,#20202c);
-           border-radius:14px;padding:18px;margin-bottom:18px;
-           border:1px solid #252530;box-shadow:0 8px 30px rgba(0,0,0,.3)}
-  .section h2{color:#ffd700;margin:0 0 15px;font-size:17px;
-              display:flex;align-items:center;gap:8px}
+  /* الأزرار العامة */
+  .top-actions{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+  .top-actions button{flex:1;min-width:130px}
 
-  .match-card{background:linear-gradient(135deg,#252530,#2d2d3e);padding:14px;
-              border-radius:12px;margin-bottom:12px;border:1px solid #333;
-              border-right:4px solid #ffd700}
+  /* أقسام */
+  .section{
+    background:linear-gradient(135deg,rgba(24,5,7,.9),rgba(35,10,14,.9));
+    border-radius:14px;padding:16px;margin-bottom:16px;
+    border:1px solid rgba(220,20,30,.25);
+    backdrop-filter:blur(10px);
+    box-shadow:0 10px 30px rgba(0,0,0,.5)}
+  .section h2{color:#fff;margin:0 0 14px;font-size:16px;
+              display:flex;align-items:center;gap:8px;font-weight:800}
+  .section h2::before{content:'';width:4px;height:18px;border-radius:4px;
+                      background:linear-gradient(180deg,#8b0000,#dc1420)}
+
+  /* كارت المباراة */
+  .match-card{
+    background:rgba(15,5,7,.7);
+    padding:14px;border-radius:12px;margin-bottom:14px;
+    border:1px solid rgba(220,20,30,.2);
+    border-right:4px solid #dc1420;
+    transition:.2s}
+  .match-card.live{border-right-color:#4caf50;
+                   box-shadow:0 0 20px rgba(76,175,80,.15)}
+
   .match-header{display:flex;justify-content:space-between;align-items:center;
-                margin-bottom:10px;flex-wrap:wrap;gap:8px}
-  .match-header .badge{background:#ffd700;color:#000;padding:3px 12px;
-                       border-radius:20px;font-size:11px;font-weight:bold}
-  .match-header .badge.live{background:#e53935;color:#fff;animation:blink 1.5s infinite}
-  @keyframes blink{50%{opacity:.5}}
-  .match-header .badge.off{background:#555;color:#ccc}
+                margin-bottom:12px;flex-wrap:wrap;gap:8px}
+  .match-header .badge{
+    background:linear-gradient(135deg,#8b0000,#dc1420);
+    color:#fff;padding:4px 14px;border-radius:20px;
+    font-size:11px;font-weight:700;letter-spacing:.3px}
+  .match-header .badge.live{background:linear-gradient(135deg,#2e7d32,#4caf50);
+                            animation:blink 1.5s infinite}
+  @keyframes blink{50%{opacity:.6}}
+  .match-header .badge.off{background:#333;color:#999}
 
-  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
   .field-row.full{grid-template-columns:1fr}
-  .field-row label{display:block;font-size:11px;color:#888;margin-bottom:4px}
-  .field-row input{width:100%;background:#0f0f18;border:1px solid #333;color:#fff;
-                   padding:9px;border-radius:8px;font-size:13px}
-  .field-row input[type="time"]{max-width:100%}
+  .field-row label{display:block;font-size:11px;color:#8a5b5e;
+                   margin-bottom:5px;font-weight:600}
+  .field-row input{width:100%;background:#0c0304;
+                   border:1px solid rgba(220,20,30,.3);
+                   color:#fff;padding:10px;border-radius:8px;
+                   font-size:13px;font-family:'Cairo',sans-serif;
+                   transition:.2s}
+  .field-row input:focus{outline:none;border-color:#dc1420;
+                         box-shadow:0 0 15px rgba(220,20,30,.3)}
   .field-row input[type="url"]{direction:ltr;font-size:12px}
-  .field-row input:focus{outline:none;border-color:#ffd700}
 
-  .match-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-  .btn{background:#ffd700;color:#000;border:none;padding:9px 18px;border-radius:8px;
-       font-weight:bold;cursor:pointer;font-size:13px;transition:.2s}
-  .btn:hover{transform:translateY(-2px);box-shadow:0 5px 15px rgba(255,215,0,.4)}
-  .btn.play{background:#4caf50;color:#fff}
-  .btn.stop{background:#e53935;color:#fff}
-  .btn.danger{background:#c62828;color:#fff}
-  .btn.ghost{background:transparent;color:#ffd700;border:1px solid #ffd700}
-  .btn.ghost:hover{background:#ffd700;color:#000}
-  .btn.full{width:100%}
+  .match-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 
-  .add-btn{background:linear-gradient(135deg,#4caf50,#2e7d32);color:#fff;
-           padding:14px;border:none;border-radius:12px;width:100%;
-           font-weight:bold;font-size:15px;cursor:pointer;margin-top:10px}
-  .add-btn:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(76,175,80,.4)}
+  /* أزرار */
+  .btn{background:linear-gradient(135deg,#8b0000,#dc1420);
+       color:#fff;border:none;padding:10px 18px;border-radius:10px;
+       font-weight:700;cursor:pointer;font-size:13px;
+       font-family:'Cairo',sans-serif;transition:.22s;
+       display:inline-flex;align-items:center;gap:6px}
+  .btn:hover{transform:translateY(-2px);
+             box-shadow:0 8px 20px rgba(220,20,30,.5)}
+  .btn:active{transform:translateY(0)}
+  .btn.play{background:linear-gradient(135deg,#2e7d32,#4caf50);
+            box-shadow:0 4px 15px rgba(76,175,80,.3)}
+  .btn.play:hover{box-shadow:0 8px 20px rgba(76,175,80,.6)}
+  .btn.stop{background:linear-gradient(135deg,#c62828,#e53935)}
+  .btn.danger{background:linear-gradient(135deg,#5a0000,#8b0000)}
+  .btn.ghost{background:transparent;color:#dc1420;
+             border:1px solid rgba(220,20,30,.5)}
+  .btn.ghost:hover{background:rgba(220,20,30,.15)}
 
-  .status{padding:10px;border-radius:8px;font-size:13px;margin-top:10px;
-          text-align:center;font-weight:bold}
-  .status.ok{background:rgba(76,175,80,.15);color:#4caf50;border:1px solid #4caf50}
-  .status.err{background:rgba(229,57,53,.15);color:#e53935;border:1px solid #e53935}
-  .conn{text-align:center;font-size:12px;padding:8px;border-radius:8px;
-        background:#0f0f18;margin-bottom:15px}
-  .conn.online{color:#4caf50;border:1px solid #4caf50}
-  .conn.offline{color:#e53935;border:1px solid #e53935}
+  .add-btn{width:100%;background:linear-gradient(135deg,#2e7d32,#4caf50);
+           color:#fff;border:none;padding:14px;border-radius:12px;
+           font-weight:800;font-size:14px;cursor:pointer;
+           font-family:'Cairo',sans-serif;transition:.22s;
+           letter-spacing:.5px}
+  .add-btn:hover{transform:translateY(-2px);
+                 box-shadow:0 10px 25px rgba(76,175,80,.5)}
+
+  .status{padding:10px;border-radius:8px;font-size:12px;margin-top:10px;
+          text-align:center;font-weight:700;display:none}
+  .status.ok{background:rgba(76,175,80,.15);color:#4caf50;
+             border:1px solid rgba(76,175,80,.5);display:block}
+  .status.err{background:rgba(229,57,53,.15);color:#e53935;
+              border:1px solid rgba(229,57,53,.5);display:block}
+
+  /* التحميل */
+  #loading{position:fixed;inset:0;background:#0a0405;z-index:9999;
+           display:flex;flex-direction:column;justify-content:center;
+           align-items:center;gap:20px;transition:opacity .5s}
+  #loading.hide{opacity:0;pointer-events:none}
+  .spinner{width:50px;height:50px;border:3px solid rgba(220,20,30,.2);
+           border-top-color:#dc1420;border-radius:50%;
+           animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .loading-txt{color:#dc1420;font-weight:700;font-size:14px}
+
+  /* إشعار الحفظ */
+  .save-indicator{position:fixed;bottom:20px;left:50%;
+                  transform:translateX(-50%);
+                  background:linear-gradient(90deg,#2e7d32,#4caf50);
+                  color:#fff;padding:10px 24px;border-radius:26px;
+                  font-weight:700;font-size:13px;
+                  box-shadow:0 10px 30px rgba(76,175,80,.5);
+                  opacity:0;transition:.3s;pointer-events:none;
+                  z-index:99999}
+  .save-indicator.show{opacity:1;bottom:30px}
+
+  @media(max-width:600px){
+    .field-row{grid-template-columns:1fr}
+    .section{padding:14px}
+    h1{font-size:19px}
+  }
 </style>
 </head>
 <body>
 
-  <h1>⚙️ لوحة التحكم</h1>
-  <div class="sub">إدارة البث والمباريات والمشاهدين</div>
-  <div class="conn offline" id="connStatus">🔄 جاري الاتصال بالسيرفر...</div>
+<div id="loading">
+  <div class="spinner"></div>
+  <div class="loading-txt">جاري تحميل البيانات المحفوظة...</div>
+</div>
 
-  <!-- الإحصائيات -->
-  <div class="stats">
-    <div class="stat-card">
-      <div class="num" id="viewerCount">0</div>
-      <div class="lbl">👥 مشاهدين الآن</div>
-    </div>
-    <div class="stat-card">
-      <div class="num" id="liveCount">0</div>
-      <div class="lbl">🔴 بث مباشر</div>
-    </div>
-    <div class="stat-card">
-      <div class="num" id="matchCount">0</div>
-      <div class="lbl">⚽ إجمالي المباريات</div>
-    </div>
-  </div>
+<h1>لوحة تحكم Alankaboot Sport</h1>
+<div class="sub">كل التعديلات بتتحفظ تلقائياً على السيرفر</div>
+<div class="conn offline" id="connStatus">جاري الاتصال...</div>
 
-  <!-- المباريات والبث -->
-  <div class="section">
-    <h2>📺 القنوات / المباريات</h2>
-    <div id="matchesList"></div>
-    <button class="add-btn" onclick="addMatch()">+ إضافة قناة / مباراة جديدة</button>
+<!-- الإحصائيات -->
+<div class="stats">
+  <div class="stat-card">
+    <div class="num" id="viewerCount">0</div>
+    <div class="lbl">مشاهدين الآن</div>
   </div>
+  <div class="stat-card live">
+    <div class="num" id="liveCount">0</div>
+    <div class="lbl">بث مباشر</div>
+  </div>
+  <div class="stat-card">
+    <div class="num" id="matchCount">0</div>
+    <div class="lbl">إجمالي المباريات</div>
+  </div>
+</div>
+
+<!-- أزرار عامة -->
+<div class="top-actions">
+  <button class="btn ghost" onclick="reloadFromServer()">🔄 إعادة تحميل من السيرفر</button>
+  <button class="btn ghost" onclick="resetToDefaults()">↺ إعادة للوضع الافتراضي</button>
+</div>
+
+<!-- المباريات -->
+<div class="section">
+  <h2>القنوات / المباريات</h2>
+  <div id="matchesList"></div>
+  <button class="add-btn" onclick="addMatch()">+ إضافة قناة / مباراة جديدة</button>
+  <div class="status" id="statusMsg"></div>
+</div>
+
+<div class="save-indicator" id="saveIndicator">✓ تم الحفظ على السيرفر</div>
 
 <script>
-  // ========= إعدادات MQTT =========
+  // ========== إعدادات الاتصال ==========
   const BROKER = 'wss://broker.emqx.io:8084/mqtt';
-  const TOPIC_CMD = 'kwtspta_9f3a2b1c/cmd';       // أوامر التشغيل/الإيقاف
-  const TOPIC_DATA = 'kwtspta_9f3a2b1c/data';     // بيانات المباريات (retained)
-  const TOPIC_HEARTBEAT = 'kwtspta_9f3a2b1c/hb';  // نبضات المشاهدين
+  const TOPIC_CMD = 'kwtspta_9f3a2b1c/cmd';
+  const TOPIC_DATA = 'kwtspta_9f3a2b1c/data';
+  const TOPIC_HB = 'kwtspta_9f3a2b1c/hb';
 
   const client = mqtt.connect(BROKER, {
     clientId: 'admin_' + Math.random().toString(16).slice(2,10)
   });
 
   const connStatus = document.getElementById('connStatus');
-  const viewers = new Map(); // id -> timestamp
+  const viewers = new Map();
+  let matches = [];
+  let isLoadedFromServer = false;
+  let publishTimeout = null;
 
+  // ========== حالة الاتصال ==========
   client.on('connect', ()=>{
-    connStatus.textContent = '✅ متصل - التحكم يعمل على كل الأجهزة';
+    connStatus.textContent = '✅ متصل - البيانات بتتحفظ تلقائياً';
     connStatus.className = 'conn online';
-    client.subscribe(TOPIC_HEARTBEAT);
-    // نشر البيانات الحالية فوراً
-    publishData();
+    client.subscribe(TOPIC_HB);
+    client.subscribe(TOPIC_DATA); // مهم جداً: نستقبل البيانات المحفوظة
+
+    // ننتظر 1.5 ثانية عشان لو فيه رسالة محفوظة توصل
+    setTimeout(()=>{
+      if(!isLoadedFromServer){
+        // مفيش رسالة محفوظة على السيرفر - نستخدم localStorage أو الافتراضي
+        loadFromLocalStorage();
+        isLoadedFromServer = true;
+        hideLoading();
+        render();
+        publishData(); // نحفظ البيانات الحالية للسيرفر
+      }
+    }, 1500);
   });
 
   client.on('error', ()=>{
     connStatus.textContent = '❌ فشل الاتصال - تأكد من الإنترنت';
     connStatus.className = 'conn offline';
+    // في حالة الفشل، نحمل من localStorage على الأقل
+    if(!isLoadedFromServer){
+      loadFromLocalStorage();
+      isLoadedFromServer = true;
+      hideLoading();
+      render();
+    }
   });
 
-  // استقبال نبضات المشاهدين
+  // ========== استقبال الرسائل ==========
   client.on('message', (topic, message)=>{
-    if(topic === TOPIC_HEARTBEAT){
-      try{
+    try{
+      // نبضات المشاهدين
+      if(topic === TOPIC_HB){
         const d = JSON.parse(message.toString());
         viewers.set(d.id, Date.now());
-      }catch(e){}
-    }
+        return;
+      }
+
+      // البيانات المحفوظة من السيرفر (retained message)
+      if(topic === TOPIC_DATA){
+        const data = JSON.parse(message.toString());
+        if(Array.isArray(data) && !isLoadedFromServer){
+          matches = data;
+          isLoadedFromServer = true;
+          hideLoading();
+          render();
+          showStatus('✓ تم تحميل البيانات المحفوظة من السيرفر', 'ok');
+        }
+        // لو جات بيانات جديدة من أدمن تاني في نفس الوقت، نحدث
+        else if(Array.isArray(data) && isLoadedFromServer){
+          // ما نعملش حاجة عشان ما نضيعش تعديلات المستخدم الحالي
+        }
+      }
+    }catch(e){}
   });
 
-  // كل 5 ثواني نحسب عدد المشاهدين النشطين (اللي بعتوا نبضة خلال 15 ثانية)
-  setInterval(()=>{
-    const now = Date.now();
-    for(const [id, t] of viewers){
-      if(now - t > 15000) viewers.delete(id);
+  // ========== تحميل من localStorage ==========
+  function loadFromLocalStorage(){
+    const saved = localStorage.getItem('matches_data');
+    if(saved){
+      try{
+        matches = JSON.parse(saved);
+      }catch(e){ matches = getDefaultMatches(); }
+    } else {
+      matches = getDefaultMatches();
     }
-    document.getElementById('viewerCount').textContent = viewers.size;
-  }, 5000);
-
-  // ========= المباريات =========
-  let matches = [];
-  const saved = localStorage.getItem('matches_data');
-  if(saved){
-    try{ matches = JSON.parse(saved); }catch(e){ matches = []; }
   }
-  if(matches.length === 0){
-    matches = [
+
+  function getDefaultMatches(){
+    return [
       {
-        id: 'm' + Date.now() + '_1',
+        id: 'm1',
         title: 'القناة الرياضية 1',
         time: '20:00',
         team1: 'الأهلي', team1Img: 'https://via.placeholder.com/80/ff0000/fff?text=AH',
@@ -170,7 +302,7 @@
         live: false
       },
       {
-        id: 'm' + Date.now() + '_2',
+        id: 'm2',
         title: 'القناة الرياضية 2',
         time: '22:00',
         team1: 'ريال مدريد', team1Img: 'https://via.placeholder.com/80/ffffff/000?text=RM',
@@ -181,75 +313,150 @@
     ];
   }
 
+  function hideLoading(){
+    const l = document.getElementById('loading');
+    l.classList.add('hide');
+    setTimeout(()=> l.style.display = 'none', 500);
+  }
+
+  // ========== عد المشاهدين ==========
+  setInterval(()=>{
+    const now = Date.now();
+    for(const [id, t] of viewers){
+      if(now - t > 15000) viewers.delete(id);
+    }
+    document.getElementById('viewerCount').textContent = viewers.size;
+  }, 5000);
+
+  // ========== عرض المباريات ==========
   function render(){
     const c = document.getElementById('matchesList');
     c.innerHTML = '';
     matches.forEach((m, i)=>{
-      const badge = m.live ? '<span class="badge live">🔴 مباشر الآن</span>' 
-                          : '<span class="badge off">⏸ متوقف</span>';
+      const badge = m.live 
+        ? '<span class="badge live">● مباشر الآن</span>'
+        : '<span class="badge off">متوقف</span>';
+
       const div = document.createElement('div');
-      div.className = 'match-card';
+      div.className = 'match-card' + (m.live ? ' live' : '');
       div.innerHTML = `
         <div class="match-header">
-          <span class="badge">${m.title || 'قناة'}</span>
+          <span class="badge">${m.title || 'قناة ' + (i+1)}</span>
           ${badge}
         </div>
+
         <div class="field-row">
           <div>
             <label>اسم الفريق 1</label>
-            <input value="${m.team1||''}" onchange="update(${i},'team1',this.value)">
+            <input value="${m.team1||''}" 
+                   oninput="updateField(${i},'team1',this.value)"
+                   onchange="saveNow()">
           </div>
           <div>
             <label>اسم الفريق 2</label>
-            <input value="${m.team2||''}" onchange="update(${i},'team2',this.value)">
+            <input value="${m.team2||''}"
+                   oninput="updateField(${i},'team2',this.value)"
+                   onchange="saveNow()">
           </div>
         </div>
+
         <div class="field-row">
           <div>
             <label>رابط صورة الفريق 1</label>
-            <input type="url" value="${m.team1Img||''}" onchange="update(${i},'team1Img',this.value)">
+            <input type="url" value="${m.team1Img||''}"
+                   oninput="updateField(${i},'team1Img',this.value)"
+                   onchange="saveNow()">
           </div>
           <div>
             <label>رابط صورة الفريق 2</label>
-            <input type="url" value="${m.team2Img||''}" onchange="update(${i},'team2Img',this.value)">
+            <input type="url" value="${m.team2Img||''}"
+                   oninput="updateField(${i},'team2Img',this.value)"
+                   onchange="saveNow()">
           </div>
         </div>
+
         <div class="field-row">
           <div>
             <label>وقت المباراة</label>
-            <input type="time" value="${m.time||'00:00'}" onchange="update(${i},'time',this.value)">
+            <input type="time" value="${m.time||'00:00'}"
+                   oninput="updateField(${i},'time',this.value)"
+                   onchange="saveNow()">
           </div>
           <div>
             <label>اسم القناة / العنوان</label>
-            <input value="${m.title||''}" onchange="update(${i},'title',this.value)">
+            <input value="${m.title||''}"
+                   oninput="updateField(${i},'title',this.value)"
+                   onchange="saveNow()">
           </div>
         </div>
+
         <div class="field-row full">
           <div>
-            <label>🔗 رابط البث (m3u8)</label>
-            <input type="url" value="${m.streamUrl||''}" onchange="update(${i},'streamUrl',this.value)"
+            <label>رابط البث (m3u8)</label>
+            <input type="url" value="${m.streamUrl||''}"
+                   oninput="updateField(${i},'streamUrl',this.value)"
+                   onchange="saveNow()"
                    placeholder="https://example.com/stream.m3u8">
           </div>
         </div>
+
         <div class="match-actions">
-          <button class="btn play" onclick="setLive(${i}, true)">🚀 تشغيل مباشر</button>
-          <button class="btn stop" onclick="setLive(${i}, false)">⏹ إيقاف</button>
+          <button class="btn play" onclick="setLive(${i}, true)">▶ تشغيل مباشر</button>
+          <button class="btn stop" onclick="setLive(${i}, false)">■ إيقاف</button>
           <button class="btn danger" onclick="removeMatch(${i})">🗑 حذف</button>
         </div>
       `;
       c.appendChild(div);
     });
+
     document.getElementById('matchCount').textContent = matches.length;
     document.getElementById('liveCount').textContent = matches.filter(x=>x.live).length;
-    localStorage.setItem('matches_data', JSON.stringify(matches));
   }
 
-  function update(i, k, v){
-    matches[i][k] = v;
+  // ========== تعديل حقول ==========
+  function updateField(i, key, value){
+    matches[i][key] = value;
+    // حفظ تلقائي في localStorage
+    localStorage.setItem('matches_data', JSON.stringify(matches));
+    // جدولة الحفظ على السيرفر
+    scheduleSave();
+  }
+
+  // ========== حفظ الآن (فوري) ==========
+  function saveNow(){
     localStorage.setItem('matches_data', JSON.stringify(matches));
     publishData();
   }
 
+  // ========== جدولة الحفظ (بعد 800ms من آخر تعديل) ==========
+  function scheduleSave(){
+    clearTimeout(publishTimeout);
+    publishTimeout = setTimeout(saveNow, 800);
+  }
+
+  // ========== نشر البيانات للسيرفر (retained) ==========
+  function publishData(){
+    try{
+      connStatus.textContent = '💾 جاري الحفظ...';
+      connStatus.className = 'conn saving';
+
+      client.publish(TOPIC_DATA, JSON.stringify(matches), { retain: true }, ()=>{
+        connStatus.textContent = '✅ متصل - البيانات بتتحفظ تلقائياً';
+        connStatus.className = 'conn online';
+        showSaved();
+      });
+    }catch(e){
+      console.error(e);
+    }
+  }
+
+  function showSaved(){
+    const s = document.getElementById('saveIndicator');
+    s.classList.add('show');
+    setTimeout(()=> s.classList.remove('show'), 1500);
+  }
+
+  // ========== إضافة مباراة ==========
   function addMatch(){
     matches.push({
       id: 'm' + Date.now(),
@@ -261,43 +468,79 @@
       live: false
     });
     render();
-    publishData();
+    saveNow();
+    showStatus('✓ تمت الإضافة والحفظ', 'ok');
   }
 
+  // ========== حذف مباراة ==========
   function removeMatch(i){
     if(!confirm('متأكد من حذف هذه القناة؟')) return;
     matches.splice(i, 1);
     render();
-    publishData();
+    saveNow();
+    showStatus('✓ تم الحذف والحفظ', 'ok');
   }
 
+  // ========== تشغيل / إيقاف ==========
   function setLive(i, status){
     if(status && !matches[i].streamUrl){
-      alert('❌ لازم تحط رابط البث (m3u8) أولاً!');
+      showStatus('❌ لازم تحط رابط البث أولاً!', 'err');
       return;
     }
-    // نوقف كل القنوات التانية ونسيب بس اللي اتضغط عليها
     matches.forEach(m => m.live = false);
     matches[i].live = status;
     render();
-    publishData();
+    saveNow();
 
-    // نبعت أمر للجميع
     client.publish(TOPIC_CMD, JSON.stringify({
       action: status ? 'play' : 'stop',
       matchId: matches[i].id,
       url: matches[i].streamUrl,
       title: matches[i].title
     }));
+
+    showStatus(status ? '✓ تم تشغيل البث للجميع' : '✓ تم إيقاف البث', 'ok');
   }
 
-  function publishData(){
-    client.publish(TOPIC_DATA, JSON.stringify(matches), { retain: true });
+  // ========== رسائل الحالة ==========
+  function showStatus(msg, type){
+    const s = document.getElementById('statusMsg');
+    s.textContent = msg;
+    s.className = 'status ' + type;
+    setTimeout(()=> s.className = 'status', 3000);
   }
 
-  render();
-  // نشر أولي
-  setTimeout(publishData, 1000);
+  // ========== إعادة تحميل من السيرفر ==========
+  function reloadFromServer(){
+    if(!confirm('هتحمّل أحدث نسخة محفوظة من السيرفر. أي تعديلات غير محفوظة هتضيع.')) return;
+    client.publish(TOPIC_DATA, '', { retain: true }); // مسح القديم
+    setTimeout(()=>{
+      connStatus.textContent = '🔄 جاري التحميل...';
+      connStatus.className = 'conn saving';
+      client.subscribe(TOPIC_DATA);
+      setTimeout(()=> location.reload(), 500);
+    }, 500);
+  }
+
+  // ========== إعادة للوضع الافتراضي ==========
+  function resetToDefaults(){
+    if(!confirm('هترجع البيانات الافتراضية. كل التعديلات هتضيع. متأكد؟')) return;
+    matches = getDefaultMatches();
+    localStorage.setItem('matches_data', JSON.stringify(matches));
+    render();
+    saveNow();
+    showStatus('✓ تم إعادة الوضع الافتراضي', 'ok');
+  }
+
+  // ========== حفظ عند إغلاق الصفحة ==========
+  window.addEventListener('beforeunload', ()=>{
+    if(matches.length){
+      try{
+        client.publish(TOPIC_DATA, JSON.stringify(matches), { retain: true });
+      }catch(e){}
+    }
+  });
+
 </script>
 </body>
 </html>
