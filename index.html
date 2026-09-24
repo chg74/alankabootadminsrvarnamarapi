@@ -18,7 +18,6 @@
      text-shadow:0 0 20px rgba(220,20,30,.6)}
   .sub{text-align:center;color:#8a5b5e;font-size:12px;margin-bottom:16px}
 
-  /* حالة الاتصال */
   .conn{text-align:center;font-size:12px;padding:10px;border-radius:10px;
         background:rgba(0,0,0,.4);margin-bottom:16px;font-weight:700;
         backdrop-filter:blur(8px)}
@@ -29,7 +28,6 @@
                animation:savePulse 1s infinite}
   @keyframes savePulse{50%{opacity:.6}}
 
-  /* إحصائيات */
   .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
          gap:12px;margin-bottom:18px}
   .stat-card{
@@ -44,11 +42,9 @@
   .stat-card.live .num{color:#dc1420;
                        text-shadow:0 0 15px rgba(220,20,30,.7)}
 
-  /* الأزرار العامة */
   .top-actions{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
   .top-actions button{flex:1;min-width:130px}
 
-  /* أقسام */
   .section{
     background:linear-gradient(135deg,rgba(24,5,7,.9),rgba(35,10,14,.9));
     border-radius:14px;padding:16px;margin-bottom:16px;
@@ -60,15 +56,16 @@
   .section h2::before{content:'';width:4px;height:18px;border-radius:4px;
                       background:linear-gradient(180deg,#8b0000,#dc1420)}
 
-  /* كارت المباراة */
   .match-card{
     background:rgba(15,5,7,.7);
     padding:14px;border-radius:12px;margin-bottom:14px;
     border:1px solid rgba(220,20,30,.2);
     border-right:4px solid #dc1420;
     transition:.2s}
-  .match-card.live{border-right-color:#4caf50;
-                   box-shadow:0 0 20px rgba(76,175,80,.15)}
+  .match-card.live{
+    border-right-color:#4caf50;
+    background:linear-gradient(135deg,rgba(20,40,20,.5),rgba(15,5,7,.7));
+    box-shadow:0 0 25px rgba(76,175,80,.2)}
 
   .match-header{display:flex;justify-content:space-between;align-items:center;
                 margin-bottom:12px;flex-wrap:wrap;gap:8px}
@@ -96,7 +93,6 @@
 
   .match-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 
-  /* أزرار */
   .btn{background:linear-gradient(135deg,#8b0000,#dc1420);
        color:#fff;border:none;padding:10px 18px;border-radius:10px;
        font-weight:700;cursor:pointer;font-size:13px;
@@ -129,7 +125,6 @@
   .status.err{background:rgba(229,57,53,.15);color:#e53935;
               border:1px solid rgba(229,57,53,.5);display:block}
 
-  /* التحميل */
   #loading{position:fixed;inset:0;background:#0a0405;z-index:9999;
            display:flex;flex-direction:column;justify-content:center;
            align-items:center;gap:20px;transition:opacity .5s}
@@ -140,7 +135,6 @@
   @keyframes spin{to{transform:rotate(360deg)}}
   .loading-txt{color:#dc1420;font-weight:700;font-size:14px}
 
-  /* إشعار الحفظ */
   .save-indicator{position:fixed;bottom:20px;left:50%;
                   transform:translateX(-50%);
                   background:linear-gradient(90deg,#2e7d32,#4caf50);
@@ -166,10 +160,9 @@
 </div>
 
 <h1>لوحة تحكم Alankaboot Sport</h1>
-<div class="sub">كل التعديلات بتتحفظ تلقائياً على السيرفر</div>
+<div class="sub">كل قناة مستقلة - تقدر تشغل أكثر من بث في نفس الوقت</div>
 <div class="conn offline" id="connStatus">جاري الاتصال...</div>
 
-<!-- الإحصائيات -->
 <div class="stats">
   <div class="stat-card">
     <div class="num" id="viewerCount">0</div>
@@ -185,13 +178,12 @@
   </div>
 </div>
 
-<!-- أزرار عامة -->
 <div class="top-actions">
   <button class="btn ghost" onclick="reloadFromServer()">🔄 إعادة تحميل من السيرفر</button>
+  <button class="btn ghost" onclick="stopAll()">⏹ إيقاف كل البث</button>
   <button class="btn ghost" onclick="resetToDefaults()">↺ إعادة للوضع الافتراضي</button>
 </div>
 
-<!-- المباريات -->
 <div class="section">
   <h2>القنوات / المباريات</h2>
   <div id="matchesList"></div>
@@ -202,7 +194,6 @@
 <div class="save-indicator" id="saveIndicator">✓ تم الحفظ على السيرفر</div>
 
 <script>
-  // ========== إعدادات الاتصال ==========
   const BROKER = 'wss://broker.emqx.io:8084/mqtt';
   const TOPIC_CMD = 'kwtspta_9f3a2b1c/cmd';
   const TOPIC_DATA = 'kwtspta_9f3a2b1c/data';
@@ -218,22 +209,19 @@
   let isLoadedFromServer = false;
   let publishTimeout = null;
 
-  // ========== حالة الاتصال ==========
   client.on('connect', ()=>{
-    connStatus.textContent = '✅ متصل - البيانات بتتحفظ تلقائياً';
+    connStatus.textContent = '✅ متصل - كل قناة مستقلة';
     connStatus.className = 'conn online';
     client.subscribe(TOPIC_HB);
-    client.subscribe(TOPIC_DATA); // مهم جداً: نستقبل البيانات المحفوظة
+    client.subscribe(TOPIC_DATA);
 
-    // ننتظر 1.5 ثانية عشان لو فيه رسالة محفوظة توصل
     setTimeout(()=>{
       if(!isLoadedFromServer){
-        // مفيش رسالة محفوظة على السيرفر - نستخدم localStorage أو الافتراضي
         loadFromLocalStorage();
         isLoadedFromServer = true;
         hideLoading();
         render();
-        publishData(); // نحفظ البيانات الحالية للسيرفر
+        publishData();
       }
     }, 1500);
   });
@@ -241,7 +229,6 @@
   client.on('error', ()=>{
     connStatus.textContent = '❌ فشل الاتصال - تأكد من الإنترنت';
     connStatus.className = 'conn offline';
-    // في حالة الفشل، نحمل من localStorage على الأقل
     if(!isLoadedFromServer){
       loadFromLocalStorage();
       isLoadedFromServer = true;
@@ -250,17 +237,13 @@
     }
   });
 
-  // ========== استقبال الرسائل ==========
   client.on('message', (topic, message)=>{
     try{
-      // نبضات المشاهدين
       if(topic === TOPIC_HB){
         const d = JSON.parse(message.toString());
         viewers.set(d.id, Date.now());
         return;
       }
-
-      // البيانات المحفوظة من السيرفر (retained message)
       if(topic === TOPIC_DATA){
         const data = JSON.parse(message.toString());
         if(Array.isArray(data) && !isLoadedFromServer){
@@ -270,21 +253,15 @@
           render();
           showStatus('✓ تم تحميل البيانات المحفوظة من السيرفر', 'ok');
         }
-        // لو جات بيانات جديدة من أدمن تاني في نفس الوقت، نحدث
-        else if(Array.isArray(data) && isLoadedFromServer){
-          // ما نعملش حاجة عشان ما نضيعش تعديلات المستخدم الحالي
-        }
       }
     }catch(e){}
   });
 
-  // ========== تحميل من localStorage ==========
   function loadFromLocalStorage(){
     const saved = localStorage.getItem('matches_data');
     if(saved){
-      try{
-        matches = JSON.parse(saved);
-      }catch(e){ matches = getDefaultMatches(); }
+      try{ matches = JSON.parse(saved); }
+      catch(e){ matches = getDefaultMatches(); }
     } else {
       matches = getDefaultMatches();
     }
@@ -300,15 +277,6 @@
         team2: 'الزمالك', team2Img: 'https://via.placeholder.com/80/ffffff/000?text=ZM',
         streamUrl: 'https://kwtspta.cdn.mangomolo.com/sp/smil:sp.stream.smil/chunklist_b900000_t64MzYwcA==.m3u8',
         live: false
-      },
-      {
-        id: 'm2',
-        title: 'القناة الرياضية 2',
-        time: '22:00',
-        team1: 'ريال مدريد', team1Img: 'https://via.placeholder.com/80/ffffff/000?text=RM',
-        team2: 'برشلونة', team2Img: 'https://via.placeholder.com/80/a50044/fff?text=FCB',
-        streamUrl: '',
-        live: false
       }
     ];
   }
@@ -319,7 +287,6 @@
     setTimeout(()=> l.style.display = 'none', 500);
   }
 
-  // ========== عد المشاهدين ==========
   setInterval(()=>{
     const now = Date.now();
     for(const [id, t] of viewers){
@@ -328,7 +295,6 @@
     document.getElementById('viewerCount').textContent = viewers.size;
   }, 5000);
 
-  // ========== عرض المباريات ==========
   function render(){
     const c = document.getElementById('matchesList');
     c.innerHTML = '';
@@ -395,14 +361,17 @@
             <label>رابط البث (m3u8)</label>
             <input type="url" value="${m.streamUrl||''}"
                    oninput="updateField(${i},'streamUrl',this.value)"
-                   onchange="saveNow()"
+                   onchange="saveNow();refreshIfLive(${i})"
                    placeholder="https://example.com/stream.m3u8">
           </div>
         </div>
 
         <div class="match-actions">
-          <button class="btn play" onclick="setLive(${i}, true)">▶ تشغيل مباشر</button>
-          <button class="btn stop" onclick="setLive(${i}, false)">■ إيقاف</button>
+          ${m.live 
+            ? `<button class="btn stop" onclick="setLive(${i}, false)">■ إيقاف البث</button>
+               <button class="btn play" onclick="restartStream(${i})">🔄 إعادة تشغيل</button>`
+            : `<button class="btn play" onclick="setLive(${i}, true)">▶ تشغيل مباشر</button>`
+          }
           <button class="btn danger" onclick="removeMatch(${i})">🗑 حذف</button>
         </div>
       `;
@@ -413,41 +382,33 @@
     document.getElementById('liveCount').textContent = matches.filter(x=>x.live).length;
   }
 
-  // ========== تعديل حقول ==========
   function updateField(i, key, value){
     matches[i][key] = value;
-    // حفظ تلقائي في localStorage
     localStorage.setItem('matches_data', JSON.stringify(matches));
-    // جدولة الحفظ على السيرفر
     scheduleSave();
   }
 
-  // ========== حفظ الآن (فوري) ==========
   function saveNow(){
     localStorage.setItem('matches_data', JSON.stringify(matches));
     publishData();
   }
 
-  // ========== جدولة الحفظ (بعد 800ms من آخر تعديل) ==========
   function scheduleSave(){
     clearTimeout(publishTimeout);
     publishTimeout = setTimeout(saveNow, 800);
   }
 
-  // ========== نشر البيانات للسيرفر (retained) ==========
   function publishData(){
     try{
       connStatus.textContent = '💾 جاري الحفظ...';
       connStatus.className = 'conn saving';
 
       client.publish(TOPIC_DATA, JSON.stringify(matches), { retain: true }, ()=>{
-        connStatus.textContent = '✅ متصل - البيانات بتتحفظ تلقائياً';
+        connStatus.textContent = '✅ متصل - كل قناة مستقلة';
         connStatus.className = 'conn online';
         showSaved();
       });
-    }catch(e){
-      console.error(e);
-    }
+    }catch(e){ console.error(e); }
   }
 
   function showSaved(){
@@ -456,10 +417,9 @@
     setTimeout(()=> s.classList.remove('show'), 1500);
   }
 
-  // ========== إضافة مباراة ==========
   function addMatch(){
     matches.push({
-      id: 'm' + Date.now(),
+      id: 'm' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
       title: 'قناة جديدة',
       time: '00:00',
       team1: 'فريق 1', team1Img: '',
@@ -472,22 +432,29 @@
     showStatus('✓ تمت الإضافة والحفظ', 'ok');
   }
 
-  // ========== حذف مباراة ==========
   function removeMatch(i){
     if(!confirm('متأكد من حذف هذه القناة؟')) return;
+    // لو كانت شغالة، نوقفها الأول
+    if(matches[i].live){
+      client.publish(TOPIC_CMD, JSON.stringify({
+        action: 'stop',
+        matchId: matches[i].id
+      }));
+    }
     matches.splice(i, 1);
     render();
     saveNow();
     showStatus('✓ تم الحذف والحفظ', 'ok');
   }
 
-  // ========== تشغيل / إيقاف ==========
+  // ★★★ كل قناة مستقلة - بدون إيقاف التانية ★★★
   function setLive(i, status){
     if(status && !matches[i].streamUrl){
       showStatus('❌ لازم تحط رابط البث أولاً!', 'err');
       return;
     }
-    matches.forEach(m => m.live = false);
+
+    // نغير حالة القناة دي بس
     matches[i].live = status;
     render();
     saveNow();
@@ -499,10 +466,38 @@
       title: matches[i].title
     }));
 
-    showStatus(status ? '✓ تم تشغيل البث للجميع' : '✓ تم إيقاف البث', 'ok');
+    showStatus(status ? '✓ تم تشغيل "' + matches[i].title + '"' : '✓ تم إيقاف "' + matches[i].title + '"', 'ok');
   }
 
-  // ========== رسائل الحالة ==========
+  // إعادة تشغيل البث الحالي (لما تعدل الرابط مثلاً)
+  function restartStream(i){
+    if(!matches[i].live) return;
+    client.publish(TOPIC_CMD, JSON.stringify({
+      action: 'play',
+      matchId: matches[i].id,
+      url: matches[i].streamUrl,
+      title: matches[i].title
+    }));
+    showStatus('✓ تم إعادة تشغيل "' + matches[i].title + '"', 'ok');
+  }
+
+  // لو الرابط تعدل أثناء البث، نحدثه تلقائياً
+  function refreshIfLive(i){
+    if(matches[i].live && matches[i].streamUrl){
+      setTimeout(()=> restartStream(i), 300);
+    }
+  }
+
+  // إيقاف كل البث
+  function stopAll(){
+    if(!confirm('هتوقف كل القنوات الشغالة. متأكد؟')) return;
+    matches.forEach(m => m.live = false);
+    render();
+    saveNow();
+    client.publish(TOPIC_CMD, JSON.stringify({ action: 'stopAll' }));
+    showStatus('✓ تم إيقاف كل البث', 'ok');
+  }
+
   function showStatus(msg, type){
     const s = document.getElementById('statusMsg');
     s.textContent = msg;
@@ -510,19 +505,14 @@
     setTimeout(()=> s.className = 'status', 3000);
   }
 
-  // ========== إعادة تحميل من السيرفر ==========
   function reloadFromServer(){
     if(!confirm('هتحمّل أحدث نسخة محفوظة من السيرفر. أي تعديلات غير محفوظة هتضيع.')) return;
-    client.publish(TOPIC_DATA, '', { retain: true }); // مسح القديم
-    setTimeout(()=>{
-      connStatus.textContent = '🔄 جاري التحميل...';
-      connStatus.className = 'conn saving';
-      client.subscribe(TOPIC_DATA);
-      setTimeout(()=> location.reload(), 500);
-    }, 500);
+    connStatus.textContent = '🔄 جاري التحميل...';
+    connStatus.className = 'conn saving';
+    localStorage.removeItem('matches_data');
+    setTimeout(()=> location.reload(), 500);
   }
 
-  // ========== إعادة للوضع الافتراضي ==========
   function resetToDefaults(){
     if(!confirm('هترجع البيانات الافتراضية. كل التعديلات هتضيع. متأكد؟')) return;
     matches = getDefaultMatches();
@@ -532,7 +522,6 @@
     showStatus('✓ تم إعادة الوضع الافتراضي', 'ok');
   }
 
-  // ========== حفظ عند إغلاق الصفحة ==========
   window.addEventListener('beforeunload', ()=>{
     if(matches.length){
       try{
@@ -540,7 +529,6 @@
       }catch(e){}
     }
   });
-
 </script>
 </body>
-</html>
+ </html>
