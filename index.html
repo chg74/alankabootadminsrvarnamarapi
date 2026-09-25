@@ -75,9 +75,6 @@
     border-right-color:#4caf50}
   .match-card.no-stream{
     border-right-color:#ff9800 !important}
-  .match-card.auto-armed{
-    border-right-color:#ffd700 !important;
-    box-shadow:0 0 20px rgba(255,215,0,.15)}
 
   .match-header{display:flex;justify-content:space-between;align-items:center;
                 margin-bottom:12px;flex-wrap:wrap;gap:8px}
@@ -94,9 +91,6 @@
   .match-header .badge.no-stream{
     background:linear-gradient(135deg,#e65100,#ff9800);
     font-size:10px}
-  .match-header .badge.auto-armed{
-    background:linear-gradient(135deg,#f57f17,#ffd700);
-    color:#000;font-size:10px}
   @keyframes blink{50%{opacity:.6}}
 
   .field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
@@ -111,7 +105,6 @@
   .field-row input:focus{outline:none;border-color:#dc1420;
                          box-shadow:0 0 15px rgba(220,20,30,.3)}
   .field-row input[type="url"]{direction:ltr;font-size:12px}
-  .field-row input:disabled{opacity:.75;cursor:not-allowed;background:#080202}
 
   .team-preview{display:flex;align-items:center;gap:10px;
                 background:rgba(0,0,0,.3);padding:8px;border-radius:8px;
@@ -142,10 +135,8 @@
   .btn.api-btn:hover{box-shadow:0 8px 20px rgba(30,136,229,.6)}
   .btn.api-stop-btn{background:linear-gradient(135deg,#4a148c,#6a1b9a);
                     box-shadow:0 4px 15px rgba(106,27,154,.3)}
-  .btn.api-stop-btn:hover{box-shadow:0 8px 20px rgba(106,27,154,.6)}
   .btn.inspect-btn{background:linear-gradient(135deg,#455a64,#607d8b);
                    box-shadow:0 4px 15px rgba(96,125,139,.3)}
-  .btn.inspect-btn:hover{box-shadow:0 8px 20px rgba(96,125,139,.6)}
 
   .add-btn{width:100%;background:linear-gradient(135deg,#2e7d32,#4caf50);
            color:#fff;border:none;padding:14px;border-radius:12px;
@@ -233,7 +224,7 @@
 <div class="conn offline" id="connStatus">جاري الاتصال...</div>
 
 <div class="mode-banner" id="modeBanner">
-  📡 وضع API شغال - التحديث تلقائي كل 30 ثانية + التشغيل التلقائي عند وقت المباراة
+  📡 وضع API شغال - المباريات اللي شايفها دي من الـ API. تقدر تشغل أي واحدة أو تحط رابط مخصص.
 </div>
 
 <div class="stats">
@@ -252,7 +243,7 @@
 </div>
 
 <div class="top-actions">
-  <button class="btn api-btn" id="apiLoadBtn" onclick="loadFromAPI()">📡 عرض من API</button>
+  <button class="btn api-btn" id="apiLoadBtn" onclick="loadFromAPI()">📡 عرض من API (مرة واحدة)</button>
   <button class="btn api-stop-btn" id="apiStopBtn" onclick="stopAPIView()" style="display:none">⏹ إيقاف عرض من API</button>
   <button class="btn inspect-btn" onclick="inspectAPI()">🔍 فحص API</button>
 </div>
@@ -265,8 +256,13 @@
 
 <div class="section">
   <h2>القنوات / المباريات</h2>
+  <div style="background:rgba(30,136,229,.1);border:1px solid rgba(30,136,229,.3);
+              padding:10px;border-radius:10px;font-size:12px;
+              color:#64b5f6;margin-bottom:12px;line-height:1.7;font-weight:600">
+    💡 <b>طريقة إضافة قناة:</b> اضغط "➕ إضافة قناة" تحت → املا البيانات (اسم الفريق، الرابط m3u8، الوقت) → واضغط "▶ تشغيل مباشر".
+  </div>
   <div id="matchesList"></div>
-  <button class="add-btn" id="addMatchBtn" onclick="addMatch()">+ إضافة قناة / مباراة جديدة</button>
+  <button class="add-btn" id="addMatchBtn" onclick="addMatch()">➕ إضافة قناة / مباراة جديدة</button>
   <div class="status" id="statusMsg"></div>
 </div>
 
@@ -288,7 +284,6 @@
   const TOPIC_HB   = 'kwtspta_9f3a2b1c/hb';
 
   const API_BASE = 'https://bein-live.online/api/matches.php?day=today&_=';
-  const API_REFRESH_MS = 30000;
 
   /* ================== الحالة ================== */
   const client = mqtt.connect(BROKER, {
@@ -302,7 +297,6 @@
   let publishTimeout = null;
 
   let apiMode = false;
-  let apiPollingInterval = null;
   let autoPlayInterval = null;
 
   /* ================== MQTT ================== */
@@ -369,15 +363,7 @@
   }
 
   function getDefaultMatches() {
-    return [{
-      id: 'm1',
-      title: 'القناة الرياضية 1',
-      time: '20:00',
-      team1: 'الأهلي', team1Img: 'https://via.placeholder.com/80/ff0000/fff?text=AH',
-      team2: 'الزمالك', team2Img: 'https://via.placeholder.com/80/ffffff/000?text=ZM',
-      streamUrl: 'https://kwtspta.cdn.mangomolo.com/sp/smil:sp.stream.smil/chunklist_b900000_t64MzYwcA==.m3u8',
-      live: false
-    }];
+    return [];
   }
 
   function hideLoading() {
@@ -401,7 +387,7 @@
 
     if (!matches.length) {
       c.innerHTML = '<div style="text-align:center;padding:40px;color:#8a5b5e;font-size:13px;line-height:1.8">' +
-        (apiMode ? '⏳ جاري تحميل المباريات من API...' : 'لا توجد مباريات حالياً.<br>اضغط "عرض من API" أو "+ إضافة قناة"') +
+        'لا توجد قنوات حالياً.<br>اضغط "<b>➕ إضافة قناة / مباراة جديدة</b>" تحت عشان تضيف واحدة،<br>أو اضغط "<b>📡 عرض من API</b>" فوق.<br>' +
         '</div>';
       document.getElementById('matchCount').textContent = 0;
       document.getElementById('liveCount').textContent = 0;
@@ -410,9 +396,7 @@
 
     matches.forEach((m, i) => {
       const isAPI = !!m._fromAPI;
-      const ro = isAPI ? 'disabled' : '';
       const noStream = !m.streamUrl;
-      const isArmed = m._autoArmed && !m.live;
 
       const badge = m.live
         ? '<span class="badge live">● مباشر الآن</span>'
@@ -420,9 +404,6 @@
 
       const apiTag = isAPI ? '<span class="badge api-tag">📡 API</span>' : '';
       const noStreamTag = noStream ? '<span class="badge no-stream">⚠ بدون رابط بث</span>' : '';
-      const armedTag = isArmed ? '<span class="badge auto-armed">⏰ مجهّز للتشغيل التلقائي</span>' : '';
-
-      const countdownText = isArmed ? getCountdownText(m.time) : '';
 
       const t1Prev = `
         <div class="team-preview">
@@ -439,17 +420,14 @@
       div.className = 'match-card'
         + (m.live ? ' live' : '')
         + (isAPI ? ' api-source' : '')
-        + (noStream ? ' no-stream' : '')
-        + (isArmed ? ' auto-armed' : '');
+        + (noStream ? ' no-stream' : '');
 
       div.innerHTML = `
         <div class="match-header">
           <span class="badge">${escapeHtml(m.title || 'قناة ' + (i + 1))}</span>
           <span style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
             ${apiTag}
-            ${armedTag}
             ${noStreamTag}
-            ${countdownText ? `<span class="countdown">⏳ ${countdownText}</span>` : ''}
             ${badge}
           </span>
         </div>
@@ -457,14 +435,14 @@
         <div class="field-row">
           <div>
             <label>اسم الفريق 1</label>
-            <input value="${escapeAttr(m.team1 || '')}" ${ro}
+            <input value="${escapeAttr(m.team1 || '')}"
                    oninput="updateField(${i},'team1',this.value)"
                    onchange="saveNow()">
             ${t1Prev}
           </div>
           <div>
             <label>اسم الفريق 2</label>
-            <input value="${escapeAttr(m.team2 || '')}" ${ro}
+            <input value="${escapeAttr(m.team2 || '')}"
                    oninput="updateField(${i},'team2',this.value)"
                    onchange="saveNow()">
             ${t2Prev}
@@ -474,13 +452,13 @@
         <div class="field-row">
           <div>
             <label>رابط صورة الفريق 1</label>
-            <input type="url" value="${escapeAttr(m.team1Img || '')}" ${ro}
+            <input type="url" value="${escapeAttr(m.team1Img || '')}"
                    oninput="updateField(${i},'team1Img',this.value);render()"
                    onchange="saveNow()">
           </div>
           <div>
             <label>رابط صورة الفريق 2</label>
-            <input type="url" value="${escapeAttr(m.team2Img || '')}" ${ro}
+            <input type="url" value="${escapeAttr(m.team2Img || '')}"
                    oninput="updateField(${i},'team2Img',this.value);render()"
                    onchange="saveNow()">
           </div>
@@ -489,13 +467,13 @@
         <div class="field-row">
           <div>
             <label>وقت المباراة (24 ساعة)</label>
-            <input type="time" value="${escapeAttr(m.time || '00:00')}" ${ro}
+            <input type="time" value="${escapeAttr(m.time || '00:00')}"
                    oninput="updateField(${i},'time',this.value)"
-                   onchange="saveNow();armAutoPlay()">
+                   onchange="saveNow()">
           </div>
           <div>
             <label>اسم القناة / العنوان</label>
-            <input value="${escapeAttr(m.title || '')}" ${ro}
+            <input value="${escapeAttr(m.title || '')}"
                    oninput="updateField(${i},'title',this.value)"
                    onchange="saveNow()">
           </div>
@@ -503,11 +481,11 @@
 
         <div class="field-row full">
           <div>
-            <label>رابط البث (m3u8)</label>
-            <input type="url" value="${escapeAttr(m.streamUrl || '')}" ${ro}
+            <label>رابط البث (m3u8) — حط أي رابط أنت عايزه</label>
+            <input type="url" value="${escapeAttr(m.streamUrl || '')}"
                    oninput="updateField(${i},'streamUrl',this.value)"
                    onchange="saveNow();refreshIfLive(${i})"
-                   placeholder="${noStream ? '⚠ الـ API مارجّعش رابط بث للمباراة دي' : 'https://example.com/stream.m3u8'}">
+                   placeholder="https://example.com/stream.m3u8">
           </div>
         </div>
 
@@ -517,7 +495,7 @@
                <button class="btn play" onclick="restartStream(${i})">🔄 إعادة تشغيل</button>`
             : `<button class="btn play" onclick="setLive(${i}, true)">▶ تشغيل مباشر</button>`
           }
-          ${!isAPI ? `<button class="btn danger" onclick="removeMatch(${i})">🗑 حذف</button>` : ''}
+          <button class="btn danger" onclick="removeMatch(${i})">🗑 حذف</button>
         </div>
       `;
       c.appendChild(div);
@@ -525,23 +503,6 @@
 
     document.getElementById('matchCount').textContent = matches.length;
     document.getElementById('liveCount').textContent = matches.filter(x => x.live).length;
-  }
-
-  function getCountdownText(timeStr) {
-    if (!timeStr) return '';
-    const now = new Date();
-    const [h, m] = timeStr.split(':').map(Number);
-    const target = new Date();
-    target.setHours(h, m, 0, 0);
-    if (target < now) target.setDate(target.getDate() + 1);
-    const diff = Math.floor((target - now) / 1000);
-    if (diff <= 0) return 'الآن';
-    const hh = Math.floor(diff / 3600);
-    const mm = Math.floor((diff % 3600) / 60);
-    const ss = diff % 60;
-    if (hh > 0) return `بعد ${hh}س ${mm}د`;
-    if (mm > 0) return `بعد ${mm}د ${ss}ث`;
-    return `بعد ${ss}ث`;
   }
 
   function escapeHtml(s) {
@@ -587,11 +548,8 @@
   }
 
   /* ================== إضافة / حذف ================== */
+  // ✅ بقى يقدر يضيف حتى في وضع API
   function addMatch() {
-    if (apiMode) {
-      showStatus('⚠️ مش ممكن تضيف في وضع API. أوقف عرض API الأول.', 'err');
-      return;
-    }
     matches.push({
       id: 'm' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
       title: 'قناة جديدة',
@@ -603,8 +561,7 @@
     });
     render();
     saveNow();
-    armAutoPlay();
-    showStatus('✓ تمت الإضافة والحفظ', 'ok');
+    showStatus('✓ تمت الإضافة. املا البيانات واضغط "▶ تشغيل مباشر".', 'ok');
   }
 
   function removeMatch(i) {
@@ -621,7 +578,7 @@
   /* ================== تشغيل / إيقاف ================== */
   function setLive(i, status) {
     if (status && !matches[i].streamUrl) {
-      showStatus('❌ مفيش رابط بث للمباراة دي. الـ API مارجّعش رابط.', 'err');
+      showStatus('❌ مفيش رابط بث. اكتب الرابط في خانة "رابط البث" الأول.', 'err');
       return;
     }
     matches[i].live = status;
@@ -677,10 +634,6 @@
   }
 
   function reloadFromServer() {
-    if (apiMode) {
-      showStatus('⚠️ أوقف عرض API الأول', 'err');
-      return;
-    }
     if (!confirm('هتحمّل أحدث نسخة محفوظة من السيرفر. أي تعديلات غير محفوظة هتضيع.')) return;
     setConn('saving', '🔄 جاري التحميل...');
     localStorage.removeItem('matches_data');
@@ -688,16 +641,12 @@
   }
 
   function resetToDefaults() {
-    if (apiMode) {
-      showStatus('⚠️ أوقف عرض API الأول', 'err');
-      return;
-    }
-    if (!confirm('هترجع البيانات الافتراضية. كل التعديلات هتضيع. متأكد؟')) return;
-    matches = getDefaultMatches();
+    if (!confirm('هتمسح كل القنوات المحفوظة عندك. متأكد؟')) return;
+    matches = [];
     localStorage.setItem('matches_data', JSON.stringify(matches));
     render();
     saveNow();
-    showStatus('✓ تم إعادة الوضع الافتراضي', 'ok');
+    showStatus('✓ تم مسح كل القنوات', 'ok');
   }
 
   /* ================== ★ API Integration ★ ================== */
@@ -746,34 +695,26 @@
       m.team1, m.team_a, m.teamA, m.home, m.home_name, m.homeName,
       m.home_team, m.homeTeam, m.home_team_name, m.localteam, m.local,
       m.team1_name, m.team1Name, m.first_team, m.firstTeam,
-      m['الفريق_الاول'], m['الفريق_الأول'], m['فريق1'], m['فريق_1'],
-      m['المستضيف'], m['صاحب_الأرض'],
-      deepFind(m, ['home_name', 'homeTeam', 'team1', 'الفريق_الاول', 'فريق1'])
+      deepFind(m, ['home_name', 'homeTeam', 'team1'])
     );
 
     const team2 = pickFirst(
       m.team2, m.team_b, m.teamB, m.away, m.away_name, m.awayName,
       m.away_team, m.awayTeam, m.away_team_name, m.visitorteam, m.visitor,
       m.team2_name, m.team2Name, m.second_team, m.secondTeam,
-      m['الفريق_الثاني'], m['فريق2'], m['فريق_2'],
-      m['الضيف'], m['الزائر'],
-      deepFind(m, ['away_name', 'awayTeam', 'team2', 'الفريق_الثاني', 'فريق2'])
+      deepFind(m, ['away_name', 'awayTeam', 'team2'])
     );
 
     const team1Img = pickFirst(
       m.team1Img, m.team1_img, m.team1_logo, m.team1Logo,
       m.home_logo, m.homeLogo, m.home_img, m.homeImg,
-      m.home_image, m.home_image_url, m.home_team_logo,
-      m['شعار_الفريق_الاول'], m['شعار1'],
-      deepFind(m, ['home_logo', 'homeLogo', 'team1_logo', 'شعار1'])
+      deepFind(m, ['home_logo', 'homeLogo', 'team1_logo'])
     );
 
     const team2Img = pickFirst(
       m.team2Img, m.team2_img, m.team2_logo, m.team2Logo,
       m.away_logo, m.awayLogo, m.away_img, m.awayImg,
-      m.away_image, m.away_image_url, m.away_team_logo,
-      m['شعار_الفريق_الثاني'], m['شعار2'],
-      deepFind(m, ['away_logo', 'awayLogo', 'team2_logo', 'شعار2'])
+      deepFind(m, ['away_logo', 'awayLogo', 'team2_logo'])
     );
 
     const streamUrl = pickFirst(
@@ -781,24 +722,19 @@
       m.iframe, m.embed, m.embed_url, m.embedUrl, m.player,
       m.player_url, m.watch_url, m.watchUrl, m.channel_url,
       m.m3u8, m.hls, m.source, m.src,
-      m['رابط'], m['رابط_البث'], m['رابط_المشاهدة'],
-      deepFind(m, ['streamUrl', 'stream_url', 'm3u8', 'hls', 'embed', 'player_url'])
+      deepFind(m, ['streamUrl', 'stream_url', 'm3u8', 'hls', 'embed'])
     );
 
-    // ===== الوقت - تحويل لأي شكل =====
     let time = pickFirst(
       m.time, m.match_time, m.matchTime, m.kickoff, m.kick_off,
       m.start_time, m.startTime, m.date_time, m.datetime,
-      m['الوقت'], m['وقت_المباراة'],
-      deepFind(m, ['match_time', 'kickoff', 'start_time', 'الوقت'])
+      deepFind(m, ['match_time', 'kickoff', 'start_time'])
     );
-
     time = normalizeTime(time);
 
     let title = pickFirst(
       m.title, m.channel, m.channel_name, m.channelName,
       m.competition, m.league, m.name, m.match_name,
-      m['القناة'], m['البطولة'], m['الدوري'],
       deepFind(m, ['channel_name', 'competition', 'league', 'title'])
     );
     if (!title && team1 && team2) title = team1 + ' × ' + team2;
@@ -806,14 +742,11 @@
 
     const liveRaw = pickFirst(
       m.live, m.is_live, m.isLive, m.status, m.state,
-      m.match_status, m.matchStatus,
-      m['مباشر'], m['الحالة'],
       deepFind(m, ['is_live', 'live', 'status'])
     );
     const liveFlag =
       liveRaw === true || liveRaw === 1 || liveRaw === '1' ||
-      liveRaw === 'true' || liveRaw === 'live' || liveRaw === 'LIVE' ||
-      liveRaw === 'مباشر' || liveRaw === 'جاري';
+      liveRaw === 'true' || liveRaw === 'live' || liveRaw === 'LIVE';
 
     return {
       id: 'api_' + pickFirst(m.id, m.match_id, m.matchId, i) + '_' + Date.now() + '_' + i,
@@ -829,11 +762,8 @@
     };
   }
 
-  // تحويل أي شكل وقت لـ HH:MM
   function normalizeTime(time) {
     if (!time) return '00:00';
-
-    // لو رقم (timestamp)
     if (typeof time === 'number') {
       const d = new Date(time < 1e12 ? time * 1000 : time);
       if (!isNaN(d.getTime())) {
@@ -841,9 +771,7 @@
       }
       return '00:00';
     }
-
     if (typeof time === 'string') {
-      // ISO أو date format
       if (time.includes('T') || time.match(/\d{4}-\d{2}-\d{2}/)) {
         try {
           const d = new Date(time);
@@ -852,16 +780,12 @@
           }
         } catch (e) {}
       }
-
-      // "20:00" أو "20:00:00"
       const match = time.match(/(\d{1,2}):(\d{2})/);
       if (match) {
         const h = String(parseInt(match[1])).padStart(2, '0');
         const m = String(parseInt(match[2])).padStart(2, '0');
         return h + ':' + m;
       }
-
-      // "8 PM" أو "8:30 PM"
       const ampm = time.match(/(\d{1,2})(?::(\d{2}))?\s*(AM|PM|am|pm)/);
       if (ampm) {
         let h = parseInt(ampm[1]);
@@ -872,13 +796,13 @@
         return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
       }
     }
-
     return '00:00';
   }
 
+  // ✅ تحميل API مرة واحدة بس (مفيش تحديث تلقائي)
   async function loadFromAPI() {
     if (apiMode) {
-      showStatus('⚠️ وضع API شغال بالفعل. أوقفه أولاً.', 'err');
+      showStatus('⚠️ وضع API شغال بالفعل. أوقفه أولاً لو عايز تجيبه تاني.', 'err');
       return;
     }
 
@@ -903,13 +827,9 @@
       client.publish(TOPIC_CMD, JSON.stringify({ action: 'stopAll' }));
       matches.forEach(m => { m.live = false; });
 
-      // تجهيز التشغيل التلقائي
-      matches.forEach(m => { m._autoArmed = true; });
-
       render();
       saveNow();
       updateAPIModeUI(true);
-      armAutoPlay();
 
       const withoutStream = matches.filter(m => !m.streamUrl).length;
       const liveCount = matches.filter(m => m.live).length;
@@ -921,9 +841,6 @@
       if (liveCount) msg += ' - ' + liveCount + ' مباشر';
       showStatus(msg, withoutStream === matches.length ? 'warn' : 'ok');
 
-      clearInterval(apiPollingInterval);
-      apiPollingInterval = setInterval(refreshAPI, API_REFRESH_MS);
-
     } catch (err) {
       console.error('API Error:', err);
       setConn('online', '✅ متصل - كل قناة مستقلة');
@@ -931,59 +848,19 @@
     }
   }
 
-  async function refreshAPI() {
-    if (!apiMode) return;
-    try {
-      const url = API_BASE + Date.now();
-      const res = await fetch(url, { cache: 'no-store', headers: { 'Accept': 'application/json' } });
-      if (!res.ok) return;
-
-      const raw = await res.json();
-      const arr = extractMatchesFromAPI(raw);
-      if (!arr.length) return;
-
-      const newMatches = arr.map(mapApiMatch);
-
-      // الحفاظ على حالة live + auto-armed للمباريات المطابقة
-      const oldMap = new Map();
-      matches.forEach(m => {
-        const key = (m.team1 || '') + '|' + (m.team2 || '') + '|' + (m.time || '');
-        oldMap.set(key, m);
-      });
-
-      newMatches.forEach(nm => {
-        const key = (nm.team1 || '') + '|' + (nm.team2 || '') + '|' + (nm.time || '');
-        const old = oldMap.get(key);
-        if (old) {
-          if (old.live) nm.live = true;
-          nm._autoArmed = true;
-        } else {
-          nm._autoArmed = true;
-        }
-      });
-
-      matches = newMatches;
-      render();
-      saveNow();
-      armAutoPlay();
-
-    } catch (e) {
-      console.error('API refresh error:', e);
-    }
+  // ✅ مفيش تحديث تلقائي - بس دالة موجودة لو احتجت
+  function refreshAPI() {
+    // متعطلة - التحديث يدوي فقط
+    console.log('API auto-refresh disabled');
   }
 
-  // ★ إيقاف عرض API - يمسح كل حاجة ويرجع اللوحة فاضية
   function stopAPIView() {
     if (!apiMode) {
       showStatus('⚠️ وضع API مش شغال أصلاً', 'err');
       return;
     }
-    if (!confirm('هتوقف عرض API، هتتمسح كل المباريات المعروضة، وترجع اللوحة فاضية عشان تضيف بنفسك. متأكد؟')) return;
+    if (!confirm('هتوقف عرض API، هتتمسح المباريات اللي من API، وترجع اللوحة فاضية. متأكد؟')) return;
 
-    clearInterval(apiPollingInterval);
-    apiPollingInterval = null;
-    clearInterval(autoPlayInterval);
-    autoPlayInterval = null;
     apiMode = false;
 
     // إيقاف كل البث
@@ -998,53 +875,13 @@
     updateAPIModeUI(false);
 
     setConn('online', '✅ متصل - كل قناة مستقلة');
-    showStatus('✓ تم إيقاف عرض API ومسح كل المباريات. اضغط "+ إضافة قناة" للبدء', 'ok');
+    showStatus('✓ تم إيقاف عرض API ومسح كل المباريات. اضغط "➕ إضافة قناة" للبدء', 'ok');
   }
 
   function updateAPIModeUI(on) {
     document.getElementById('apiLoadBtn').style.display = on ? 'none' : 'inline-flex';
     document.getElementById('apiStopBtn').style.display = on ? 'inline-flex' : 'none';
     document.getElementById('modeBanner').classList.toggle('show', on);
-    document.getElementById('addMatchBtn').disabled = on;
-  }
-
-  /* ================== ★ التشغيل التلقائي عند وقت المباراة ★ ================== */
-  function armAutoPlay() {
-    // نحدّث العدادات كل ثانية
-    if (autoPlayInterval) clearInterval(autoPlayInterval);
-
-    autoPlayInterval = setInterval(() => {
-      let changed = false;
-      const now = new Date();
-      const nowHM = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
-
-      matches.forEach((m, i) => {
-        if (m.live) return;
-        if (!m.streamUrl) return;
-        if (!m._autoArmed) return;
-        if (m.time === nowHM) {
-          console.log('⏰ التشغيل التلقائي: ' + m.title);
-          m.live = true;
-          changed = true;
-
-          client.publish(TOPIC_CMD, JSON.stringify({
-            action: 'play',
-            matchId: m.id,
-            url: m.streamUrl,
-            title: m.title
-          }));
-
-          showStatus('▶ تشغيل تلقائي: "' + m.title + '"', 'ok');
-        }
-      });
-
-      // إعادة رندر لتحديث العدادات (كل دقيقة بس عشان مايبقاش تقيل)
-      const sec = now.getSeconds();
-      if (sec === 0 || changed) {
-        render();
-        if (changed) saveNow();
-      }
-    }, 1000);
   }
 
   /* ================== فحص API ================== */
@@ -1072,7 +909,7 @@
 
   /* ================== حفظ قبل الخروج ================== */
   window.addEventListener('beforeunload', () => {
-    if (matches.length && !apiMode) {
+    if (matches.length) {
       try {
         client.publish(TOPIC_DATA, JSON.stringify(matches), { retain: true });
       } catch (e) {}
