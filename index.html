@@ -132,11 +132,9 @@
 <div class="save-indicator" id="saveIndicator">✓ تم الحفظ</div>
 
 <script>
-  /* ============ الإعدادات ============ */
   const PROXY_BASE = 'https://alankaboot-proxy.kamlnot61.workers.dev';
   const ADMIN_KEY  = 'ANKABOOT_ADMIN_2026_CHANGE_ME';
 
-  /* ============ MQTT ============ */
   const BROKER = 'wss://broker.emqx.io:8084/mqtt';
   const TOPIC_CMD  = 'kwtspta_9f3a2b1c/cmd';
   const TOPIC_DATA = 'kwtspta_9f3a2b1c/data';
@@ -224,7 +222,6 @@
     document.getElementById('viewerCount').textContent = viewers.size;
   }, 5000);
 
-  /* ============ العرض ============ */
   function render() {
     const c = document.getElementById('matchesList');
     c.innerHTML = '';
@@ -353,7 +350,6 @@
     setTimeout(() => s.classList.remove('show'), 1500);
   }
 
-  /* ============ إضافة / حذف ============ */
   function addMatch() {
     matches.push({
       id: 'm' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
@@ -381,7 +377,6 @@
     showStatus('✓ تم الحذف', 'ok');
   }
 
-  /* ============ توليد التوكن ============ */
   async function generateToken(i) {
     const origUrl = (matches[i].originalUrl || '').trim();
     if (!origUrl) {
@@ -413,9 +408,7 @@
     }
   }
 
-  /* ============ تشغيل / إيقاف ============ */
   async function setLive(i, status) {
-    /* إيقاف */
     if (!status) {
       matches[i].live = false;
       render();
@@ -428,14 +421,12 @@
       return;
     }
 
-    /* تشغيل */
     const origUrl = (matches[i].originalUrl || '').trim();
     if (!origUrl) {
       showStatus('❌ اكتب الرابط الأصلي الأول', 'err');
       return;
     }
 
-    /* لو مفيش توكن أو الرابط اتغير → ولّد تلقائي */
     if (!matches[i].streamToken || matches[i]._tokenUrl !== origUrl) {
       showStatus('🔐 جاري توليد التوكن تلقائياً...', 'info');
       const tok = await generateToken(i);
