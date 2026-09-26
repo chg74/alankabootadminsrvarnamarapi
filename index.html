@@ -122,8 +122,7 @@
     💡 <b>طريقة الإضافة:</b><br>
     1️⃣ اضغط "➕ إضافة قناة"<br>
     2️⃣ حط <b>الرابط الأصلي (m3u8)</b> في خانته<br>
-    3️⃣ اضغط <b>"🔐 توليد توكن"</b><br>
-    4️⃣ لما يطلع التوكن → اضغط <b>"▶ تشغيل مباشر"</b>
+    3️⃣ اضغط <b>"▶ تشغيل مباشر"</b> (التوكن هيتولّد تلقائياً)
   </div>
   <div id="matchesList"></div>
   <button class="add-btn" onclick="addMatch()">➕ إضافة قناة / مباراة جديدة</button>
@@ -133,7 +132,7 @@
 <div class="save-indicator" id="saveIndicator">✓ تم الحفظ</div>
 
 <script>
-  /* ============ إعداداتك ============ */
+  /* ============ الإعدادات ============ */
   const PROXY_BASE = 'https://alankaboot-proxy.kamlnot61.workers.dev';
   const ADMIN_KEY  = 'ANKABOOT_ADMIN_2026_CHANGE_ME';
 
@@ -225,6 +224,7 @@
     document.getElementById('viewerCount').textContent = viewers.size;
   }, 5000);
 
+  /* ============ العرض ============ */
   function render() {
     const c = document.getElementById('matchesList');
     c.innerHTML = '';
@@ -294,7 +294,7 @@
           </div>
         </div>
 
-        <button class="btn token-btn" onclick="generateToken(${i})">🔐 توليد توكن للمشاهدين</button>
+        <button class="btn token-btn" onclick="generateToken(${i})">🔐 توليد توكن يدوياً</button>
 
         ${hasToken ? `<div class="token-box">${escapeHtml(m.streamToken)}</div>` : ''}
 
@@ -353,6 +353,7 @@
     setTimeout(() => s.classList.remove('show'), 1500);
   }
 
+  /* ============ إضافة / حذف ============ */
   function addMatch() {
     matches.push({
       id: 'm' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
@@ -366,7 +367,7 @@
     });
     render();
     saveNow();
-    showStatus('✓ تمت الإضافة. املا البيانات.', 'ok');
+    showStatus('✓ تمت الإضافة', 'ok');
   }
 
   function removeMatch(i) {
@@ -380,11 +381,12 @@
     showStatus('✓ تم الحذف', 'ok');
   }
 
+  /* ============ توليد التوكن ============ */
   async function generateToken(i) {
     const origUrl = (matches[i].originalUrl || '').trim();
     if (!origUrl) {
       showStatus('❌ اكتب الرابط الأصلي الأول', 'err');
-      return;
+      return null;
     }
 
     showStatus('🔐 جاري توليد التوكن...', 'info');
@@ -400,31 +402,58 @@
       if (!token || token.length < 20) throw new Error('توكن غير صالح');
 
       matches[i].streamToken = token;
+      matches[i]._tokenUrl = origUrl;
       saveNow();
       render();
       showStatus('✓ تم توليد التوكن ✅', 'ok');
+      return token;
     } catch (err) {
       showStatus('❌ فشل: ' + err.message, 'err');
+      return null;
     }
   }
 
-  function setLive(i, status) {
-    if (status && !matches[i].streamToken) {
-      showStatus('❌ ولّد توكن الأول', 'err');
+  /* ============ تشغيل / إيقاف ============ */
+  async function setLive(i, status) {
+    /* إيقاف */
+    if (!status) {
+      matches[i].live = false;
+      render();
+      saveNow();
+      client.publish(TOPIC_CMD, JSON.stringify({
+        action: 'stop',
+        matchId: matches[i].id
+      }));
+      showStatus('✓ تم الإيقاف', 'ok');
       return;
     }
-    matches[i].live = status;
+
+    /* تشغيل */
+    const origUrl = (matches[i].originalUrl || '').trim();
+    if (!origUrl) {
+      showStatus('❌ اكتب الرابط الأصلي الأول', 'err');
+      return;
+    }
+
+    /* لو مفيش توكن أو الرابط اتغير → ولّد تلقائي */
+    if (!matches[i].streamToken || matches[i]._tokenUrl !== origUrl) {
+      showStatus('🔐 جاري توليد التوكن تلقائياً...', 'info');
+      const tok = await generateToken(i);
+      if (!tok) return;
+    }
+
+    matches[i].live = true;
     render();
     saveNow();
 
     client.publish(TOPIC_CMD, JSON.stringify({
-      action: status ? 'play' : 'stop',
+      action: 'play',
       matchId: matches[i].id,
       token: matches[i].streamToken,
       title: matches[i].title
     }));
 
-    showStatus(status ? '✓ تم التشغيل' : '✓ تم الإيقاف', 'ok');
+    showStatus('✓ تم التشغيل', 'ok');
   }
 
   function restartStream(i) {
