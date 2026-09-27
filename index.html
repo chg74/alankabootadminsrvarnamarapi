@@ -114,7 +114,7 @@
 </div>
 
 <h1>لوحة تحكم Alankaboot Sport</h1>
-<div class="sub">الأدمن فقط - اختر وضع كل قناة بنفسك</div>
+<div class="sub">الأدمن فقط - اختر وضع كل قناة</div>
 <div class="conn offline" id="connStatus">جاري الاتصال...</div>
 
 <div class="stats">
@@ -200,6 +200,9 @@
         const data = JSON.parse(message.toString());
         if (Array.isArray(data)) {
           matches = data;
+          matches.forEach(m => {
+            if (typeof m.useToken === 'undefined') m.useToken = true;
+          });
           isLoadedFromServer = true;
           hideLoading();
           render();
@@ -220,7 +223,6 @@
     } else {
       matches = [];
     }
-    /* ضمان وجود useToken */
     matches.forEach(m => {
       if (typeof m.useToken === 'undefined') m.useToken = true;
     });
@@ -253,14 +255,14 @@
 
     matches.forEach((m, i) => {
       const hasToken = !!m.streamToken;
-      const useToken = m.useToken !== false; /* default true */
+      const useToken = m.useToken !== false;
 
       const badge = m.live
         ? '<span class="badge live">● مباشر</span>'
         : '<span class="badge off">متوقف</span>';
 
       const modeBadge = useToken
-        ? (hasToken ? '<span class="badge tok">🔐 مع التوكن</span>' : '')
+        ? (hasToken ? '<span class="badge tok">🔐 مع التوكن</span>' : '<span class="badge tok" style="opacity:.5">🔐 بدون توكن بعد</span>')
         : '<span class="badge direct">🔓 بدون توكن</span>';
 
       const div = document.createElement('div');
@@ -328,12 +330,10 @@
           </button>
         </div>
 
-        ${useToken && !useToken ? '' : ''}
-
         ${useToken
           ? `<button class="btn token-btn" onclick="generateToken(${i})">🔐 توليد توكن يدوياً</button>
              ${hasToken ? `<div class="token-box">${escapeHtml(m.streamToken)}</div>` : ''}`
-          : `<div class="warn-box">⚠️ <b>بدون توكن:</b> الرابط الأصلي هيظهر للمشاهد في Network. استخدم ده بس مع الروابط اللي مش بتشتغل بالتوكن (زي IP-based).</div>`
+          : `<div class="warn-box">⚠️ <b>وضع مباشر:</b> الرابط يفتح من متصفح المشاهد مباشرة. ده بيشتغل مع أي رابط، بس الرابط مش محمي.</div>`
         }
 
         <div class="match-actions">
@@ -368,7 +368,6 @@
   function setMode(i, useToken) {
     matches[i].useToken = useToken;
     if (useToken === false) {
-      /* امسح التوكن القديم عشان مايبقاش في لبس */
       matches[i].streamToken = '';
     }
     render();
@@ -494,7 +493,6 @@
     };
 
     if (useToken) {
-      /* وضع التوكن: ولّد تلقائي */
       if (!matches[i].streamToken || matches[i]._tokenUrl !== origUrl) {
         showStatus('🔐 جاري توليد التوكن تلقائياً...', 'info');
         const tok = await generateToken(i);
@@ -502,7 +500,6 @@
       }
       playPayload.token = matches[i].streamToken;
     } else {
-      /* وضع بدون توكن: ابعت الرابط مباشر */
       playPayload.directUrl = origUrl;
     }
 
@@ -573,4 +570,4 @@
   });
 </script>
 </body>
-</html>x
+</html>
