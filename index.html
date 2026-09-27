@@ -37,7 +37,6 @@
   .match-card{background:rgba(15,5,7,.7);padding:14px;border-radius:12px;margin-bottom:14px;
     border:1px solid rgba(220,20,30,.2);border-right:4px solid #dc1420;transition:.2s}
   .match-card.live{border-right-color:#4caf50;background:linear-gradient(135deg,rgba(20,40,20,.5),rgba(15,5,7,.7))}
-  .match-card.direct{border-right-color:#ff9800}
   .match-card.has-token{border-right-color:#1e88e5}
   .match-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px}
   .match-header .badge{background:linear-gradient(135deg,#8b0000,#dc1420);color:#fff;
@@ -45,7 +44,6 @@
   .match-header .badge.live{background:linear-gradient(135deg,#2e7d32,#4caf50);animation:blink 1.5s infinite}
   .match-header .badge.off{background:#333;color:#999}
   .match-header .badge.tok{background:linear-gradient(135deg,#1565c0,#1e88e5);font-size:10px}
-  .match-header .badge.direct{background:linear-gradient(135deg,#e65100,#ff9800);font-size:10px}
   @keyframes blink{50%{opacity:.6}}
   .field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
   .field-row.full{grid-template-columns:1fr}
@@ -57,15 +55,6 @@
   .token-box{background:rgba(30,136,229,.1);border:1px solid rgba(30,136,229,.35);
     padding:10px;border-radius:8px;font-size:11px;color:#64b5f6;
     word-break:break-all;margin-top:8px;direction:ltr;text-align:left;font-family:monospace}
-  .mode-toggle{display:flex;gap:8px;margin:10px 0;flex-wrap:wrap}
-  .mode-btn{flex:1;min-width:140px;padding:12px;border-radius:10px;border:2px solid transparent;
-    font-weight:700;cursor:pointer;font-size:13px;font-family:'Cairo',sans-serif;
-    transition:.25s;display:flex;align-items:center;justify-content:center;gap:8px;
-    background:rgba(255,255,255,.05);color:#8a5b5e}
-  .mode-btn.active-tok{background:linear-gradient(135deg,#1565c0,#1e88e5);color:#fff;
-    border-color:#42a5f5;box-shadow:0 6px 20px rgba(30,136,229,.4)}
-  .mode-btn.active-direct{background:linear-gradient(135deg,#e65100,#ff9800);color:#fff;
-    border-color:#ffb74d;box-shadow:0 6px 20px rgba(255,152,0,.4)}
   .match-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
   .btn{background:linear-gradient(135deg,#8b0000,#dc1420);color:#fff;border:none;
        padding:10px 18px;border-radius:10px;font-weight:700;cursor:pointer;
@@ -77,6 +66,7 @@
   .btn.danger{background:linear-gradient(135deg,#5a0000,#8b0000)}
   .btn.ghost{background:transparent;color:#dc1420;border:1px solid rgba(220,20,30,.5)}
   .btn.token-btn{background:linear-gradient(135deg,#1565c0,#1e88e5);width:100%}
+  .btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
   .add-btn{width:100%;background:linear-gradient(135deg,#2e7d32,#4caf50);color:#fff;
     border:none;padding:14px;border-radius:12px;font-weight:800;font-size:14px;
     cursor:pointer;font-family:'Cairo',sans-serif}
@@ -100,9 +90,6 @@
   .info-box{background:rgba(30,136,229,.1);border:1px solid rgba(30,136,229,.3);
     padding:12px;border-radius:10px;font-size:12px;color:#64b5f6;
     margin-bottom:12px;line-height:1.7;font-weight:600}
-  .warn-box{background:rgba(255,152,0,.1);border:1px solid rgba(255,152,0,.4);
-    padding:10px;border-radius:8px;font-size:11px;color:#ffb74d;
-    margin-top:8px;line-height:1.6;font-weight:600}
   @media(max-width:600px){.field-row{grid-template-columns:1fr}h1{font-size:19px}}
 </style>
 </head>
@@ -114,7 +101,7 @@
 </div>
 
 <h1>لوحة تحكم Alankaboot Sport</h1>
-<div class="sub">الأدمن فقط - اختر وضع كل قناة</div>
+<div class="sub">الأدمن فقط - الرابط الأصلي مش بيتوزع للمشاهدين</div>
 <div class="conn offline" id="connStatus">جاري الاتصال...</div>
 
 <div class="stats">
@@ -134,9 +121,8 @@
   <div class="info-box">
     💡 <b>طريقة الإضافة:</b><br>
     1️⃣ اضغط "➕ إضافة قناة"<br>
-    2️⃣ حط <b>الرابط الأصلي</b><br>
-    3️⃣ اختر الوضع: <b>🔐 مع التوكن</b> أو <b>🔓 بدون توكن</b><br>
-    4️⃣ اضغط <b>"▶ تشغيل مباشر"</b>
+    2️⃣ حط <b>الرابط الأصلي (m3u8)</b> في خانته<br>
+    3️⃣ اضغط <b>"▶ تشغيل مباشر"</b> (التوكن هيتولّد تلقائياً)
   </div>
   <div id="matchesList"></div>
   <button class="add-btn" onclick="addMatch()">➕ إضافة قناة / مباراة جديدة</button>
@@ -200,9 +186,6 @@
         const data = JSON.parse(message.toString());
         if (Array.isArray(data)) {
           matches = data;
-          matches.forEach(m => {
-            if (typeof m.useToken === 'undefined') m.useToken = true;
-          });
           isLoadedFromServer = true;
           hideLoading();
           render();
@@ -217,15 +200,12 @@
   }
 
   function loadFromLocalStorage() {
-    const saved = localStorage.getItem('matches_data_v3');
+    const saved = localStorage.getItem('matches_data_v2');
     if (saved) {
       try { matches = JSON.parse(saved); } catch (e) { matches = []; }
     } else {
       matches = [];
     }
-    matches.forEach(m => {
-      if (typeof m.useToken === 'undefined') m.useToken = true;
-    });
   }
 
   function hideLoading() {
@@ -255,26 +235,18 @@
 
     matches.forEach((m, i) => {
       const hasToken = !!m.streamToken;
-      const useToken = m.useToken !== false;
-
       const badge = m.live
         ? '<span class="badge live">● مباشر</span>'
         : '<span class="badge off">متوقف</span>';
-
-      const modeBadge = useToken
-        ? (hasToken ? '<span class="badge tok">🔐 مع التوكن</span>' : '<span class="badge tok" style="opacity:.5">🔐 بدون توكن بعد</span>')
-        : '<span class="badge direct">🔓 بدون توكن</span>';
+      const tokenBadge = hasToken ? '<span class="badge tok">🔐 توكن جاهز</span>' : '';
 
       const div = document.createElement('div');
-      div.className = 'match-card'
-        + (m.live ? ' live' : '')
-        + (useToken && hasToken ? ' has-token' : '')
-        + (!useToken ? ' direct' : '');
+      div.className = 'match-card' + (m.live ? ' live' : '') + (hasToken ? ' has-token' : '');
 
       div.innerHTML = `
         <div class="match-header">
           <span class="badge">${escapeHtml(m.title || 'قناة ' + (i+1))}</span>
-          <span style="display:flex;gap:6px;flex-wrap:wrap">${modeBadge}${badge}</span>
+          <span style="display:flex;gap:6px;flex-wrap:wrap">${tokenBadge}${badge}</span>
         </div>
 
         <div class="field-row">
@@ -319,22 +291,9 @@
           </div>
         </div>
 
-        <div class="mode-toggle">
-          <button class="mode-btn ${useToken ? 'active-tok' : ''}"
-                  onclick="setMode(${i}, true)">
-            🔐 مع التوكن (محمي)
-          </button>
-          <button class="mode-btn ${!useToken ? 'active-direct' : ''}"
-                  onclick="setMode(${i}, false)">
-            🔓 بدون توكن (مباشر)
-          </button>
-        </div>
+        <button class="btn token-btn" onclick="generateToken(${i})">🔐 توليد توكن يدوياً</button>
 
-        ${useToken
-          ? `<button class="btn token-btn" onclick="generateToken(${i})">🔐 توليد توكن يدوياً</button>
-             ${hasToken ? `<div class="token-box">${escapeHtml(m.streamToken)}</div>` : ''}`
-          : `<div class="warn-box">⚠️ <b>وضع مباشر:</b> الرابط يفتح من متصفح المشاهد مباشرة. ده بيشتغل مع أي رابط، بس الرابط مش محمي.</div>`
-        }
+        ${hasToken ? `<div class="token-box">${escapeHtml(m.streamToken)}</div>` : ''}
 
         <div class="match-actions">
           ${m.live
@@ -361,25 +320,12 @@
 
   function updateField(i, key, value) {
     matches[i][key] = value;
-    localStorage.setItem('matches_data_v3', JSON.stringify(matches));
+    localStorage.setItem('matches_data_v2', JSON.stringify(matches));
     scheduleSave();
   }
 
-  function setMode(i, useToken) {
-    matches[i].useToken = useToken;
-    if (useToken === false) {
-      matches[i].streamToken = '';
-    }
-    render();
-    saveNow();
-    showStatus(
-      useToken ? '🔐 تم تفعيل وضع "مع التوكن"' : '🔓 تم تفعيل وضع "بدون توكن"',
-      'ok'
-    );
-  }
-
   function saveNow() {
-    localStorage.setItem('matches_data_v3', JSON.stringify(matches));
+    localStorage.setItem('matches_data_v2', JSON.stringify(matches));
     publishData();
   }
 
@@ -413,7 +359,6 @@
       team2: 'فريق 2', team2Img: '',
       originalUrl: '',
       streamToken: '',
-      useToken: true,
       live: false
     });
     render();
@@ -464,9 +409,6 @@
   }
 
   async function setLive(i, status) {
-    const useToken = matches[i].useToken !== false;
-
-    /* إيقاف */
     if (!status) {
       matches[i].live = false;
       render();
@@ -479,56 +421,40 @@
       return;
     }
 
-    /* تشغيل */
     const origUrl = (matches[i].originalUrl || '').trim();
     if (!origUrl) {
       showStatus('❌ اكتب الرابط الأصلي الأول', 'err');
       return;
     }
 
-    let playPayload = {
-      action: 'play',
-      matchId: matches[i].id,
-      title: matches[i].title
-    };
-
-    if (useToken) {
-      if (!matches[i].streamToken || matches[i]._tokenUrl !== origUrl) {
-        showStatus('🔐 جاري توليد التوكن تلقائياً...', 'info');
-        const tok = await generateToken(i);
-        if (!tok) return;
-      }
-      playPayload.token = matches[i].streamToken;
-    } else {
-      playPayload.directUrl = origUrl;
+    if (!matches[i].streamToken || matches[i]._tokenUrl !== origUrl) {
+      showStatus('🔐 جاري توليد التوكن تلقائياً...', 'info');
+      const tok = await generateToken(i);
+      if (!tok) return;
     }
 
     matches[i].live = true;
     render();
     saveNow();
 
-    client.publish(TOPIC_CMD, JSON.stringify(playPayload));
+    client.publish(TOPIC_CMD, JSON.stringify({
+      action: 'play',
+      matchId: matches[i].id,
+      token: matches[i].streamToken,
+      title: matches[i].title
+    }));
 
-    showStatus(
-      useToken ? '✓ تم التشغيل (🔐 مع التوكن)' : '✓ تم التشغيل (🔓 بدون توكن)',
-      'ok'
-    );
+    showStatus('✓ تم التشغيل', 'ok');
   }
 
   function restartStream(i) {
     if (!matches[i].live) return;
-    const useToken = matches[i].useToken !== false;
-    const payload = {
+    client.publish(TOPIC_CMD, JSON.stringify({
       action: 'play',
       matchId: matches[i].id,
+      token: matches[i].streamToken,
       title: matches[i].title
-    };
-    if (useToken) {
-      payload.token = matches[i].streamToken;
-    } else {
-      payload.directUrl = matches[i].originalUrl;
-    }
-    client.publish(TOPIC_CMD, JSON.stringify(payload));
+    }));
     showStatus('✓ تم إعادة التشغيل', 'ok');
   }
 
@@ -550,14 +476,14 @@
 
   function reloadFromServer() {
     if (!confirm('إعادة تحميل من السيرفر؟')) return;
-    localStorage.removeItem('matches_data_v3');
+    localStorage.removeItem('matches_data_v2');
     location.reload();
   }
 
   function resetToDefaults() {
     if (!confirm('مسح كل القنوات؟')) return;
     matches = [];
-    localStorage.setItem('matches_data_v3', JSON.stringify(matches));
+    localStorage.setItem('matches_data_v2', JSON.stringify(matches));
     render();
     saveNow();
     showStatus('✓ تم المسح', 'ok');
