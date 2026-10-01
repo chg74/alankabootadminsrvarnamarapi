@@ -3,497 +3,250 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>لوحة التحكم - Alankaboot Sport</title>
+<title>لوحة أدمن العنكبوت سبورت</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
-<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 <style>
-  *{box-sizing:border-box;font-family:'Cairo',sans-serif;margin:0;padding:0}
-  body{background:linear-gradient(135deg,#0a0405 0%,#1a0507 50%,#0a0405 100%);
-       background-size:400% 400%;animation:bgMove 20s ease infinite;
-       color:#fff;padding:16px;min-height:100vh}
-  @keyframes bgMove{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
-  h1{text-align:center;color:#fff;font-size:22px;font-weight:900;margin-bottom:6px;
-     letter-spacing:1.5px;text-shadow:0 0 20px rgba(220,20,30,.6)}
-  .sub{text-align:center;color:#8a5b5e;font-size:12px;margin-bottom:16px}
-  .conn{text-align:center;font-size:12px;padding:10px;border-radius:10px;
-        background:rgba(0,0,0,.4);margin-bottom:16px;font-weight:700}
-  .conn.online{color:#4caf50;border:1px solid rgba(76,175,80,.5)}
-  .conn.offline{color:#e53935;border:1px solid rgba(229,57,53,.5)}
-  .conn.saving{color:#ffd700;border:1px solid rgba(255,215,0,.5);animation:savePulse 1s infinite}
-  @keyframes savePulse{50%{opacity:.6}}
-  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:18px}
-  .stat-card{background:linear-gradient(135deg,rgba(24,5,7,.85),rgba(35,10,14,.85));
-    padding:16px;border-radius:14px;border:1px solid rgba(220,20,30,.3);text-align:center}
-  .stat-card .num{font-size:30px;font-weight:900;color:#4caf50}
-  .stat-card .lbl{font-size:11px;color:#b89fa1;margin-top:5px;font-weight:600}
-  .stat-card.live .num{color:#dc1420}
-  .top-actions{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
-  .top-actions button{flex:1;min-width:130px}
-  .section{background:linear-gradient(135deg,rgba(24,5,7,.9),rgba(35,10,14,.9));
-    border-radius:14px;padding:16px;margin-bottom:16px;border:1px solid rgba(220,20,30,.25)}
-  .section h2{color:#fff;margin:0 0 14px;font-size:16px;display:flex;align-items:center;gap:8px;font-weight:800}
-  .section h2::before{content:'';width:4px;height:18px;border-radius:4px;
-                      background:linear-gradient(180deg,#8b0000,#dc1420)}
-  .match-card{background:rgba(15,5,7,.7);padding:14px;border-radius:12px;margin-bottom:14px;
-    border:1px solid rgba(220,20,30,.2);border-right:4px solid #dc1420;transition:.2s}
-  .match-card.live{border-right-color:#4caf50;background:linear-gradient(135deg,rgba(20,40,20,.5),rgba(15,5,7,.7))}
-  .match-card.has-token{border-right-color:#1e88e5}
-  .match-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px}
-  .match-header .badge{background:linear-gradient(135deg,#8b0000,#dc1420);color:#fff;
-    padding:4px 14px;border-radius:20px;font-size:11px;font-weight:700}
-  .match-header .badge.live{background:linear-gradient(135deg,#2e7d32,#4caf50);animation:blink 1.5s infinite}
-  .match-header .badge.off{background:#333;color:#999}
-  .match-header .badge.tok{background:linear-gradient(135deg,#1565c0,#1e88e5);font-size:10px}
-  @keyframes blink{50%{opacity:.6}}
-  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
-  .field-row.full{grid-template-columns:1fr}
-  .field-row label{display:block;font-size:11px;color:#8a5b5e;margin-bottom:5px;font-weight:600}
-  .field-row input{width:100%;background:#0c0304;border:1px solid rgba(220,20,30,.3);
-                   color:#fff;padding:10px;border-radius:8px;font-size:13px;font-family:'Cairo',sans-serif}
-  .field-row input:focus{outline:none;border-color:#dc1420;box-shadow:0 0 15px rgba(220,20,30,.3)}
-  .field-row input[type="url"]{direction:ltr;font-size:12px}
-  .token-box{background:rgba(30,136,229,.1);border:1px solid rgba(30,136,229,.35);
-    padding:10px;border-radius:8px;font-size:11px;color:#64b5f6;
-    word-break:break-all;margin-top:8px;direction:ltr;text-align:left;font-family:monospace}
-  .match-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-  .btn{background:linear-gradient(135deg,#8b0000,#dc1420);color:#fff;border:none;
-       padding:10px 18px;border-radius:10px;font-weight:700;cursor:pointer;
-       font-size:13px;font-family:'Cairo',sans-serif;transition:.22s;
-       display:inline-flex;align-items:center;gap:6px}
-  .btn:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(220,20,30,.5)}
-  .btn.play{background:linear-gradient(135deg,#2e7d32,#4caf50)}
-  .btn.stop{background:linear-gradient(135deg,#c62828,#e53935)}
-  .btn.danger{background:linear-gradient(135deg,#5a0000,#8b0000)}
-  .btn.ghost{background:transparent;color:#dc1420;border:1px solid rgba(220,20,30,.5)}
-  .btn.token-btn{background:linear-gradient(135deg,#1565c0,#1e88e5);width:100%}
-  .btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
-  .add-btn{width:100%;background:linear-gradient(135deg,#2e7d32,#4caf50);color:#fff;
-    border:none;padding:14px;border-radius:12px;font-weight:800;font-size:14px;
-    cursor:pointer;font-family:'Cairo',sans-serif}
-  .status{padding:10px;border-radius:8px;font-size:12px;margin-top:10px;
-    text-align:center;font-weight:700;display:none}
-  .status.ok{background:rgba(76,175,80,.15);color:#4caf50;border:1px solid rgba(76,175,80,.5);display:block}
-  .status.err{background:rgba(229,57,53,.15);color:#e53935;border:1px solid rgba(229,57,53,.5);display:block}
-  .status.info{background:rgba(30,136,229,.15);color:#1e88e5;border:1px solid rgba(30,136,229,.5);display:block}
-  #loading{position:fixed;inset:0;background:#0a0405;z-index:9999;display:flex;
-    flex-direction:column;justify-content:center;align-items:center;gap:20px;transition:opacity .5s}
-  #loading.hide{opacity:0;pointer-events:none}
-  .spinner{width:50px;height:50px;border:3px solid rgba(220,20,30,.2);
-    border-top-color:#dc1420;border-radius:50%;animation:spin 1s linear infinite}
-  @keyframes spin{to{transform:rotate(360deg)}}
-  .loading-txt{color:#dc1420;font-weight:700;font-size:14px}
-  .save-indicator{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
-    background:linear-gradient(90deg,#2e7d32,#4caf50);color:#fff;padding:10px 24px;
-    border-radius:26px;font-weight:700;font-size:13px;box-shadow:0 10px 30px rgba(76,175,80,.5);
-    opacity:0;transition:.3s;pointer-events:none;z-index:99999}
-  .save-indicator.show{opacity:1;bottom:30px}
-  .info-box{background:rgba(30,136,229,.1);border:1px solid rgba(30,136,229,.3);
-    padding:12px;border-radius:10px;font-size:12px;color:#64b5f6;
-    margin-bottom:12px;line-height:1.7;font-weight:600}
-  @media(max-width:600px){.field-row{grid-template-columns:1fr}h1{font-size:19px}}
+*{box-sizing:border-box;font-family:'Cairo',sans-serif;margin:0;padding:0}
+body{background:#08080a;color:#fff;min-height:100vh;padding:16px}
+.container{max-width:800px;margin:0 auto}
+.header{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;background:#121216;border-radius:16px;border:1px solid rgba(220,20,30,.2);margin-bottom:16px}
+.header h1{font-size:16px;color:#dc1420;font-weight:900}
+.header a{color:#fff;text-decoration:none;background:#dc1420;padding:8px 14px;border-radius:8px;font-weight:700;font-size:12px}
+.card{background:#121216;border-radius:16px;padding:20px;border:1px solid rgba(255,255,255,.05);margin-bottom:16px}
+.card h2{font-size:15px;color:#ccc;margin-bottom:14px;border-bottom:1px solid rgba(220,20,30,.2);padding-bottom:10px}
+.fg{margin-bottom:12px}
+.fg label{display:block;font-size:13px;color:#aaa;margin-bottom:6px;font-weight:600}
+.fg input,.fg select{width:100%;padding:11px 14px;background:#0a0a0c;border:1px solid rgba(255,255,255,.1);border-radius:10px;color:#fff;font-family:'Cairo',sans-serif;font-size:14px;outline:none}
+.fg input:focus,.fg select:focus{border-color:#dc1420}
+.btn{width:100%;padding:13px;background:linear-gradient(90deg,#8b0000,#dc1420);color:#fff;border:none;border-radius:10px;font-weight:700;font-size:15px;cursor:pointer;font-family:'Cairo',sans-serif;margin-top:6px}
+.btn-gray{background:#333;margin-top:8px;display:none}
+.li{display:flex;justify-content:space-between;align-items:center;padding:11px;background:#0a0a0c;border-radius:10px;margin-bottom:8px;border:1px solid rgba(255,255,255,.05)}
+.li .info{flex:1;display:flex;align-items:center;gap:10px;min-width:0}
+.li .info img{width:40px;height:40px;object-fit:contain;border-radius:8px;background:#fff;padding:3px}
+.li .info .txt{flex:1;min-width:0}
+.li .info .nm{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.li .info .sb{font-size:11px;color:#666}
+.li .act{display:flex;gap:5px}
+.li .act button{padding:7px 11px;border:none;border-radius:6px;cursor:pointer;font-family:'Cairo',sans-serif;font-weight:600;font-size:11px;color:#fff}
+.ed{background:#2196F3}.dl{background:#dc1420}
+.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:linear-gradient(90deg,#8b0000,#dc1420);color:#fff;padding:12px 26px;border-radius:30px;font-weight:700;font-size:14px;opacity:0;transition:.3s;pointer-events:none;z-index:99}
+.toast.show{opacity:1;bottom:40px}
 </style>
 </head>
 <body>
-
-<div id="loading">
-  <div class="spinner"></div>
-  <div class="loading-txt">جاري التحميل...</div>
-</div>
-
-<h1>لوحة تحكم Alankaboot Sport</h1>
-<div class="sub">الأدمن فقط - الرابط الأصلي مش بيتوزع للمشاهدين</div>
-<div class="conn offline" id="connStatus">جاري الاتصال...</div>
-
-<div class="stats">
-  <div class="stat-card"><div class="num" id="viewerCount">0</div><div class="lbl">مشاهدين الآن</div></div>
-  <div class="stat-card live"><div class="num" id="liveCount">0</div><div class="lbl">بث مباشر</div></div>
-  <div class="stat-card"><div class="num" id="matchCount">0</div><div class="lbl">إجمالي القنوات</div></div>
-</div>
-
-<div class="top-actions">
-  <button class="btn ghost" onclick="reloadFromServer()">🔄 إعادة تحميل</button>
-  <button class="btn ghost" onclick="stopAll()">⏹ إيقاف كل البث</button>
-  <button class="btn ghost" onclick="resetToDefaults()">↺ مسح الكل</button>
-</div>
-
-<div class="section">
-  <h2>القنوات / المباريات</h2>
-  <div class="info-box">
-    💡 <b>طريقة الإضافة:</b><br>
-    1️⃣ اضغط "➕ إضافة قناة"<br>
-    2️⃣ حط <b>الرابط الأصلي (m3u8)</b> في خانته<br>
-    3️⃣ اضغط <b>"▶ تشغيل مباشر"</b> (التوكن هيتولّد تلقائياً)
+<div class="container">
+  <div class="header">
+    <h1>⚙️ لوحة تحكم العنكبوت</h1>
+    <a href="index.html" target="_blank">فتح التطبيق ←</a>
   </div>
-  <div id="matchesList"></div>
-  <button class="add-btn" onclick="addMatch()">➕ إضافة قناة / مباراة جديدة</button>
-  <div class="status" id="statusMsg"></div>
+
+  <div class="card">
+    <h2 id="catTitle">➕ إضافة قسم جديد</h2>
+    <input type="hidden" id="catEditId">
+    <div class="fg">
+      <label>اسم القسم</label>
+      <input type="text" id="catName" placeholder="مثال: الرياضة، الأفلام">
+    </div>
+    <button class="btn" onclick="saveCat()" id="catBtn">💾 حفظ القسم</button>
+    <button class="btn btn-gray" onclick="clearCat()" id="catCancel">إلغاء التعديل</button>
+    <div id="catsList" style="margin-top:16px"></div>
+  </div>
+
+  <div class="card">
+    <h2 id="chTitle">➕ إضافة قناة جديدة</h2>
+    <input type="hidden" id="chEditId">
+    <div class="fg">
+      <label>اسم القناة</label>
+      <input type="text" id="chName" placeholder="مثال: beIN Sports 1">
+    </div>
+    <div class="fg">
+      <label>القسم التابع له</label>
+      <select id="chCat"></select>
+    </div>
+    <div class="fg">
+      <label>رابط الصورة (Logo)</label>
+      <input type="text" id="chLogo" placeholder="https://..." dir="ltr">
+    </div>
+    <div class="fg">
+      <label>رابط البث (m3u8 أو ts)</label>
+      <input type="text" id="chUrl" placeholder="http://mag.tiger-ott.net/live/.../1030236.m3u8" dir="ltr">
+    </div>
+    <div class="fg">
+      <label>حالة البث</label>
+      <select id="chStatus">
+        <option value="live">🔴 مباشر الآن</option>
+        <option value="offline">⚫ غير متاح</option>
+      </select>
+    </div>
+    <button class="btn" onclick="saveCh()" id="chBtn">💾 حفظ القناة</button>
+    <button class="btn btn-gray" onclick="clearCh()" id="chCancel">إلغاء التعديل</button>
+    <div id="chList" style="margin-top:16px"></div>
+  </div>
 </div>
+<div class="toast" id="toast"></div>
 
-<div class="save-indicator" id="saveIndicator">✓ تم الحفظ</div>
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getDatabase, ref, push, set, remove, onValue, update }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-<script>
-  const PROXY_BASE = 'https://alankaboot-proxy.kamlnot61.workers.dev';
-  const ADMIN_KEY  = 'ANKABOOT_ADMIN_2026_CHANGE_ME';
+const firebaseConfig = {
+  apiKey: "AIzaSyAUc2C9hG9VE7RECiW19QXjNZqVH96sFE",
+  authDomain: "zezo-59a8d.firebaseapp.com",
+  databaseURL: "https://zezo-59a8d-default-rtdb.firebaseio.com",
+  projectId: "zezo-59a8d",
+  storageBucket: "zezo-59a8d.firebasestorage.app",
+  messagingSenderId: "49183098248",
+  appId: "1:49183098248:web:37e3fb16744042a1bb263d"
+};
 
-  const BROKER = 'wss://broker.emqx.io:8084/mqtt';
-  const TOPIC_CMD  = 'kwtspta_9f3a2b1c/cmd';
-  const TOPIC_DATA = 'kwtspta_9f3a2b1c/data';
-  const TOPIC_HB   = 'kwtspta_9f3a2b1c/hb';
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
-  const client = mqtt.connect(BROKER, {
-    clientId: 'admin_' + Math.random().toString(16).slice(2,10)
-  });
+let DATA = { categories: {}, channels: {} };
+const $ = id => document.getElementById(id);
 
-  const connStatus = document.getElementById('connStatus');
-  const viewers = new Map();
-  let matches = [];
-  let isLoadedFromServer = false;
-  let publishTimeout = null;
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000);}
 
-  client.on('connect', () => {
-    setConn('online', '✅ متصل');
-    client.subscribe(TOPIC_HB);
-    client.subscribe(TOPIC_DATA);
-    setTimeout(() => {
-      if (!isLoadedFromServer) {
-        loadFromLocalStorage();
-        isLoadedFromServer = true;
-        hideLoading();
-        render();
-        publishData();
-      }
-    }, 1500);
-  });
+// تحميل البيانات من Firebase
+onValue(ref(db, '/'), (snap) => {
+  const val = snap.val();
+  DATA = {
+    categories: val && val.categories ? val.categories : {},
+    channels: val && val.channels ? val.channels : {}
+  };
+  render();
+});
 
-  client.on('error', () => {
-    setConn('offline', '❌ فشل الاتصال');
-    if (!isLoadedFromServer) {
-      loadFromLocalStorage();
-      isLoadedFromServer = true;
-      hideLoading();
-      render();
-    }
-  });
+function render(){ renderCats(); renderCatSelect(); renderChs(); }
 
-  client.on('message', (topic, message) => {
-    try {
-      if (topic === TOPIC_HB) {
-        const d = JSON.parse(message.toString());
-        viewers.set(d.id, Date.now());
-        return;
-      }
-      if (topic === TOPIC_DATA && !isLoadedFromServer) {
-        const data = JSON.parse(message.toString());
-        if (Array.isArray(data)) {
-          matches = data;
-          isLoadedFromServer = true;
-          hideLoading();
-          render();
-        }
-      }
-    } catch (e) {}
-  });
+function renderCats(){
+  const c = $('catsList');
+  const list = Object.entries(DATA.categories).map(([id, v]) => ({id, ...v}));
+  if(!list.length){ c.innerHTML = '<p style="color:#666;font-size:12px;text-align:center;padding:10px">لا توجد أقسام</p>'; return; }
+  c.innerHTML = list.map(cat => {
+    const count = Object.values(DATA.channels).filter(x => x.categoryId === cat.id).length;
+    return `<div class="li">
+      <div class="info"><div class="txt"><div class="nm">${cat.name}</div><div class="sb">${count} قناة</div></div></div>
+      <div class="act"><button class="ed" onclick="editCat('${cat.id}')">تعديل</button><button class="dl" onclick="delCat('${cat.id}')">حذف</button></div>
+    </div>`;
+  }).join('');
+}
 
-  function setConn(state, text) {
-    connStatus.className = 'conn ' + state;
-    connStatus.textContent = text;
+function renderCatSelect(){
+  const s = $('chCat');
+  const list = Object.entries(DATA.categories).map(([id, v]) => ({id, ...v}));
+  if(!list.length){ s.innerHTML = '<option value="">-- أضف قسماً أولاً --</option>'; return; }
+  s.innerHTML = list.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+}
+
+function renderChs(){
+  const c = $('chList');
+  const list = Object.entries(DATA.channels).map(([id, v]) => ({id, ...v}));
+  if(!list.length){ c.innerHTML = '<p style="color:#666;font-size:12px;text-align:center;padding:10px">لا توجد قنوات</p>'; return; }
+  c.innerHTML = list.map(ch => {
+    const cat = DATA.categories[ch.categoryId];
+    return `<div class="li">
+      <div class="info">
+        <img src="${ch.logo || 'https://marketplace.canva.com/Na9X8/MAHB7PNa9X8/1/tl/canva-spider-web-illustration-MAHB7PNa9X8.png'}" onerror="this.src='https://marketplace.canva.com/Na9X8/MAHB7PNa9X8/1/tl/canva-spider-web-illustration-MAHB7PNa9X8.png'">
+        <div class="txt"><div class="nm">${ch.name} ${ch.status==='live'?'<span style="color:#dc1420;font-size:10px">● مباشر</span>':''}</div><div class="sb">${cat?cat.name:'بدون قسم'}</div></div>
+      </div>
+      <div class="act"><button class="ed" onclick="editCh('${ch.id}')">تعديل</button><button class="dl" onclick="delCh('${ch.id}')">حذف</button></div>
+    </div>`;
+  }).join('');
+}
+
+window.saveCat = async function(){
+  const name = $('catName').value.trim();
+  const id = $('catEditId').value;
+  if(!name){ toast('اكتب اسم القسم'); return; }
+  if(id){
+    await update(ref(db, 'categories/' + id), { name });
+    toast('تم التعديل');
+  } else {
+    const newRef = push(ref(db, 'categories'));
+    await set(newRef, { name });
+    toast('تمت الإضافة');
   }
+  clearCat(); render();
+};
 
-  function loadFromLocalStorage() {
-    const saved = localStorage.getItem('matches_data_v2');
-    if (saved) {
-      try { matches = JSON.parse(saved); } catch (e) { matches = []; }
-    } else {
-      matches = [];
-    }
+window.editCat = function(id){
+  const c = DATA.categories[id];
+  if(!c) return;
+  $('catName').value = c.name;
+  $('catEditId').value = id;
+  $('catTitle').textContent = '✏️ تعديل القسم';
+  $('catBtn').textContent = '💾 حفظ التعديلات';
+  $('catCancel').style.display = 'block';
+  window.scrollTo({top:0,behavior:'smooth'});
+};
+
+window.delCat = async function(id){
+  const c = DATA.categories[id];
+  if(!c || !confirm(`حذف "${c.name}" وكل قنواته؟`)) return;
+  const toDelete = Object.entries(DATA.channels).filter(([k,v]) => v.categoryId === id).map(([k]) => k);
+  for(const k of toDelete) await remove(ref(db, 'channels/' + k));
+  await remove(ref(db, 'categories/' + id));
+  toast('تم الحذف');
+};
+
+window.clearCat = function(){
+  $('catName').value = ''; $('catEditId').value = '';
+  $('catTitle').textContent = '➕ إضافة قسم جديد';
+  $('catBtn').textContent = '💾 حفظ القسم';
+  $('catCancel').style.display = 'none';
+};
+
+window.saveCh = async function(){
+  const name = $('chName').value.trim();
+  const categoryId = $('chCat').value;
+  const logo = $('chLogo').value.trim();
+  const url = $('chUrl').value.trim();
+  const status = $('chStatus').value;
+  const id = $('chEditId').value;
+  if(!name || !url){ toast('املأ الاسم والرابط'); return; }
+  if(!categoryId){ toast('اختر القسم'); return; }
+  if(id){
+    await update(ref(db, 'channels/' + id), { name, categoryId, logo, url, status });
+    toast('تم التعديل');
+  } else {
+    const newRef = push(ref(db, 'channels'));
+    await set(newRef, { name, categoryId, logo, url, status });
+    toast('تمت الإضافة');
   }
+  clearCh(); render();
+};
 
-  function hideLoading() {
-    const l = document.getElementById('loading');
-    l.classList.add('hide');
-    setTimeout(() => l.style.display = 'none', 500);
-  }
+window.editCh = function(id){
+  const ch = DATA.channels[id];
+  if(!ch) return;
+  $('chName').value = ch.name;
+  $('chCat').value = ch.categoryId;
+  $('chLogo').value = ch.logo || '';
+  $('chUrl').value = ch.url;
+  $('chStatus').value = ch.status;
+  $('chEditId').value = id;
+  $('chTitle').textContent = '✏️ تعديل القناة';
+  $('chBtn').textContent = '💾 حفظ التعديلات';
+  $('chCancel').style.display = 'block';
+  window.scrollTo({top:0,behavior:'smooth'});
+};
 
-  setInterval(() => {
-    const now = Date.now();
-    for (const [id, t] of viewers) {
-      if (now - t > 15000) viewers.delete(id);
-    }
-    document.getElementById('viewerCount').textContent = viewers.size;
-  }, 5000);
+window.delCh = async function(id){
+  if(!confirm('حذف القناة؟')) return;
+  await remove(ref(db, 'channels/' + id));
+  toast('تم الحذف');
+};
 
-  function render() {
-    const c = document.getElementById('matchesList');
-    c.innerHTML = '';
-
-    if (!matches.length) {
-      c.innerHTML = '<div style="text-align:center;padding:40px;color:#8a5b5e;font-size:13px;line-height:1.8">لا توجد قنوات. اضغط "➕ إضافة قناة" للبدء.</div>';
-      document.getElementById('matchCount').textContent = 0;
-      document.getElementById('liveCount').textContent = 0;
-      return;
-    }
-
-    matches.forEach((m, i) => {
-      const hasToken = !!m.streamToken;
-      const badge = m.live
-        ? '<span class="badge live">● مباشر</span>'
-        : '<span class="badge off">متوقف</span>';
-      const tokenBadge = hasToken ? '<span class="badge tok">🔐 توكن جاهز</span>' : '';
-
-      const div = document.createElement('div');
-      div.className = 'match-card' + (m.live ? ' live' : '') + (hasToken ? ' has-token' : '');
-
-      div.innerHTML = `
-        <div class="match-header">
-          <span class="badge">${escapeHtml(m.title || 'قناة ' + (i+1))}</span>
-          <span style="display:flex;gap:6px;flex-wrap:wrap">${tokenBadge}${badge}</span>
-        </div>
-
-        <div class="field-row">
-          <div>
-            <label>اسم الفريق 1</label>
-            <input value="${escapeAttr(m.team1 || '')}" oninput="updateField(${i},'team1',this.value)" onchange="saveNow()">
-          </div>
-          <div>
-            <label>اسم الفريق 2</label>
-            <input value="${escapeAttr(m.team2 || '')}" oninput="updateField(${i},'team2',this.value)" onchange="saveNow()">
-          </div>
-        </div>
-
-        <div class="field-row">
-          <div>
-            <label>صورة الفريق 1</label>
-            <input type="url" value="${escapeAttr(m.team1Img || '')}" oninput="updateField(${i},'team1Img',this.value)" onchange="saveNow()">
-          </div>
-          <div>
-            <label>صورة الفريق 2</label>
-            <input type="url" value="${escapeAttr(m.team2Img || '')}" oninput="updateField(${i},'team2Img',this.value)" onchange="saveNow()">
-          </div>
-        </div>
-
-        <div class="field-row">
-          <div>
-            <label>الوقت</label>
-            <input type="time" value="${escapeAttr(m.time || '00:00')}" oninput="updateField(${i},'time',this.value)" onchange="saveNow()">
-          </div>
-          <div>
-            <label>اسم القناة</label>
-            <input value="${escapeAttr(m.title || '')}" oninput="updateField(${i},'title',this.value)" onchange="saveNow()">
-          </div>
-        </div>
-
-        <div class="field-row full">
-          <div>
-            <label>🔒 الرابط الأصلي (m3u8) — الأدمن فقط</label>
-            <input type="url" value="${escapeAttr(m.originalUrl || '')}"
-                   oninput="updateField(${i},'originalUrl',this.value)"
-                   placeholder="https://example.com/stream.m3u8">
-          </div>
-        </div>
-
-        <button class="btn token-btn" onclick="generateToken(${i})">🔐 توليد توكن يدوياً</button>
-
-        ${hasToken ? `<div class="token-box">${escapeHtml(m.streamToken)}</div>` : ''}
-
-        <div class="match-actions">
-          ${m.live
-            ? `<button class="btn stop" onclick="setLive(${i}, false)">■ إيقاف</button>
-               <button class="btn play" onclick="restartStream(${i})">🔄 إعادة تشغيل</button>`
-            : `<button class="btn play" onclick="setLive(${i}, true)">▶ تشغيل مباشر</button>`
-          }
-          <button class="btn danger" onclick="removeMatch(${i})">🗑 حذف</button>
-        </div>
-      `;
-      c.appendChild(div);
-    });
-
-    document.getElementById('matchCount').textContent = matches.length;
-    document.getElementById('liveCount').textContent = matches.filter(x => x.live).length;
-  }
-
-  function escapeHtml(s) {
-    return String(s).replace(/[&<>"']/g, ch => ({
-      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-    }[ch]));
-  }
-  function escapeAttr(s) { return escapeHtml(s); }
-
-  function updateField(i, key, value) {
-    matches[i][key] = value;
-    localStorage.setItem('matches_data_v2', JSON.stringify(matches));
-    scheduleSave();
-  }
-
-  function saveNow() {
-    localStorage.setItem('matches_data_v2', JSON.stringify(matches));
-    publishData();
-  }
-
-  function scheduleSave() {
-    clearTimeout(publishTimeout);
-    publishTimeout = setTimeout(saveNow, 800);
-  }
-
-  function publishData() {
-    try {
-      setConn('saving', '💾 جاري الحفظ...');
-      client.publish(TOPIC_DATA, JSON.stringify(matches), { retain: true }, () => {
-        setConn('online', '✅ متصل');
-        showSaved();
-      });
-    } catch (e) {}
-  }
-
-  function showSaved() {
-    const s = document.getElementById('saveIndicator');
-    s.classList.add('show');
-    setTimeout(() => s.classList.remove('show'), 1500);
-  }
-
-  function addMatch() {
-    matches.push({
-      id: 'm' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
-      title: 'قناة جديدة',
-      time: '00:00',
-      team1: 'فريق 1', team1Img: '',
-      team2: 'فريق 2', team2Img: '',
-      originalUrl: '',
-      streamToken: '',
-      live: false
-    });
-    render();
-    saveNow();
-    showStatus('✓ تمت الإضافة', 'ok');
-  }
-
-  function removeMatch(i) {
-    if (!confirm('متأكد من الحذف؟')) return;
-    if (matches[i].live) {
-      client.publish(TOPIC_CMD, JSON.stringify({ action: 'stop', matchId: matches[i].id }));
-    }
-    matches.splice(i, 1);
-    render();
-    saveNow();
-    showStatus('✓ تم الحذف', 'ok');
-  }
-
-  async function generateToken(i) {
-    const origUrl = (matches[i].originalUrl || '').trim();
-    if (!origUrl) {
-      showStatus('❌ اكتب الرابط الأصلي الأول', 'err');
-      return null;
-    }
-
-    showStatus('🔐 جاري توليد التوكن...', 'info');
-
-    try {
-      const res = await fetch(
-        PROXY_BASE + '/token?key=' + encodeURIComponent(ADMIN_KEY) +
-        '&url=' + encodeURIComponent(origUrl)
-      );
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-
-      const token = (await res.text()).trim();
-      if (!token || token.length < 20) throw new Error('توكن غير صالح');
-
-      matches[i].streamToken = token;
-      matches[i]._tokenUrl = origUrl;
-      saveNow();
-      render();
-      showStatus('✓ تم توليد التوكن ✅', 'ok');
-      return token;
-    } catch (err) {
-      showStatus('❌ فشل: ' + err.message, 'err');
-      return null;
-    }
-  }
-
-  async function setLive(i, status) {
-    if (!status) {
-      matches[i].live = false;
-      render();
-      saveNow();
-      client.publish(TOPIC_CMD, JSON.stringify({
-        action: 'stop',
-        matchId: matches[i].id
-      }));
-      showStatus('✓ تم الإيقاف', 'ok');
-      return;
-    }
-
-    const origUrl = (matches[i].originalUrl || '').trim();
-    if (!origUrl) {
-      showStatus('❌ اكتب الرابط الأصلي الأول', 'err');
-      return;
-    }
-
-    if (!matches[i].streamToken || matches[i]._tokenUrl !== origUrl) {
-      showStatus('🔐 جاري توليد التوكن تلقائياً...', 'info');
-      const tok = await generateToken(i);
-      if (!tok) return;
-    }
-
-    matches[i].live = true;
-    render();
-    saveNow();
-
-    client.publish(TOPIC_CMD, JSON.stringify({
-      action: 'play',
-      matchId: matches[i].id,
-      token: matches[i].streamToken,
-      title: matches[i].title
-    }));
-
-    showStatus('✓ تم التشغيل', 'ok');
-  }
-
-  function restartStream(i) {
-    if (!matches[i].live) return;
-    client.publish(TOPIC_CMD, JSON.stringify({
-      action: 'play',
-      matchId: matches[i].id,
-      token: matches[i].streamToken,
-      title: matches[i].title
-    }));
-    showStatus('✓ تم إعادة التشغيل', 'ok');
-  }
-
-  function stopAll() {
-    if (!confirm('إيقاف كل البث؟')) return;
-    matches.forEach(m => m.live = false);
-    render();
-    saveNow();
-    client.publish(TOPIC_CMD, JSON.stringify({ action: 'stopAll' }));
-    showStatus('✓ تم إيقاف الكل', 'ok');
-  }
-
-  function showStatus(msg, type) {
-    const s = document.getElementById('statusMsg');
-    s.textContent = msg;
-    s.className = 'status ' + type;
-    setTimeout(() => { s.className = 'status'; }, 4000);
-  }
-
-  function reloadFromServer() {
-    if (!confirm('إعادة تحميل من السيرفر؟')) return;
-    localStorage.removeItem('matches_data_v2');
-    location.reload();
-  }
-
-  function resetToDefaults() {
-    if (!confirm('مسح كل القنوات؟')) return;
-    matches = [];
-    localStorage.setItem('matches_data_v2', JSON.stringify(matches));
-    render();
-    saveNow();
-    showStatus('✓ تم المسح', 'ok');
-  }
-
-  window.addEventListener('beforeunload', () => {
-    if (matches.length) {
-      try { client.publish(TOPIC_DATA, JSON.stringify(matches), { retain: true }); } catch (e) {}
-    }
-  });
+window.clearCh = function(){
+  $('chName').value = ''; $('chLogo').value = ''; $('chUrl').value = '';
+  $('chStatus').value = 'live'; $('chEditId').value = '';
+  $('chTitle').textContent = '➕ إضافة قناة جديدة';
+  $('chBtn').textContent = '💾 حفظ القناة';
+  $('chCancel').style.display = 'none';
+};
 </script>
 </body>
 </html>
