@@ -4,93 +4,318 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>لوحة التحكم - Alankaboot Sport</title>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 <style>
-  *{box-sizing:border-box;font-family:'Cairo',sans-serif;margin:0;padding:0}
-  body{background:linear-gradient(135deg,#0a0405 0%,#1a0507 50%,#0a0405 100%);
-       background-size:400% 400%;animation:bgMove 20s ease infinite;
-       color:#fff;padding:16px;min-height:100vh}
-  @keyframes bgMove{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
-  h1{text-align:center;color:#fff;font-size:22px;font-weight:900;margin-bottom:6px;
-     letter-spacing:1.5px;text-shadow:0 0 20px rgba(220,20,30,.6)}
-  .sub{text-align:center;color:#8a5b5e;font-size:12px;margin-bottom:16px}
-  .conn{text-align:center;font-size:12px;padding:10px;border-radius:10px;
-        background:rgba(0,0,0,.4);margin-bottom:16px;font-weight:700}
-  .conn.online{color:#4caf50;border:1px solid rgba(76,175,80,.5)}
-  .conn.offline{color:#e53935;border:1px solid rgba(229,57,53,.5)}
-  .conn.saving{color:#ffd700;border:1px solid rgba(255,215,0,.5);animation:savePulse 1s infinite}
-  @keyframes savePulse{50%{opacity:.6}}
-  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:18px}
-  .stat-card{background:linear-gradient(135deg,rgba(24,5,7,.85),rgba(35,10,14,.85));
-    padding:16px;border-radius:14px;border:1px solid rgba(220,20,30,.3);text-align:center}
-  .stat-card .num{font-size:30px;font-weight:900;color:#4caf50}
-  .stat-card .lbl{font-size:11px;color:#b89fa1;margin-top:5px;font-weight:600}
-  .stat-card.live .num{color:#dc1420}
-  .top-actions{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
-  .top-actions button{flex:1;min-width:130px}
-  .section{background:linear-gradient(135deg,rgba(24,5,7,.9),rgba(35,10,14,.9));
-    border-radius:14px;padding:16px;margin-bottom:16px;border:1px solid rgba(220,20,30,.25)}
-  .section h2{color:#fff;margin:0 0 14px;font-size:16px;display:flex;align-items:center;gap:8px;font-weight:800}
-  .section h2::before{content:'';width:4px;height:18px;border-radius:4px;
-                      background:linear-gradient(180deg,#8b0000,#dc1420)}
-  .match-card{background:rgba(15,5,7,.7);padding:14px;border-radius:12px;margin-bottom:14px;
-    border:1px solid rgba(220,20,30,.2);border-right:4px solid #dc1420;transition:.2s}
-  .match-card.live{border-right-color:#4caf50;background:linear-gradient(135deg,rgba(20,40,20,.5),rgba(15,5,7,.7))}
-  .match-card.has-token{border-right-color:#1e88e5}
-  .match-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px}
-  .match-header .badge{background:linear-gradient(135deg,#8b0000,#dc1420);color:#fff;
-    padding:4px 14px;border-radius:20px;font-size:11px;font-weight:700}
-  .match-header .badge.live{background:linear-gradient(135deg,#2e7d32,#4caf50);animation:blink 1.5s infinite}
-  .match-header .badge.off{background:#333;color:#999}
-  .match-header .badge.tok{background:linear-gradient(135deg,#1565c0,#1e88e5);font-size:10px}
-  @keyframes blink{50%{opacity:.6}}
-  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
-  .field-row.full{grid-template-columns:1fr}
-  .field-row label{display:block;font-size:11px;color:#8a5b5e;margin-bottom:5px;font-weight:600}
-  .field-row input{width:100%;background:#0c0304;border:1px solid rgba(220,20,30,.3);
-                   color:#fff;padding:10px;border-radius:8px;font-size:13px;font-family:'Cairo',sans-serif}
-  .field-row input:focus{outline:none;border-color:#dc1420;box-shadow:0 0 15px rgba(220,20,30,.3)}
-  .field-row input[type="url"]{direction:ltr;font-size:12px}
-  .token-box{background:rgba(30,136,229,.1);border:1px solid rgba(30,136,229,.35);
-    padding:10px;border-radius:8px;font-size:11px;color:#64b5f6;
-    word-break:break-all;margin-top:8px;direction:ltr;text-align:left;font-family:monospace}
-  .match-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-  .btn{background:linear-gradient(135deg,#8b0000,#dc1420);color:#fff;border:none;
-       padding:10px 18px;border-radius:10px;font-weight:700;cursor:pointer;
-       font-size:13px;font-family:'Cairo',sans-serif;transition:.22s;
-       display:inline-flex;align-items:center;gap:6px}
-  .btn:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(220,20,30,.5)}
-  .btn.play{background:linear-gradient(135deg,#2e7d32,#4caf50)}
-  .btn.stop{background:linear-gradient(135deg,#c62828,#e53935)}
-  .btn.danger{background:linear-gradient(135deg,#5a0000,#8b0000)}
-  .btn.ghost{background:transparent;color:#dc1420;border:1px solid rgba(220,20,30,.5)}
-  .btn.token-btn{background:linear-gradient(135deg,#1565c0,#1e88e5);width:100%}
-  .btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
-  .add-btn{width:100%;background:linear-gradient(135deg,#2e7d32,#4caf50);color:#fff;
-    border:none;padding:14px;border-radius:12px;font-weight:800;font-size:14px;
-    cursor:pointer;font-family:'Cairo',sans-serif}
-  .status{padding:10px;border-radius:8px;font-size:12px;margin-top:10px;
-    text-align:center;font-weight:700;display:none}
-  .status.ok{background:rgba(76,175,80,.15);color:#4caf50;border:1px solid rgba(76,175,80,.5);display:block}
-  .status.err{background:rgba(229,57,53,.15);color:#e53935;border:1px solid rgba(229,57,53,.5);display:block}
-  .status.info{background:rgba(30,136,229,.15);color:#1e88e5;border:1px solid rgba(30,136,229,.5);display:block}
-  #loading{position:fixed;inset:0;background:#0a0405;z-index:9999;display:flex;
-    flex-direction:column;justify-content:center;align-items:center;gap:20px;transition:opacity .5s}
+  *{box-sizing:border-box;font-family:'Cairo',sans-serif;margin:0;padding:0;
+    -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+  :root{
+    --bg:#0a0a0f;
+    --bg-2:#12121a;
+    --card:rgba(255,255,255,0.035);
+    --card-2:rgba(255,255,255,0.055);
+    --border:rgba(255,255,255,0.08);
+    --border-hi:rgba(255,255,255,0.14);
+    --accent:#e11d2e;
+    --accent-2:#ff3b52;
+    --accent-glow:rgba(225,29,46,.45);
+    --green:#22c55e;
+    --green-glow:rgba(34,197,94,.4);
+    --blue:#3b82f6;
+    --blue-glow:rgba(59,130,246,.4);
+    --text:#ffffff;
+    --text-dim:#8a8a9a;
+    --text-mute:#5a5a68;
+    --r-sm:10px;
+    --r:16px;
+    --r-lg:20px;
+    --r-xl:26px;
+  }
+  body{
+    background:
+      radial-gradient(1200px 600px at 50% -10%,rgba(225,29,46,.14),transparent 60%),
+      radial-gradient(900px 500px at 100% 100%,rgba(59,130,246,.08),transparent 60%),
+      radial-gradient(900px 500px at 0% 60%,rgba(225,29,46,.06),transparent 60%),
+      #0a0a0f;
+    color:var(--text);padding:18px;min-height:100vh;
+    position:relative;overflow-x:hidden}
+  body::before{
+    content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+    background-image:
+      linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px);
+    background-size:44px 44px;
+    mask-image:radial-gradient(ellipse at 50% 0%,black 20%,transparent 75%);
+    -webkit-mask-image:radial-gradient(ellipse at 50% 0%,black 20%,transparent 75%)}
+
+  h1{
+    text-align:center;color:#fff;font-size:24px;font-weight:800;
+    margin-bottom:8px;letter-spacing:-.3px;
+    background:linear-gradient(180deg,#fff 40%,#b0b0be 100%);
+    -webkit-background-clip:text;background-clip:text;
+    -webkit-text-fill-color:transparent;
+    position:relative;z-index:1}
+  .sub{text-align:center;color:var(--text-dim);font-size:12.5px;
+    margin-bottom:18px;font-weight:500;position:relative;z-index:1}
+
+  .conn{
+    text-align:center;font-size:12.5px;padding:11px 14px;
+    border-radius:var(--r);background:var(--card);
+    border:1px solid var(--border);margin-bottom:18px;
+    font-weight:700;backdrop-filter:blur(20px);
+    -webkit-backdrop-filter:blur(20px);position:relative;z-index:1;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    transition:.3s}
+  .conn::before{
+    content:'';width:8px;height:8px;border-radius:50%;
+    background:currentColor;box-shadow:0 0 12px currentColor;
+    animation:pulse 2s ease-in-out infinite}
+  @keyframes pulse{50%{opacity:.4;transform:scale(.85)}}
+  .conn.online{color:var(--green)}
+  .conn.offline{color:#ef4444}
+  .conn.saving{color:#fbbf24}
+
+  .stats{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+    gap:12px;margin-bottom:18px;position:relative;z-index:1}
+  .stat-card{
+    background:linear-gradient(180deg,var(--card-2),var(--card));
+    padding:20px 16px;border-radius:var(--r-lg);
+    border:1px solid var(--border);text-align:center;
+    backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+    position:relative;overflow:hidden;transition:.3s}
+  .stat-card::before{
+    content:'';position:absolute;inset:0;border-radius:inherit;
+    padding:1px;background:linear-gradient(180deg,rgba(255,255,255,.1),transparent 60%);
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+  .stat-card:hover{transform:translateY(-2px);border-color:var(--border-hi)}
+  .stat-card .num{font-size:32px;font-weight:800;color:var(--green);
+    line-height:1;letter-spacing:-1px;
+    text-shadow:0 0 30px var(--green-glow)}
+  .stat-card.live .num{color:var(--accent-2);
+    text-shadow:0 0 30px var(--accent-glow)}
+  .stat-card .lbl{font-size:11.5px;color:var(--text-dim);margin-top:8px;font-weight:600}
+
+  .top-actions{display:flex;gap:10px;margin-bottom:18px;
+    flex-wrap:wrap;position:relative;z-index:1}
+  .top-actions button{flex:1;min-width:140px}
+
+  .section{
+    background:linear-gradient(180deg,var(--card-2),var(--card));
+    border-radius:var(--r-xl);padding:20px;margin-bottom:18px;
+    border:1px solid var(--border);position:relative;z-index:1;
+    backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+    box-shadow:0 20px 60px rgba(0,0,0,.4)}
+  .section h2{
+    color:#fff;margin:0 0 16px;font-size:16px;font-weight:800;
+    display:flex;align-items:center;gap:10px;
+    padding-bottom:14px;border-bottom:1px solid var(--border)}
+  .section h2::before{
+    content:'';width:3px;height:18px;border-radius:4px;
+    background:linear-gradient(180deg,var(--accent-2),var(--accent));
+    box-shadow:0 0 12px var(--accent-glow)}
+
+  .info-box{
+    background:linear-gradient(135deg,rgba(59,130,246,.08),rgba(59,130,246,.03));
+    border:1px solid rgba(59,130,246,.22);
+    padding:14px 16px;border-radius:var(--r);
+    font-size:12.5px;color:#93b8f5;margin-bottom:16px;
+    line-height:1.75;font-weight:500;
+    display:flex;gap:10px;align-items:flex-start}
+  .info-box::before{
+    content:'💡';font-size:16px;flex-shrink:0;line-height:1.4}
+
+  .cat-card{
+    background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02));
+    padding:16px;border-radius:var(--r-lg);margin-bottom:14px;
+    border:1px solid var(--border);transition:.3s;
+    position:relative;overflow:hidden}
+  .cat-card::before{
+    content:'';position:absolute;top:0;right:0;bottom:0;width:3px;
+    background:linear-gradient(180deg,var(--accent-2),var(--accent));
+    border-radius:0 var(--r-lg) var(--r-lg) 0;
+    box-shadow:0 0 20px var(--accent-glow)}
+  .cat-card:hover{border-color:var(--border-hi)}
+
+  .cat-head{
+    display:flex;justify-content:space-between;align-items:center;gap:10px;
+    margin-bottom:12px;flex-wrap:wrap;cursor:pointer;transition:.2s}
+  .cat-head:hover{opacity:.9}
+  .cat-head .cat-title{display:flex;align-items:center;gap:12px;flex:1;min-width:180px}
+  .cat-head .cat-title img{
+    width:48px;height:48px;object-fit:contain;background:rgba(255,255,255,.03);
+    border-radius:12px;padding:4px;border:1px solid var(--border);
+    transition:.3s}
+  .cat-card:hover .cat-head .cat-title img{border-color:var(--accent);
+    box-shadow:0 0 20px var(--accent-glow)}
+  .cat-head .cat-title .info{display:flex;flex-direction:column;gap:3px;flex:1}
+  .cat-head .cat-title .info .nm{color:#fff;font-weight:800;font-size:14.5px;
+    letter-spacing:-.2px}
+  .cat-head .cat-title .info .cnt{color:var(--text-dim);font-size:11.5px;font-weight:600}
+  .expand-arrow{
+    color:var(--accent-2);font-size:14px;font-weight:900;transition:.3s;
+    width:28px;height:28px;display:flex;align-items:center;justify-content:center;
+    background:rgba(225,29,46,.12);border-radius:50%;
+    border:1px solid rgba(225,29,46,.25)}
+  .cat-card.collapsed .expand-arrow{transform:rotate(-90deg)}
+  .cat-card.collapsed .cat-body{display:none}
+
+  .cat-body{padding-top:14px;border-top:1px dashed var(--border)}
+
+  .ch-card{
+    background:rgba(0,0,0,.25);padding:14px;border-radius:var(--r);
+    margin-bottom:12px;border:1px solid var(--border);
+    transition:.3s;display:grid;grid-template-columns:76px 1fr;gap:14px;
+    position:relative;overflow:hidden}
+  .ch-card::before{
+    content:'';position:absolute;top:0;right:0;bottom:0;width:3px;
+    background:#4a4a56;border-radius:0 var(--r) var(--r) 0;transition:.3s}
+  .ch-card.live::before{background:linear-gradient(180deg,#4ade80,#22c55e);
+    box-shadow:0 0 20px var(--green-glow)}
+  .ch-card.has-token::before{background:linear-gradient(180deg,#60a5fa,#3b82f6);
+    box-shadow:0 0 20px var(--blue-glow)}
+  .ch-card.live{background:linear-gradient(135deg,rgba(34,197,94,.06),rgba(0,0,0,.25))}
+  .ch-card:hover{border-color:var(--border-hi)}
+  .ch-card .logo-preview{
+    width:76px;height:76px;object-fit:contain;background:rgba(255,255,255,.03);
+    border-radius:14px;padding:6px;border:1px solid var(--border)}
+  .ch-card .ch-body{display:flex;flex-direction:column;gap:9px}
+  .ch-card .ch-head{display:flex;justify-content:space-between;
+    align-items:center;gap:8px;flex-wrap:wrap}
+
+  .badge{
+    background:linear-gradient(135deg,var(--accent),#a30f1f);
+    color:#fff;padding:4px 12px;border-radius:100px;
+    font-size:10.5px;font-weight:700;letter-spacing:.2px;
+    box-shadow:0 4px 12px rgba(225,29,46,.25)}
+  .badge.live{
+    background:linear-gradient(135deg,#4ade80,#16a34a);
+    box-shadow:0 4px 12px var(--green-glow);
+    display:inline-flex;align-items:center;gap:5px}
+  .badge.live::before{
+    content:'';width:6px;height:6px;border-radius:50%;background:#fff;
+    animation:blink 1.2s infinite}
+  @keyframes blink{50%{opacity:.35}}
+  .badge.off{background:#2a2a34;color:#8a8a9a;box-shadow:none}
+  .badge.tok{background:linear-gradient(135deg,#60a5fa,#2563eb);
+    box-shadow:0 4px 12px var(--blue-glow)}
+
+  .field{display:flex;flex-direction:column;gap:5px}
+  .field label{font-size:10.5px;color:var(--text-dim);font-weight:600;
+    letter-spacing:.2px}
+  .field input{
+    width:100%;background:rgba(0,0,0,.4);
+    border:1px solid var(--border);color:#fff;
+    padding:10px 12px;border-radius:var(--r-sm);
+    font-size:12.5px;font-family:'Cairo',sans-serif;
+    transition:.25s;font-weight:500}
+  .field input::placeholder{color:var(--text-mute)}
+  .field input:focus{
+    outline:none;border-color:var(--accent);
+    background:rgba(225,29,46,.04);
+    box-shadow:0 0 0 3px rgba(225,29,46,.12),0 0 20px var(--accent-glow)}
+  .field input[type="url"]{direction:ltr;font-size:11.5px;text-align:left}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+  .token-box{
+    background:rgba(59,130,246,.08);
+    border:1px solid rgba(59,130,246,.25);
+    padding:9px 11px;border-radius:var(--r-sm);
+    font-size:10.5px;color:#93b8f5;word-break:break-all;
+    direction:ltr;text-align:left;font-family:ui-monospace,Menlo,monospace;
+    line-height:1.5}
+
+  .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+
+  .btn{
+    background:linear-gradient(180deg,var(--accent-2),var(--accent));
+    color:#fff;border:none;padding:10px 18px;border-radius:100px;
+    font-weight:700;cursor:pointer;font-size:12.5px;
+    font-family:'Cairo',sans-serif;transition:.25s;
+    display:inline-flex;align-items:center;justify-content:center;gap:6px;
+    box-shadow:0 4px 14px rgba(225,29,46,.3),inset 0 1px 0 rgba(255,255,255,.15);
+    position:relative;letter-spacing:.2px}
+  .btn:hover{transform:translateY(-1px);
+    box-shadow:0 8px 24px rgba(225,29,46,.45),inset 0 1px 0 rgba(255,255,255,.2)}
+  .btn:active{transform:translateY(0)}
+  .btn.play{
+    background:linear-gradient(180deg,#4ade80,#16a34a);
+    box-shadow:0 4px 14px var(--green-glow),inset 0 1px 0 rgba(255,255,255,.2)}
+  .btn.play:hover{box-shadow:0 8px 24px var(--green-glow),inset 0 1px 0 rgba(255,255,255,.25)}
+  .btn.stop{
+    background:linear-gradient(180deg,#f87171,#dc2626);
+    box-shadow:0 4px 14px rgba(220,38,38,.35),inset 0 1px 0 rgba(255,255,255,.2)}
+  .btn.danger{
+    background:linear-gradient(180deg,#a30f1f,#6b0a15);
+    box-shadow:0 4px 14px rgba(107,10,21,.4),inset 0 1px 0 rgba(255,255,255,.1)}
+  .btn.blue{
+    background:linear-gradient(180deg,#60a5fa,#2563eb);
+    box-shadow:0 4px 14px var(--blue-glow),inset 0 1px 0 rgba(255,255,255,.2)}
+  .btn.ghost{
+    background:rgba(255,255,255,.05);color:#fff;
+    border:1px solid var(--border);box-shadow:none}
+  .btn.ghost:hover{background:rgba(255,255,255,.09);border-color:var(--border-hi);
+    box-shadow:0 4px 14px rgba(0,0,0,.3)}
+  .btn.small{padding:7px 12px;font-size:11.5px}
+
+  .add-btn{
+    width:100%;background:linear-gradient(180deg,#4ade80,#16a34a);
+    color:#fff;border:none;padding:15px;border-radius:var(--r);
+    font-weight:800;font-size:14px;cursor:pointer;
+    font-family:'Cairo',sans-serif;margin-top:8px;transition:.25s;
+    box-shadow:0 8px 24px var(--green-glow),inset 0 1px 0 rgba(255,255,255,.2);
+    letter-spacing:.2px}
+  .add-btn:hover{transform:translateY(-2px);
+    box-shadow:0 12px 32px var(--green-glow),inset 0 1px 0 rgba(255,255,255,.25)}
+  .add-btn.sub{
+    background:linear-gradient(180deg,#60a5fa,#2563eb);
+    box-shadow:0 6px 18px var(--blue-glow),inset 0 1px 0 rgba(255,255,255,.2);
+    padding:12px;font-size:12.5px;margin-top:8px}
+  .add-btn.sub:hover{box-shadow:0 10px 26px var(--blue-glow),inset 0 1px 0 rgba(255,255,255,.25)}
+
+  .status{
+    padding:12px 16px;border-radius:var(--r);font-size:12.5px;
+    margin-top:12px;text-align:center;font-weight:700;display:none}
+  .status.ok{background:rgba(34,197,94,.1);color:#4ade80;
+    border:1px solid rgba(34,197,94,.3);display:block}
+  .status.err{background:rgba(239,68,68,.1);color:#f87171;
+    border:1px solid rgba(239,68,68,.3);display:block}
+  .status.info{background:rgba(59,130,246,.1);color:#60a5fa;
+    border:1px solid rgba(59,130,246,.3);display:block}
+
+  #loading{
+    position:fixed;inset:0;background:#0a0a0f;z-index:9999;
+    display:flex;flex-direction:column;justify-content:center;align-items:center;
+    gap:22px;transition:opacity .5s}
   #loading.hide{opacity:0;pointer-events:none}
-  .spinner{width:50px;height:50px;border:3px solid rgba(220,20,30,.2);
-    border-top-color:#dc1420;border-radius:50%;animation:spin 1s linear infinite}
+  .spinner{
+    width:52px;height:52px;
+    border:3px solid rgba(225,29,46,.15);
+    border-top-color:var(--accent-2);border-radius:50%;
+    animation:spin 1s linear infinite;
+    box-shadow:0 0 30px var(--accent-glow)}
   @keyframes spin{to{transform:rotate(360deg)}}
-  .loading-txt{color:#dc1420;font-weight:700;font-size:14px}
-  .save-indicator{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
-    background:linear-gradient(90deg,#2e7d32,#4caf50);color:#fff;padding:10px 24px;
-    border-radius:26px;font-weight:700;font-size:13px;box-shadow:0 10px 30px rgba(76,175,80,.5);
-    opacity:0;transition:.3s;pointer-events:none;z-index:99999}
-  .save-indicator.show{opacity:1;bottom:30px}
-  .info-box{background:rgba(30,136,229,.1);border:1px solid rgba(30,136,229,.3);
-    padding:12px;border-radius:10px;font-size:12px;color:#64b5f6;
-    margin-bottom:12px;line-height:1.7;font-weight:600}
-  @media(max-width:600px){.field-row{grid-template-columns:1fr}h1{font-size:19px}}
+  .loading-txt{color:var(--accent-2);font-weight:700;font-size:14px;
+    letter-spacing:.3px;animation:pulse2 1.4s ease-in-out infinite}
+  @keyframes pulse2{50%{opacity:.5}}
+
+  .save-indicator{
+    position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(10px);
+    background:linear-gradient(180deg,#4ade80,#16a34a);color:#fff;
+    padding:11px 26px;border-radius:100px;font-weight:800;font-size:13px;
+    box-shadow:0 12px 32px var(--green-glow),inset 0 1px 0 rgba(255,255,255,.25);
+    opacity:0;transition:.35s cubic-bezier(.34,1.56,.64,1);
+    pointer-events:none;z-index:99999}
+  .save-indicator.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  @media(max-width:600px){
+    body{padding:14px}
+    h1{font-size:20px}
+    .ch-card{grid-template-columns:1fr}
+    .ch-card .logo-preview{margin:0 auto}
+    .row2{grid-template-columns:1fr}
+  }
 </style>
 </head>
 <body>
@@ -101,31 +326,30 @@
 </div>
 
 <h1>لوحة تحكم Alankaboot Sport</h1>
-<div class="sub">الأدمن فقط - الرابط الأصلي مش بيتوزع للمشاهدين</div>
+<div class="sub">أضف أقسام → ضيف قنوات جوه كل قسم → تظهر للمستخدمين تلقائياً</div>
 <div class="conn offline" id="connStatus">جاري الاتصال...</div>
 
 <div class="stats">
   <div class="stat-card"><div class="num" id="viewerCount">0</div><div class="lbl">مشاهدين الآن</div></div>
-  <div class="stat-card live"><div class="num" id="liveCount">0</div><div class="lbl">بث مباشر</div></div>
-  <div class="stat-card"><div class="num" id="matchCount">0</div><div class="lbl">إجمالي القنوات</div></div>
+  <div class="stat-card live"><div class="num" id="liveCount">0</div><div class="lbl">قنوات مباشرة</div></div>
+  <div class="stat-card"><div class="num" id="chCount">0</div><div class="lbl">إجمالي القنوات</div></div>
 </div>
 
 <div class="top-actions">
   <button class="btn ghost" onclick="reloadFromServer()">🔄 إعادة تحميل</button>
   <button class="btn ghost" onclick="stopAll()">⏹ إيقاف كل البث</button>
-  <button class="btn ghost" onclick="resetToDefaults()">↺ مسح الكل</button>
+  <button class="btn ghost" onclick="resetAll()">↺ مسح الكل</button>
 </div>
 
 <div class="section">
-  <h2>القنوات / المباريات</h2>
+  <h2>الأقسام والقنوات</h2>
   <div class="info-box">
-    💡 <b>طريقة الإضافة:</b><br>
-    1️⃣ اضغط "➕ إضافة قناة"<br>
-    2️⃣ حط <b>الرابط الأصلي (m3u8)</b> في خانته<br>
-    3️⃣ اضغط <b>"▶ تشغيل مباشر"</b> (التوكن هيتولّد تلقائياً)
+    <div>
+      <b>الطريقة:</b> ضيف قسم (مثل beIN Sports) → جواه ضيف القنوات (beIN 1, 2, 3...) → اضغط "▶ تشغيل مباشر" على القناة اللي عايزها.
+    </div>
   </div>
-  <div id="matchesList"></div>
-  <button class="add-btn" onclick="addMatch()">➕ إضافة قناة / مباراة جديدة</button>
+  <div id="catsList"></div>
+  <button class="add-btn" onclick="addCategory()">➕ إضافة قسم جديد</button>
   <div class="status" id="statusMsg"></div>
 </div>
 
@@ -146,8 +370,8 @@
 
   const connStatus = document.getElementById('connStatus');
   const viewers = new Map();
-  let matches = [];
-  let isLoadedFromServer = false;
+  let categories = [];
+  let isLoaded = false;
   let publishTimeout = null;
 
   client.on('connect', () => {
@@ -155,9 +379,9 @@
     client.subscribe(TOPIC_HB);
     client.subscribe(TOPIC_DATA);
     setTimeout(() => {
-      if (!isLoadedFromServer) {
-        loadFromLocalStorage();
-        isLoadedFromServer = true;
+      if (!isLoaded) {
+        loadLocal();
+        isLoaded = true;
         hideLoading();
         render();
         publishData();
@@ -167,9 +391,9 @@
 
   client.on('error', () => {
     setConn('offline', '❌ فشل الاتصال');
-    if (!isLoadedFromServer) {
-      loadFromLocalStorage();
-      isLoadedFromServer = true;
+    if (!isLoaded) {
+      loadLocal();
+      isLoaded = true;
       hideLoading();
       render();
     }
@@ -182,11 +406,11 @@
         viewers.set(d.id, Date.now());
         return;
       }
-      if (topic === TOPIC_DATA && !isLoadedFromServer) {
+      if (topic === TOPIC_DATA && !isLoaded) {
         const data = JSON.parse(message.toString());
         if (Array.isArray(data)) {
-          matches = data;
-          isLoadedFromServer = true;
+          categories = data;
+          isLoaded = true;
           hideLoading();
           render();
         }
@@ -199,13 +423,9 @@
     connStatus.textContent = text;
   }
 
-  function loadFromLocalStorage() {
-    const saved = localStorage.getItem('matches_data_v2');
-    if (saved) {
-      try { matches = JSON.parse(saved); } catch (e) { matches = []; }
-    } else {
-      matches = [];
-    }
+  function loadLocal() {
+    const saved = localStorage.getItem('cats_data_v1');
+    categories = saved ? (JSON.parse(saved) || []) : [];
   }
 
   function hideLoading() {
@@ -216,99 +436,117 @@
 
   setInterval(() => {
     const now = Date.now();
-    for (const [id, t] of viewers) {
-      if (now - t > 15000) viewers.delete(id);
-    }
+    for (const [id, t] of viewers) if (now - t > 15000) viewers.delete(id);
     document.getElementById('viewerCount').textContent = viewers.size;
   }, 5000);
 
   function render() {
-    const c = document.getElementById('matchesList');
+    const c = document.getElementById('catsList');
     c.innerHTML = '';
 
-    if (!matches.length) {
-      c.innerHTML = '<div style="text-align:center;padding:40px;color:#8a5b5e;font-size:13px;line-height:1.8">لا توجد قنوات. اضغط "➕ إضافة قناة" للبدء.</div>';
-      document.getElementById('matchCount').textContent = 0;
+    if (!categories.length) {
+      c.innerHTML = '<div style="text-align:center;padding:40px;color:#8a8a9a;font-size:13px;line-height:1.8">لا توجد أقسام. اضغط "➕ إضافة قسم" للبدء.</div>';
+      document.getElementById('chCount').textContent = 0;
       document.getElementById('liveCount').textContent = 0;
       return;
     }
 
-    matches.forEach((m, i) => {
-      const hasToken = !!m.streamToken;
-      const badge = m.live
-        ? '<span class="badge live">● مباشر</span>'
-        : '<span class="badge off">متوقف</span>';
-      const tokenBadge = hasToken ? '<span class="badge tok">🔐 توكن جاهز</span>' : '';
+    let totalCh = 0, totalLive = 0;
 
-      const div = document.createElement('div');
-      div.className = 'match-card' + (m.live ? ' live' : '') + (hasToken ? ' has-token' : '');
+    categories.forEach((cat, ci) => {
+      const chCount = cat.channels ? cat.channels.length : 0;
+      const collapsed = cat.collapsed ? 'collapsed' : '';
 
-      div.innerHTML = `
-        <div class="match-header">
-          <span class="badge">${escapeHtml(m.title || 'قناة ' + (i+1))}</span>
-          <span style="display:flex;gap:6px;flex-wrap:wrap">${tokenBadge}${badge}</span>
+      const catDiv = document.createElement('div');
+      catDiv.className = 'cat-card ' + collapsed;
+
+      catDiv.innerHTML = `
+        <div class="cat-head" onclick="toggleCat(${ci}, event)">
+          <div class="cat-title">
+            <img src="${escapeAttr(cat.logo || '')}" onerror="this.style.opacity=.2">
+            <div class="info">
+              <div class="nm">${escapeHtml(cat.name || 'قسم')}</div>
+              <div class="cnt">${chCount} قناة</div>
+            </div>
+          </div>
+          <span class="expand-arrow">▼</span>
+          <button class="btn danger small" onclick="removeCategory(${ci}, event)">🗑 حذف القسم</button>
         </div>
 
-        <div class="field-row">
-          <div>
-            <label>اسم الفريق 1</label>
-            <input value="${escapeAttr(m.team1 || '')}" oninput="updateField(${i},'team1',this.value)" onchange="saveNow()">
+        <div class="cat-body">
+          <div class="row2">
+            <div class="field">
+              <label>اسم القسم</label>
+              <input value="${escapeAttr(cat.name || '')}" oninput="updCat(${ci},'name',this.value)" onchange="saveNow()" placeholder="beIN Sports">
+            </div>
+            <div class="field">
+              <label>رابط لوجو القسم</label>
+              <input type="url" value="${escapeAttr(cat.logo || '')}" oninput="updCat(${ci},'logo',this.value)" onchange="saveNow()" placeholder="https://...png">
+            </div>
           </div>
-          <div>
-            <label>اسم الفريق 2</label>
-            <input value="${escapeAttr(m.team2 || '')}" oninput="updateField(${i},'team2',this.value)" onchange="saveNow()">
-          </div>
-        </div>
 
-        <div class="field-row">
-          <div>
-            <label>صورة الفريق 1</label>
-            <input type="url" value="${escapeAttr(m.team1Img || '')}" oninput="updateField(${i},'team1Img',this.value)" onchange="saveNow()">
+          <div style="margin-top:16px">
+            ${(cat.channels || []).map((ch, chi) => renderChannel(ci, chi, ch)).join('')}
           </div>
-          <div>
-            <label>صورة الفريق 2</label>
-            <input type="url" value="${escapeAttr(m.team2Img || '')}" oninput="updateField(${i},'team2Img',this.value)" onchange="saveNow()">
-          </div>
-        </div>
 
-        <div class="field-row">
-          <div>
-            <label>الوقت</label>
-            <input type="time" value="${escapeAttr(m.time || '00:00')}" oninput="updateField(${i},'time',this.value)" onchange="saveNow()">
-          </div>
-          <div>
-            <label>اسم القناة</label>
-            <input value="${escapeAttr(m.title || '')}" oninput="updateField(${i},'title',this.value)" onchange="saveNow()">
-          </div>
-        </div>
-
-        <div class="field-row full">
-          <div>
-            <label>🔒 الرابط الأصلي (m3u8) — الأدمن فقط</label>
-            <input type="url" value="${escapeAttr(m.originalUrl || '')}"
-                   oninput="updateField(${i},'originalUrl',this.value)"
-                   placeholder="https://example.com/stream.m3u8">
-          </div>
-        </div>
-
-        <button class="btn token-btn" onclick="generateToken(${i})">🔐 توليد توكن يدوياً</button>
-
-        ${hasToken ? `<div class="token-box">${escapeHtml(m.streamToken)}</div>` : ''}
-
-        <div class="match-actions">
-          ${m.live
-            ? `<button class="btn stop" onclick="setLive(${i}, false)">■ إيقاف</button>
-               <button class="btn play" onclick="restartStream(${i})">🔄 إعادة تشغيل</button>`
-            : `<button class="btn play" onclick="setLive(${i}, true)">▶ تشغيل مباشر</button>`
-          }
-          <button class="btn danger" onclick="removeMatch(${i})">🗑 حذف</button>
+          <button class="add-btn sub" onclick="addChannel(${ci})">➕ إضافة قناة في "${escapeHtml(cat.name || 'القسم')}"</button>
         </div>
       `;
-      c.appendChild(div);
+
+      c.appendChild(catDiv);
+
+      totalCh += chCount;
+      totalLive += (cat.channels || []).filter(x => x.live).length;
     });
 
-    document.getElementById('matchCount').textContent = matches.length;
-    document.getElementById('liveCount').textContent = matches.filter(x => x.live).length;
+    document.getElementById('chCount').textContent = totalCh;
+    document.getElementById('liveCount').textContent = totalLive;
+  }
+
+  function renderChannel(ci, chi, ch) {
+    const hasToken = !!ch.token;
+    const badge = ch.live ? '<span class="badge live">مباشر</span>' : '<span class="badge off">متوقف</span>';
+    const tokBadge = hasToken ? '<span class="badge tok">🔐 توكن</span>' : '';
+
+    return `
+      <div class="ch-card ${ch.live ? 'live' : ''} ${hasToken ? 'has-token' : ''}">
+        <img class="logo-preview" src="${escapeAttr(ch.logo || '')}" onerror="this.style.opacity=.2">
+        <div class="ch-body">
+          <div class="ch-head">
+            <span class="badge">${escapeHtml(ch.name || 'قناة')}</span>
+            <span style="display:flex;gap:6px;flex-wrap:wrap">${tokBadge}${badge}</span>
+          </div>
+
+          <div class="row2">
+            <div class="field">
+              <label>اسم القناة</label>
+              <input value="${escapeAttr(ch.name || '')}" oninput="updCh(${ci},${chi},'name',this.value)" onchange="saveNow()" placeholder="beIN Sports 1">
+            </div>
+            <div class="field">
+              <label>رابط اللوجو</label>
+              <input type="url" value="${escapeAttr(ch.logo || '')}" oninput="updCh(${ci},${chi},'logo',this.value)" onchange="saveNow()" placeholder="https://...png">
+            </div>
+          </div>
+
+          <div class="field">
+            <label>🔒 رابط البث (m3u8) — للأدمن فقط</label>
+            <input type="url" value="${escapeAttr(ch.url || '')}" oninput="updCh(${ci},${chi},'url',this.value)" onchange="saveNow()" placeholder="https://example.com/stream.m3u8">
+          </div>
+
+          ${hasToken ? `<div class="token-box">${escapeHtml(ch.token)}</div>` : ''}
+
+          <div class="actions">
+            ${ch.live
+              ? `<button class="btn stop small" onclick="setLive(${ci},${chi},false)">■ إيقاف</button>
+                 <button class="btn play small" onclick="restart(${ci},${chi})">🔄 إعادة</button>`
+              : `<button class="btn play small" onclick="setLive(${ci},${chi},true)">▶ تشغيل</button>`
+            }
+            <button class="btn blue small" onclick="genToken(${ci},${chi})">🔐 توكن</button>
+            <button class="btn danger small" onclick="removeChannel(${ci},${chi})">🗑</button>
+          </div>
+        </div>
+      </div>
+    `;
   }
 
   function escapeHtml(s) {
@@ -318,17 +556,28 @@
   }
   function escapeAttr(s) { return escapeHtml(s); }
 
-  function updateField(i, key, value) {
-    matches[i][key] = value;
-    localStorage.setItem('matches_data_v2', JSON.stringify(matches));
+  function toggleCat(ci, e) {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
+    categories[ci].collapsed = !categories[ci].collapsed;
+    render();
+    localStorage.setItem('cats_data_v1', JSON.stringify(categories));
+  }
+
+  function updCat(ci, key, value) {
+    categories[ci][key] = value;
+    localStorage.setItem('cats_data_v1', JSON.stringify(categories));
+    scheduleSave();
+  }
+  function updCh(ci, chi, key, value) {
+    categories[ci].channels[chi][key] = value;
+    localStorage.setItem('cats_data_v1', JSON.stringify(categories));
     scheduleSave();
   }
 
   function saveNow() {
-    localStorage.setItem('matches_data_v2', JSON.stringify(matches));
+    localStorage.setItem('cats_data_v1', JSON.stringify(categories));
     publishData();
   }
-
   function scheduleSave() {
     clearTimeout(publishTimeout);
     publishTimeout = setTimeout(saveNow, 800);
@@ -337,7 +586,7 @@
   function publishData() {
     try {
       setConn('saving', '💾 جاري الحفظ...');
-      client.publish(TOPIC_DATA, JSON.stringify(matches), { retain: true }, () => {
+      client.publish(TOPIC_DATA, JSON.stringify(categories), { retain: true }, () => {
         setConn('online', '✅ متصل');
         showSaved();
       });
@@ -350,54 +599,74 @@
     setTimeout(() => s.classList.remove('show'), 1500);
   }
 
-  function addMatch() {
-    matches.push({
-      id: 'm' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
-      title: 'قناة جديدة',
-      time: '00:00',
-      team1: 'فريق 1', team1Img: '',
-      team2: 'فريق 2', team2Img: '',
-      originalUrl: '',
-      streamToken: '',
+  function addCategory() {
+    categories.push({
+      id: 'cat_' + Date.now() + '_' + Math.random().toString(36).slice(2,5),
+      name: 'قسم جديد',
+      logo: '',
+      collapsed: false,
+      channels: []
+    });
+    render();
+    saveNow();
+    showStatus('✓ تمت إضافة القسم', 'ok');
+  }
+
+  function removeCategory(ci, e) {
+    e.stopPropagation();
+    if (!confirm('متأكد من حذف القسم "' + (categories[ci].name || '') + '" وكل قنواته؟')) return;
+    (categories[ci].channels || []).forEach(ch => {
+      if (ch.live) client.publish(TOPIC_CMD, JSON.stringify({ action: 'stop', channelId: ch.id }));
+    });
+    categories.splice(ci, 1);
+    render();
+    saveNow();
+    showStatus('✓ تم حذف القسم', 'ok');
+  }
+
+  function addChannel(ci) {
+    if (!categories[ci].channels) categories[ci].channels = [];
+    categories[ci].channels.push({
+      id: 'ch_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
+      name: 'قناة جديدة',
+      logo: '',
+      url: '',
+      token: '',
+      _tokenUrl: '',
       live: false
     });
     render();
     saveNow();
-    showStatus('✓ تمت الإضافة', 'ok');
+    showStatus('✓ تمت إضافة القناة', 'ok');
   }
 
-  function removeMatch(i) {
-    if (!confirm('متأكد من الحذف؟')) return;
-    if (matches[i].live) {
-      client.publish(TOPIC_CMD, JSON.stringify({ action: 'stop', matchId: matches[i].id }));
-    }
-    matches.splice(i, 1);
+  function removeChannel(ci, chi) {
+    const ch = categories[ci].channels[chi];
+    if (!confirm('حذف "' + (ch.name || '') + '"؟')) return;
+    if (ch.live) client.publish(TOPIC_CMD, JSON.stringify({ action: 'stop', channelId: ch.id }));
+    categories[ci].channels.splice(chi, 1);
     render();
     saveNow();
     showStatus('✓ تم الحذف', 'ok');
   }
 
-  async function generateToken(i) {
-    const origUrl = (matches[i].originalUrl || '').trim();
-    if (!origUrl) {
-      showStatus('❌ اكتب الرابط الأصلي الأول', 'err');
-      return null;
-    }
+  async function genToken(ci, chi) {
+    const ch = categories[ci].channels[chi];
+    const origUrl = (ch.url || '').trim();
+    if (!origUrl) { showStatus('❌ اكتب رابط البث الأول', 'err'); return null; }
 
     showStatus('🔐 جاري توليد التوكن...', 'info');
-
     try {
       const res = await fetch(
         PROXY_BASE + '/token?key=' + encodeURIComponent(ADMIN_KEY) +
         '&url=' + encodeURIComponent(origUrl)
       );
       if (!res.ok) throw new Error('HTTP ' + res.status);
-
       const token = (await res.text()).trim();
       if (!token || token.length < 20) throw new Error('توكن غير صالح');
 
-      matches[i].streamToken = token;
-      matches[i]._tokenUrl = origUrl;
+      ch.token = token;
+      ch._tokenUrl = origUrl;
       saveNow();
       render();
       showStatus('✓ تم توليد التوكن ✅', 'ok');
@@ -408,59 +677,56 @@
     }
   }
 
-  async function setLive(i, status) {
+  async function setLive(ci, chi, status) {
+    const ch = categories[ci].channels[chi];
+
     if (!status) {
-      matches[i].live = false;
+      ch.live = false;
       render();
       saveNow();
-      client.publish(TOPIC_CMD, JSON.stringify({
-        action: 'stop',
-        matchId: matches[i].id
-      }));
+      client.publish(TOPIC_CMD, JSON.stringify({ action: 'stop', channelId: ch.id }));
       showStatus('✓ تم الإيقاف', 'ok');
       return;
     }
 
-    const origUrl = (matches[i].originalUrl || '').trim();
-    if (!origUrl) {
-      showStatus('❌ اكتب الرابط الأصلي الأول', 'err');
-      return;
-    }
+    const origUrl = (ch.url || '').trim();
+    if (!origUrl) { showStatus('❌ اكتب رابط البث الأول', 'err'); return; }
 
-    if (!matches[i].streamToken || matches[i]._tokenUrl !== origUrl) {
-      showStatus('🔐 جاري توليد التوكن تلقائياً...', 'info');
-      const tok = await generateToken(i);
+    if (!ch.token || ch._tokenUrl !== origUrl) {
+      showStatus('🔐 جاري توليد التوكن...', 'info');
+      const tok = await genToken(ci, chi);
       if (!tok) return;
     }
 
-    matches[i].live = true;
+    ch.live = true;
     render();
     saveNow();
 
     client.publish(TOPIC_CMD, JSON.stringify({
       action: 'play',
-      matchId: matches[i].id,
-      token: matches[i].streamToken,
-      title: matches[i].title
+      channelId: ch.id,
+      token: ch.token,
+      name: ch.name
     }));
 
     showStatus('✓ تم التشغيل', 'ok');
   }
 
-  function restartStream(i) {
-    if (!matches[i].live) return;
+  function restart(ci, chi) {
+    const ch = categories[ci].channels[chi];
+    if (!ch.live) return;
     client.publish(TOPIC_CMD, JSON.stringify({
       action: 'play',
-      matchId: matches[i].id,
-      token: matches[i].streamToken,
-      title: matches[i].title
+      channelId: ch.id,
+      token: ch.token,
+      name: ch.name
     }));
     showStatus('✓ تم إعادة التشغيل', 'ok');
   }
 
   function stopAll() {
     if (!confirm('إيقاف كل البث؟')) return;
-    matches.forEach(m => m.live = false);
+    categories.forEach(cat => (cat.channels || []).forEach(ch => ch.live = false));
     render();
     saveNow();
     client.publish(TOPIC_CMD, JSON.stringify({ action: 'stopAll' }));
@@ -476,22 +742,22 @@
 
   function reloadFromServer() {
     if (!confirm('إعادة تحميل من السيرفر؟')) return;
-    localStorage.removeItem('matches_data_v2');
+    localStorage.removeItem('cats_data_v1');
     location.reload();
   }
 
-  function resetToDefaults() {
-    if (!confirm('مسح كل القنوات؟')) return;
-    matches = [];
-    localStorage.setItem('matches_data_v2', JSON.stringify(matches));
+  function resetAll() {
+    if (!confirm('مسح كل الأقسام والقنوات؟')) return;
+    categories = [];
+    localStorage.setItem('cats_data_v1', JSON.stringify(categories));
     render();
     saveNow();
     showStatus('✓ تم المسح', 'ok');
   }
 
   window.addEventListener('beforeunload', () => {
-    if (matches.length) {
-      try { client.publish(TOPIC_DATA, JSON.stringify(matches), { retain: true }); } catch (e) {}
+    if (categories.length) {
+      try { client.publish(TOPIC_DATA, JSON.stringify(categories), { retain: true }); } catch (e) {}
     }
   });
 </script>
