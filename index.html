@@ -6,6 +6,8 @@
 <title>لوحة التحكم - Alankaboot Sport</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+<!-- إضافة مكتبة Hls.js لتمكين معاينة الروابط -->
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js"></script>
 <style>
   *{box-sizing:border-box;font-family:'Cairo',sans-serif;margin:0;padding:0;
     -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
@@ -309,6 +311,24 @@
     pointer-events:none;z-index:99999}
   .save-indicator.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
+  /* Modal Styles for Testing */
+  #testModal {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+    z-index: 100000; justify-content: center; align-items: center;
+    flex-direction: column; padding: 20px; backdrop-filter: blur(5px);
+  }
+  .test-modal-content {
+    width: 100%; max-width: 800px; background: #12121a;
+    border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);
+    padding: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+  }
+  .test-modal-content h3 { color: #fff; margin-bottom: 15px; font-size: 16px; }
+  .test-modal-content video {
+    width: 100%; aspect-ratio: 16/9; background: #000;
+    border-radius: 8px; border: 1px solid var(--border);
+  }
+  .test-modal-actions { margin-top: 15px; text-align: right; }
+
   @media(max-width:600px){
     body{padding:14px}
     h1{font-size:20px}
@@ -345,7 +365,9 @@
   <h2>الأقسام والقنوات</h2>
   <div class="info-box">
     <div>
-      <b>الطريقة:</b> ضيف قسم (مثل beIN Sports) → جواه ضيف القنوات (beIN 1, 2, 3...) → اضغط "▶ تشغيل مباشر" على القناة اللي عايزها.
+      <b>الطريقة:</b> ضيف قسم (مثل beIN Sports) → جواه ضيف القنوات (beIN 1, 2, 3...) → اضغط "🔍 تجربة" للتأكد من أن الرابط يعمل → ثم "🔐 توكن" لتوليد الرابط المشفر → وأخيراً "▶ تشغيل مباشر".
+      <br><br>
+      <b>ملاحظة هامة:</b> عند الضغط على "تشغيل" لأي قناة، سيتم تحويل جميع المشاهدين إلى هذه القناة تلقائياً. لتشغيل أكثر من قناة في نفس الوقت، يجب أن يكون لديك أكثر من شاشة أو متصفح.
     </div>
   </div>
   <div id="catsList"></div>
@@ -354,6 +376,17 @@
 </div>
 
 <div class="save-indicator" id="saveIndicator">✓ تم الحفظ</div>
+
+<!-- Modal for Testing Links -->
+<div id="testModal">
+  <div class="test-modal-content">
+    <h3>🔍 معاينة الرابط قبل التشفير</h3>
+    <video id="testVideo" controls playsinline></video>
+    <div class="test-modal-actions">
+      <button class="btn ghost" onclick="closeTestModal()">إغلاق</button>
+    </div>
+  </div>
+</div>
 
 <script>
   const PROXY_BASE = 'https://alankaboot-proxy.kamlnot61.workers.dev';
@@ -373,6 +406,7 @@
   let categories = [];
   let isLoaded = false;
   let publishTimeout = null;
+  let testHls = null;
 
   client.on('connect', () => {
     setConn('online', '✅ متصل');
@@ -536,6 +570,7 @@
           ${hasToken ? `<div class="token-box">${escapeHtml(ch.token)}</div>` : ''}
 
           <div class="actions">
+            <button class="btn blue small" onclick="testLink(${ci},${chi})">🔍 تجربة</button>
             ${ch.live
               ? `<button class="btn stop small" onclick="setLive(${ci},${chi},false)">■ إيقاف</button>
                  <button class="btn play small" onclick="restart(${ci},${chi})">🔄 إعادة</button>`
@@ -650,6 +685,43 @@
     showStatus('✓ تم الحذف', 'ok');
   }
 
+  // دالة تجربة الرابط قبل التشفير
+  function testLink(ci, chi) {
+    const ch = categories[ci].channels[chi];
+    const url = (ch.url || '').trim();
+    if (!url) { showStatus('❌ اكتب رابط البث الأول', 'err'); return; }
+
+    const modal = document.getElementById('testModal');
+    const video = document.getElementById('testVideo');
+    modal.style.display = 'flex';
+
+    if (testHls) { testHls.destroy(); testHls = null; }
+    video.pause(); video.removeAttribute('src'); video.load();
+
+    if (Hls.isSupported()) {
+      testHls = new Hls({ lowLatencyMode: true, maxBufferLength: 30 });
+      testHls.loadSource(url);
+      testHls.attachMedia(video);
+      testHls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(e => console.log(e)));
+      testHls.on(Hls.Events.ERROR, (e, d) => {
+        if (d.fatal) {
+          showStatus('❌ الرابط لا يعمل أو به مشكلة: ' + d.details, 'err');
+        }
+      });
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = url;
+      video.play().catch(e => console.log(e));
+    }
+  }
+
+  function closeTestModal() {
+    document.getElementById('testModal').style.display = 'none';
+    const video = document.getElementById('testVideo');
+    video.pause();
+    if (testHls) { testHls.destroy(); testHls = null; }
+    video.removeAttribute('src'); video.load();
+  }
+
   async function genToken(ci, chi) {
     const ch = categories[ci].channels[chi];
     const origUrl = (ch.url || '').trim();
@@ -702,6 +774,7 @@
     render();
     saveNow();
 
+    // إرسال أمر التشغيل لجميع المشاهدين (سيتم تحويلهم تلقائياً للقناة)
     client.publish(TOPIC_CMD, JSON.stringify({
       action: 'play',
       channelId: ch.id,
@@ -709,7 +782,7 @@
       name: ch.name
     }));
 
-    showStatus('✓ تم التشغيل', 'ok');
+    showStatus('✓ تم التشغيل، سيتم تحويل المشاهدين للقناة', 'ok');
   }
 
   function restart(ci, chi) {
