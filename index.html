@@ -6,19 +6,31 @@
 <title>لوحة التحكم - Alankaboot Sport</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js"></script>
 <style>
   *{box-sizing:border-box;font-family:'Cairo',sans-serif;margin:0;padding:0;
     -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
   :root{
-    --bg:#0a0a0f;--bg-2:#12121a;
-    --card:rgba(255,255,255,0.035);--card-2:rgba(255,255,255,0.055);
-    --border:rgba(255,255,255,0.08);--border-hi:rgba(255,255,255,0.14);
-    --accent:#e11d2e;--accent-2:#ff3b52;--accent-glow:rgba(225,29,46,.45);
-    --green:#22c55e;--green-glow:rgba(34,197,94,.4);
-    --blue:#3b82f6;--blue-glow:rgba(59,130,246,.4);
-    --text:#ffffff;--text-dim:#8a8a9a;--text-mute:#5a5a68;
-    --r-sm:10px;--r:16px;--r-lg:20px;--r-xl:26px;
+    --bg:#0a0a0f;
+    --card:rgba(255,255,255,0.035);
+    --card-2:rgba(255,255,255,0.055);
+    --border:rgba(255,255,255,0.08);
+    --border-hi:rgba(255,255,255,0.14);
+    --accent:#e11d2e;
+    --accent-2:#ff3b52;
+    --accent-glow:rgba(225,29,46,.45);
+    --green:#22c55e;
+    --green-glow:rgba(34,197,94,.4);
+    --blue:#3b82f6;
+    --blue-glow:rgba(59,130,246,.4);
+    --purple:#8b5cf6;
+    --purple-glow:rgba(139,92,246,.4);
+    --text:#ffffff;
+    --text-dim:#8a8a9a;
+    --text-mute:#5a5a68;
+    --r-sm:10px;
+    --r:16px;
+    --r-lg:20px;
+    --r-xl:26px;
   }
   body{
     background:
@@ -36,150 +48,139 @@
     background-size:44px 44px;
     mask-image:radial-gradient(ellipse at 50% 0%,black 20%,transparent 75%);
     -webkit-mask-image:radial-gradient(ellipse at 50% 0%,black 20%,transparent 75%)}
-  h1{text-align:center;color:#fff;font-size:24px;font-weight:800;
+
+  h1{
+    text-align:center;color:#fff;font-size:24px;font-weight:800;
     margin-bottom:8px;letter-spacing:-.3px;
     background:linear-gradient(180deg,#fff 40%,#b0b0be 100%);
     -webkit-background-clip:text;background-clip:text;
-    -webkit-text-fill-color:transparent;position:relative;z-index:1}
+    -webkit-text-fill-color:transparent;
+    position:relative;z-index:1}
   .sub{text-align:center;color:var(--text-dim);font-size:12.5px;
     margin-bottom:18px;font-weight:500;position:relative;z-index:1}
-  .conn{text-align:center;font-size:12.5px;padding:11px 14px;
+
+  .conn{
+    text-align:center;font-size:12.5px;padding:11px 14px;
     border-radius:var(--r);background:var(--card);
     border:1px solid var(--border);margin-bottom:18px;
     font-weight:700;backdrop-filter:blur(20px);
     -webkit-backdrop-filter:blur(20px);position:relative;z-index:1;
-    display:flex;align-items:center;justify-content:center;gap:8px;transition:.3s}
-  .conn::before{content:'';width:8px;height:8px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    transition:.3s}
+  .conn::before{
+    content:'';width:8px;height:8px;border-radius:50%;
     background:currentColor;box-shadow:0 0 12px currentColor;
     animation:pulse 2s ease-in-out infinite}
   @keyframes pulse{50%{opacity:.4;transform:scale(.85)}}
   .conn.online{color:var(--green)}
   .conn.offline{color:#ef4444}
   .conn.saving{color:#fbbf24}
-  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+
+  .stats{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
     gap:12px;margin-bottom:18px;position:relative;z-index:1}
-  .stat-card{background:linear-gradient(180deg,var(--card-2),var(--card));
+  .stat-card{
+    background:linear-gradient(180deg,var(--card-2),var(--card));
     padding:20px 16px;border-radius:var(--r-lg);
     border:1px solid var(--border);text-align:center;
     backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
     position:relative;overflow:hidden;transition:.3s}
-  .stat-card::before{content:'';position:absolute;inset:0;border-radius:inherit;
+  .stat-card::before{
+    content:'';position:absolute;inset:0;border-radius:inherit;
     padding:1px;background:linear-gradient(180deg,rgba(255,255,255,.1),transparent 60%);
     -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
     -webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
   .stat-card:hover{transform:translateY(-2px);border-color:var(--border-hi)}
-  .stat-card .num{font-size:32px;font-weight:800;color:var(--green);
+  .stat-card .num{font-size:30px;font-weight:800;color:var(--green);
     line-height:1;letter-spacing:-1px;
     text-shadow:0 0 30px var(--green-glow)}
   .stat-card.live .num{color:var(--accent-2);
     text-shadow:0 0 30px var(--accent-glow)}
+  .stat-card.codes .num{color:var(--purple);
+    text-shadow:0 0 30px var(--purple-glow)}
   .stat-card .lbl{font-size:11.5px;color:var(--text-dim);margin-top:8px;font-weight:600}
-  .top-actions{display:flex;gap:10px;margin-bottom:18px;
-    flex-wrap:wrap;position:relative;z-index:1}
-  .top-actions button{flex:1;min-width:140px}
-  .section{background:linear-gradient(180deg,var(--card-2),var(--card));
+
+  /* ================= Tabs ================= */
+  .tabs{
+    display:flex;gap:8px;margin-bottom:18px;
+    background:rgba(255,255,255,.03);padding:6px;
+    border-radius:var(--r-lg);border:1px solid var(--border);
+    position:relative;z-index:1;
+    backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+  .tab{
+    flex:1;padding:12px 8px;border-radius:var(--r);
+    background:transparent;border:none;color:var(--text-dim);
+    font-family:'Cairo',sans-serif;font-weight:800;font-size:13px;
+    cursor:pointer;transition:.25s;
+    display:flex;align-items:center;justify-content:center;gap:6px}
+  .tab:hover{color:#fff;background:rgba(255,255,255,.04)}
+  .tab.active{
+    background:linear-gradient(180deg,var(--accent-2),var(--accent));
+    color:#fff;box-shadow:0 8px 24px var(--accent-glow),
+      inset 0 1px 0 rgba(255,255,255,.2)}
+  .tab .tab-icon{font-size:16px}
+
+  .tab-content{display:none;position:relative;z-index:1}
+  .tab-content.active{display:block;animation:fadeIn .35s ease}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+  .section{
+    background:linear-gradient(180deg,var(--card-2),var(--card));
     border-radius:var(--r-xl);padding:20px;margin-bottom:18px;
-    border:1px solid var(--border);position:relative;z-index:1;
+    border:1px solid var(--border);
     backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
     box-shadow:0 20px 60px rgba(0,0,0,.4)}
-  .section h2{color:#fff;margin:0 0 16px;font-size:16px;font-weight:800;
+  .section h2{
+    color:#fff;margin:0 0 16px;font-size:16px;font-weight:800;
     display:flex;align-items:center;gap:10px;
     padding-bottom:14px;border-bottom:1px solid var(--border)}
-  .section h2::before{content:'';width:3px;height:18px;border-radius:4px;
+  .section h2::before{
+    content:'';width:3px;height:18px;border-radius:4px;
     background:linear-gradient(180deg,var(--accent-2),var(--accent));
     box-shadow:0 0 12px var(--accent-glow)}
-  .info-box{background:linear-gradient(135deg,rgba(59,130,246,.08),rgba(59,130,246,.03));
+  .section h2 .count-badge{
+    background:rgba(225,29,46,.15);color:var(--accent-2);
+    font-size:11px;padding:3px 10px;border-radius:100px;
+    border:1px solid rgba(225,29,46,.3);margin-right:auto}
+
+  .info-box{
+    background:linear-gradient(135deg,rgba(59,130,246,.08),rgba(59,130,246,.03));
     border:1px solid rgba(59,130,246,.22);
     padding:14px 16px;border-radius:var(--r);
     font-size:12.5px;color:#93b8f5;margin-bottom:16px;
     line-height:1.75;font-weight:500;
     display:flex;gap:10px;align-items:flex-start}
-  .info-box::before{content:'💡';font-size:16px;flex-shrink:0;line-height:1.4}
-  .cat-card{background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02));
-    padding:16px;border-radius:var(--r-lg);margin-bottom:14px;
-    border:1px solid var(--border);transition:.3s;
-    position:relative;overflow:hidden}
-  .cat-card::before{content:'';position:absolute;top:0;right:0;bottom:0;width:3px;
-    background:linear-gradient(180deg,var(--accent-2),var(--accent));
-    border-radius:0 var(--r-lg) var(--r-lg) 0;
-    box-shadow:0 0 20px var(--accent-glow)}
-  .cat-card:hover{border-color:var(--border-hi)}
-  .cat-head{display:flex;justify-content:space-between;align-items:center;gap:10px;
-    margin-bottom:12px;flex-wrap:wrap;cursor:pointer;transition:.2s}
-  .cat-head:hover{opacity:.9}
-  .cat-head .cat-title{display:flex;align-items:center;gap:12px;flex:1;min-width:180px}
-  .cat-head .cat-title img{width:48px;height:48px;object-fit:contain;background:rgba(255,255,255,.03);
-    border-radius:12px;padding:4px;border:1px solid var(--border);transition:.3s}
-  .cat-card:hover .cat-head .cat-title img{border-color:var(--accent);
-    box-shadow:0 0 20px var(--accent-glow)}
-  .cat-head .cat-title .info{display:flex;flex-direction:column;gap:3px;flex:1}
-  .cat-head .cat-title .info .nm{color:#fff;font-weight:800;font-size:14.5px;letter-spacing:-.2px}
-  .cat-head .cat-title .info .cnt{color:var(--text-dim);font-size:11.5px;font-weight:600}
-  .expand-arrow{color:var(--accent-2);font-size:14px;font-weight:900;transition:.3s;
-    width:28px;height:28px;display:flex;align-items:center;justify-content:center;
-    background:rgba(225,29,46,.12);border-radius:50%;
-    border:1px solid rgba(225,29,46,.25)}
-  .cat-card.collapsed .expand-arrow{transform:rotate(-90deg)}
-  .cat-card.collapsed .cat-body{display:none}
-  .cat-body{padding-top:14px;border-top:1px dashed var(--border)}
-  .ch-card{background:rgba(0,0,0,.25);padding:14px;border-radius:var(--r);
-    margin-bottom:12px;border:1px solid var(--border);
-    transition:.3s;display:grid;grid-template-columns:76px 1fr;gap:14px;
-    position:relative;overflow:hidden}
-  .ch-card::before{content:'';position:absolute;top:0;right:0;bottom:0;width:3px;
-    background:#4a4a56;border-radius:0 var(--r) var(--r) 0;transition:.3s}
-  .ch-card.live::before{background:linear-gradient(180deg,#4ade80,#22c55e);
-    box-shadow:0 0 20px var(--green-glow)}
-  .ch-card.has-token::before{background:linear-gradient(180deg,#60a5fa,#3b82f6);
-    box-shadow:0 0 20px var(--blue-glow)}
-  .ch-card.live{background:linear-gradient(135deg,rgba(34,197,94,.06),rgba(0,0,0,.25))}
-  .ch-card:hover{border-color:var(--border-hi)}
-  .ch-card .logo-preview{width:76px;height:76px;object-fit:contain;background:rgba(255,255,255,.03);
-    border-radius:14px;padding:6px;border:1px solid var(--border)}
-  .ch-card .ch-body{display:flex;flex-direction:column;gap:9px}
-  .ch-card .ch-head{display:flex;justify-content:space-between;
-    align-items:center;gap:8px;flex-wrap:wrap}
-  .badge{background:linear-gradient(135deg,var(--accent),#a30f1f);
-    color:#fff;padding:4px 12px;border-radius:100px;
-    font-size:10.5px;font-weight:700;letter-spacing:.2px;
-    box-shadow:0 4px 12px rgba(225,29,46,.25)}
-  .badge.live{background:linear-gradient(135deg,#4ade80,#16a34a);
-    box-shadow:0 4px 12px var(--green-glow);
-    display:inline-flex;align-items:center;gap:5px}
-  .badge.live::before{content:'';width:6px;height:6px;border-radius:50%;background:#fff;
-    animation:blink 1.2s infinite}
-  @keyframes blink{50%{opacity:.35}}
-  .badge.off{background:#2a2a34;color:#8a8a9a;box-shadow:none}
-  .badge.tok{background:linear-gradient(135deg,#60a5fa,#2563eb);
-    box-shadow:0 4px 12px var(--blue-glow)}
+  .info-box::before{
+    content:'💡';font-size:16px;flex-shrink:0;line-height:1.4}
+
+  .top-actions{display:flex;gap:10px;margin-bottom:18px;
+    flex-wrap:wrap;position:relative;z-index:1}
+  .top-actions button{flex:1;min-width:130px}
+
+  /* ================= Field ================= */
   .field{display:flex;flex-direction:column;gap:5px}
-  .field label{font-size:10.5px;color:var(--text-dim);font-weight:600;letter-spacing:.2px}
-  .field input,.field select{width:100%;background:rgba(0,0,0,.4);
+  .field label{font-size:10.5px;color:var(--text-dim);font-weight:600;
+    letter-spacing:.2px}
+  .field input, .field textarea{
+    width:100%;background:rgba(0,0,0,.4);
     border:1px solid var(--border);color:#fff;
-    padding:10px 12px;border-radius:var(--r-sm);
+    padding:11px 13px;border-radius:var(--r-sm);
     font-size:12.5px;font-family:'Cairo',sans-serif;
     transition:.25s;font-weight:500}
   .field input::placeholder{color:var(--text-mute)}
-  .field input:focus,.field select:focus{outline:none;border-color:var(--accent);
+  .field input:focus, .field textarea:focus{
+    outline:none;border-color:var(--accent);
     background:rgba(225,29,46,.04);
     box-shadow:0 0 0 3px rgba(225,29,46,.12),0 0 20px var(--accent-glow)}
   .field input[type="url"]{direction:ltr;font-size:11.5px;text-align:left}
-  .field select{cursor:pointer;appearance:none;
-    background-image:linear-gradient(45deg,transparent 50%,var(--text-dim) 50%),linear-gradient(135deg,var(--text-dim) 50%,transparent 50%);
-    background-position:calc(0% + 12px) 50%,calc(0% + 18px) 50%;
-    background-size:6px 6px,6px 6px;background-repeat:no-repeat;
-    padding-left:32px}
-  .field select option{background:#1a1a22;color:#fff}
+  .field.mono input{font-family:ui-monospace,Menlo,monospace;letter-spacing:1px;direction:ltr;text-align:center}
+
   .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .token-box{background:rgba(59,130,246,.08);
-    border:1px solid rgba(59,130,246,.25);
-    padding:9px 11px;border-radius:var(--r-sm);
-    font-size:10.5px;color:#93b8f5;word-break:break-all;
-    direction:ltr;text-align:left;font-family:ui-monospace,Menlo,monospace;
-    line-height:1.5}
-  .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
-  .btn{background:linear-gradient(180deg,var(--accent-2),var(--accent));
-    color:#fff;border:none;padding:10px 18px;border-radius:100px;
+
+  /* ================= Buttons ================= */
+  .btn{
+    background:linear-gradient(180deg,var(--accent-2),var(--accent));
+    color:#fff;border:none;padding:11px 18px;border-radius:100px;
     font-weight:700;cursor:pointer;font-size:12.5px;
     font-family:'Cairo',sans-serif;transition:.25s;
     display:inline-flex;align-items:center;justify-content:center;gap:6px;
@@ -188,20 +189,32 @@
   .btn:hover{transform:translateY(-1px);
     box-shadow:0 8px 24px rgba(225,29,46,.45),inset 0 1px 0 rgba(255,255,255,.2)}
   .btn:active{transform:translateY(0)}
-  .btn.play{background:linear-gradient(180deg,#4ade80,#16a34a);
+  .btn.play{
+    background:linear-gradient(180deg,#4ade80,#16a34a);
     box-shadow:0 4px 14px var(--green-glow),inset 0 1px 0 rgba(255,255,255,.2)}
-  .btn.stop{background:linear-gradient(180deg,#f87171,#dc2626);
+  .btn.play:hover{box-shadow:0 8px 24px var(--green-glow),inset 0 1px 0 rgba(255,255,255,.25)}
+  .btn.stop{
+    background:linear-gradient(180deg,#f87171,#dc2626);
     box-shadow:0 4px 14px rgba(220,38,38,.35),inset 0 1px 0 rgba(255,255,255,.2)}
-  .btn.danger{background:linear-gradient(180deg,#a30f1f,#6b0a15);
+  .btn.danger{
+    background:linear-gradient(180deg,#a30f1f,#6b0a15);
     box-shadow:0 4px 14px rgba(107,10,21,.4),inset 0 1px 0 rgba(255,255,255,.1)}
-  .btn.blue{background:linear-gradient(180deg,#60a5fa,#2563eb);
+  .btn.blue{
+    background:linear-gradient(180deg,#60a5fa,#2563eb);
     box-shadow:0 4px 14px var(--blue-glow),inset 0 1px 0 rgba(255,255,255,.2)}
-  .btn.ghost{background:rgba(255,255,255,.05);color:#fff;
+  .btn.purple{
+    background:linear-gradient(180deg,#a78bfa,#7c3aed);
+    box-shadow:0 4px 14px var(--purple-glow),inset 0 1px 0 rgba(255,255,255,.2)}
+  .btn.ghost{
+    background:rgba(255,255,255,.05);color:#fff;
     border:1px solid var(--border);box-shadow:none}
   .btn.ghost:hover{background:rgba(255,255,255,.09);border-color:var(--border-hi);
     box-shadow:0 4px 14px rgba(0,0,0,.3)}
-  .btn.small{padding:7px 12px;font-size:11.5px}
-  .add-btn{width:100%;background:linear-gradient(180deg,#4ade80,#16a34a);
+  .btn.small{padding:8px 14px;font-size:11.5px}
+  .btn.block{width:100%}
+
+  .add-btn{
+    width:100%;background:linear-gradient(180deg,#4ade80,#16a34a);
     color:#fff;border:none;padding:15px;border-radius:var(--r);
     font-weight:800;font-size:14px;cursor:pointer;
     font-family:'Cairo',sans-serif;margin-top:8px;transition:.25s;
@@ -209,1069 +222,57 @@
     letter-spacing:.2px}
   .add-btn:hover{transform:translateY(-2px);
     box-shadow:0 12px 32px var(--green-glow),inset 0 1px 0 rgba(255,255,255,.25)}
-  .add-btn.sub{background:linear-gradient(180deg,#60a5fa,#2563eb);
+  .add-btn.sub{
+    background:linear-gradient(180deg,#60a5fa,#2563eb);
     box-shadow:0 6px 18px var(--blue-glow),inset 0 1px 0 rgba(255,255,255,.2);
     padding:12px;font-size:12.5px;margin-top:8px}
-  .status{padding:12px 16px;border-radius:var(--r);font-size:12.5px;
-    margin-top:12px;text-align:center;font-weight:700;display:none}
-  .status.ok{background:rgba(34,197,94,.1);color:#4ade80;
-    border:1px solid rgba(34,197,94,.3);display:block}
-  .status.err{background:rgba(239,68,68,.1);color:#f87171;
-    border:1px solid rgba(239,68,68,.3);display:block}
-  .status.info{background:rgba(59,130,246,.1);color:#60a5fa;
-    border:1px solid rgba(59,130,246,.3);display:block}
-  #loading{position:fixed;inset:0;background:#0a0a0f;z-index:9999;
-    display:flex;flex-direction:column;justify-content:center;align-items:center;
-    gap:22px;transition:opacity .5s}
-  #loading.hide{opacity:0;pointer-events:none}
-  .spinner{width:52px;height:52px;
-    border:3px solid rgba(225,29,46,.15);
-    border-top-color:var(--accent-2);border-radius:50%;
-    animation:spin 1s linear infinite;box-shadow:0 0 30px var(--accent-glow)}
-  @keyframes spin{to{transform:rotate(360deg)}}
-  .loading-txt{color:var(--accent-2);font-weight:700;font-size:14px;
-    letter-spacing:.3px;animation:pulse2 1.4s ease-in-out infinite}
-  @keyframes pulse2{50%{opacity:.5}}
-  .save-indicator{position:fixed;bottom:20px;left:50%;
-    transform:translateX(-50%) translateY(10px);
-    background:linear-gradient(180deg,#4ade80,#16a34a);color:#fff;
-    padding:11px 26px;border-radius:100px;font-weight:800;font-size:13px;
-    box-shadow:0 12px 32px var(--green-glow),inset 0 1px 0 rgba(255,255,255,.25);
-    opacity:0;transition:.35s cubic-bezier(.34,1.56,.64,1);
-    pointer-events:none;z-index:99999}
-  .save-indicator.show{opacity:1;transform:translateX(-50%) translateY(0)}
-  #testModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);
-    z-index:100000;justify-content:center;align-items:center;
-    flex-direction:column;padding:20px;backdrop-filter:blur(5px)}
-  .test-modal-content{width:100%;max-width:800px;background:#12121a;
-    border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,0.1);
-    padding:20px;box-shadow:0 20px 60px rgba(0,0,0,0.8)}
-  .test-modal-content h3{color:#fff;margin-bottom:15px;font-size:16px}
-  .test-modal-content video{width:100%;aspect-ratio:16/9;background:#000;
-    border-radius:8px;border:1px solid var(--border)}
-  .test-modal-actions{margin-top:15px;text-align:right}
-  .code-gen-row{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:12px}
-  .code-gen-row .field input,.code-gen-row .field select{text-align:center;font-weight:800}
-  .code-gen-row .field select{text-align:right;font-weight:600}
-  .codes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
-    gap:10px;margin-top:8px}
-  .code-card{background:linear-gradient(180deg,rgba(34,197,94,.08),rgba(34,197,94,.02));
-    border:1px solid rgba(34,197,94,.28);border-radius:var(--r);
-    padding:12px 14px;position:relative;overflow:hidden;transition:.3s}
-  .code-card.off{opacity:.55;
-    background:linear-gradient(180deg,rgba(120,120,130,.08),rgba(0,0,0,.2));
-    border-color:var(--border)}
-  .code-card::after{content:'';position:absolute;top:0;right:0;bottom:0;width:3px;
-    background:linear-gradient(180deg,#4ade80,#16a34a);
-    border-radius:0 var(--r) var(--r) 0;
-    box-shadow:0 0 20px var(--green-glow)}
-  .code-card.off::after{background:#4a4a56;box-shadow:none}
-  .code-card .cc-code{font-family:ui-monospace,Menlo,monospace;font-size:17px;
-    font-weight:800;color:#4ade80;letter-spacing:2px;direction:ltr;
-    text-align:left;margin-bottom:8px;cursor:pointer;transition:.2s;
-    display:flex;align-items:center;justify-content:space-between;gap:6px}
-  .code-card.off .cc-code{color:#8a8a9a}
-  .code-card .cc-code:active{transform:scale(.98);color:#fff}
-  .code-card .cc-code .copy-ic{width:18px;height:18px;fill:currentColor;
-    opacity:.5;flex-shrink:0}
-  .code-card .cc-meta{display:flex;gap:8px;flex-wrap:wrap;font-size:10.5px;
-    color:var(--text-dim);font-weight:600}
-  .code-card .cc-meta .chip{display:inline-flex;align-items:center;gap:3px;
-    padding:3px 8px;border-radius:100px;
-    background:rgba(255,255,255,.06);border:1px solid var(--border)}
-  .code-card .cc-actions{margin-top:10px;display:flex;gap:6px;flex-wrap:wrap}
-
-  /* ============ شاشة تسجيل الدخول للأدمن ============ */
-  #adminLogin{position:fixed;inset:0;z-index:999998;
-    display:flex;justify-content:center;align-items:center;padding:22px;
-    background:
-      radial-gradient(ellipse at 25% 15%, rgba(225,29,46,.30), transparent 55%),
-      radial-gradient(ellipse at 75% 85%, rgba(139,92,246,.25), transparent 55%),
-      #05050a;transition:opacity .4s}
-  #adminLogin.hide{opacity:0;pointer-events:none}
-  .login-card{position:relative;z-index:2;width:100%;max-width:380px;
-    background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.025));
-    border:1px solid rgba(255,255,255,.10);border-radius:28px;
-    padding:36px 24px 26px;text-align:center;
-    backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
-    box-shadow:0 25px 60px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.12);
-    animation:lockCardIn .7s cubic-bezier(.22,1,.36,1) both}
-  @keyframes lockCardIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
-  .login-icon{width:80px;height:80px;margin:0 auto 16px;border-radius:50%;
-    background:linear-gradient(180deg,var(--accent-2),var(--accent));
-    display:flex;justify-content:center;align-items:center;
-    box-shadow:0 0 30px var(--accent-glow),inset 0 1px 0 rgba(255,255,255,.3)}
-  .login-icon svg{width:38px;height:38px;fill:#fff}
-  .login-title{font-size:22px;font-weight:900;letter-spacing:-.4px;color:#fff;
-    margin-bottom:6px;line-height:1.1}
-  .login-sub{color:rgba(255,255,255,.6);font-size:12.5px;font-weight:600;
-    margin-bottom:22px}
-  .login-input{width:100%;background:rgba(0,0,0,.45);
-    border:1.5px solid rgba(255,255,255,.10);color:#fff;
-    padding:15px 16px;border-radius:14px;font-size:15px;font-weight:800;
-    text-align:center;font-family:ui-monospace,Menlo,'Cairo',monospace;
-    direction:ltr;letter-spacing:1.5px;outline:none;transition:.25s;
-    margin-bottom:12px}
-  .login-input:focus{border-color:var(--accent-2);background:rgba(225,29,46,.06)}
-  .login-input.err{border-color:#ef4444;animation:shake .5s}
-  @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}
-    40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
-  .login-btn{width:100%;padding:15px;border-radius:14px;border:none;
-    background:linear-gradient(180deg,#ff3b52,#e11d2e);color:#fff;
-    font-size:14.5px;font-weight:800;font-family:'Cairo',sans-serif;
-    cursor:pointer;transition:transform .15s;
-    box-shadow:0 8px 20px var(--accent-glow),inset 0 1px 0 rgba(255,255,255,.22);
-    display:flex;align-items:center;justify-content:center;gap:8px}
-  .login-btn:active{transform:scale(.97)}
-  .login-btn svg{width:17px;height:17px;fill:#fff}
-  .login-msg{margin-top:14px;font-size:12.5px;font-weight:700;
-    min-height:20px;line-height:1.5;color:#f87171}
-
-  @media(max-width:600px){
-    body{padding:14px}
-    h1{font-size:20px}
-    .ch-card{grid-template-columns:1fr}
-    .ch-card .logo-preview{margin:0 auto}
-    .row2{grid-template-columns:1fr}
-    .code-gen-row{grid-template-columns:1fr 1fr}
-  }
-</style>
-</head>
-<body>
-
-<!-- ============ شاشة تسجيل دخول الأدمن ============ -->
-<div id="adminLogin">
-  <div class="login-card">
-    <div class="login-icon">
-      <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>
-    </div>
-    <div class="login-title">لوحة تحكم الأدمن</div>
-    <div class="login-sub">أدخل كود الأدمن للدخول</div>
-    <input type="password" id="adminCode" class="login-input"
-           placeholder="• • • • • • • •" autocomplete="off" spellcheck="false">
-    <button class="login-btn" onclick="submitAdminLogin()">
-      <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm3 12c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>
-      <span>دخول</span>
-    </button>
-    <div class="login-msg" id="loginMsg"></div>
-  </div>
-</div>
-
-<div id="loading">
-  <div class="spinner"></div>
-  <div class="loading-txt">جاري التحميل...</div>
-</div>
-
-<h1>لوحة تحكم Alankaboot Sport</h1>
-<div class="sub">أضف أقسام → ضيف قنوات جوه كل قسم → تظهر للمستخدمين تلقائياً</div>
-<div class="conn offline" id="connStatus">جاري الاتصال...</div>
-
-<div class="stats">
-  <div class="stat-card"><div class="num" id="viewerCount">0</div><div class="lbl">مشاهدين الآن</div></div>
-  <div class="stat-card live"><div class="num" id="liveCount">0</div><div class="lbl">قنوات مباشرة</div></div>
-  <div class="stat-card"><div class="num" id="chCount">0</div><div class="lbl">إجمالي القنوات</div></div>
-</div>
-
-<div class="top-actions">
-  <button class="btn ghost" onclick="reloadFromServer()">🔄 إعادة تحميل</button>
-  <button class="btn ghost" onclick="stopAll()">⏹ إيقاف كل البث</button>
-  <button class="btn ghost" onclick="resetAll()">↺ مسح الكل</button>
-</div>
-
-<div class="section">
-  <h2>🎫 أكواد التفعيل</h2>
-  <div class="info-box">
-    <div>
-      <b>طريقة الاستخدام:</b> حدد العدد والمدة (دقائق / ساعات / أيام) واضغط "توليد" → هيظهر الجدول أسفل → اضغط على الكود لنسخه.
-      <br><br>
-      <b>ملاحظة:</b> الكود يبدأ العد من لحظة التفعيل بالوقت الحقيقي (الساعة بتاعة الموبايل) حتى لو المستخدم قفل التطبيق. لما تخلص المدة، يتقفل تلقائياً. ولو عطّلت أو حذفت الكود، المستخدمين الفعّالين به يتم طردهم فوراً.
-    </div>
-  </div>
-
-  <div class="stats" style="margin-bottom:14px">
-    <div class="stat-card"><div class="num" id="codeTotal">0</div><div class="lbl">إجمالي الأكواد</div></div>
-    <div class="stat-card live"><div class="num" id="codeActive">0</div><div class="lbl">أكواد فعّالة</div></div>
-    <div class="stat-card"><div class="num" id="codeDisabled">0</div><div class="lbl">أكواد معطّلة</div></div>
-  </div>
-
-  <div class="code-gen-row">
-    <div class="field">
-      <label>عدد الأكواد</label>
-      <input type="number" id="genCount" value="1" min="1" max="100">
-    </div>
-    <div class="field">
-      <label>المدة</label>
-      <input type="number" id="genDuration" value="24" min="1" max="99999">
-    </div>
-    <div class="field">
-      <label>الوحدة</label>
-      <select id="genUnit">
-        <option value="min">دقائق</option>
-        <option value="hour" selected>ساعات</option>
-        <option value="day">أيام</option>
-      </select>
-    </div>
-    <div class="field">
-      <label>بادئة (اختياري)</label>
-      <input type="text" id="genPrefix" placeholder="VIP" maxlength="4" style="text-transform:uppercase">
-    </div>
-  </div>
-
-  <button class="add-btn" onclick="generateCodes()">🎫 توليد الأكواد</button>
-  <button class="add-btn sub" onclick="deleteAllCodes()">🗑 حذف كل الأكواد</button>
-
-  <div id="codesList" class="codes-grid" style="margin-top:16px"></div>
-  <div class="status" id="codesStatus"></div>
-</div>
-
-<div class="section">
-  <h2>الأقسام والقنوات</h2>
-  <div class="info-box">
-    <div>
-      <b>الطريقة:</b> ضيف قسم (مثل beIN Sports) → جواه ضيف القنوات (beIN 1, 2, 3...) → اضغط "🔍 تجربة" للتأكد من أن الرابط يعمل → ثم "🔐 توكن" لتوليد الرابط المشفر → وأخيراً "▶ تشغيل مباشر".
-      <br><br>
-      <b>ملاحظة هامة:</b> عند الضغط على "تشغيل" لأي قناة، سيتم تحويل جميع المشاهدين إلى هذه القناة تلقائياً.
-    </div>
-  </div>
-  <div id="catsList"></div>
-  <button class="add-btn" onclick="addCategory()">➕ إضافة قسم جديد</button>
-  <div class="status" id="statusMsg"></div>
-</div>
-
-<div class="save-indicator" id="saveIndicator">✓ تم الحفظ</div>
-
-<div id="testModal">
-  <div class="test-modal-content">
-    <h3>🔍 معاينة الرابط قبل التشفير</h3>
-    <video id="testVideo" controls playsinline></video>
-    <div class="test-modal-actions">
-      <button class="btn ghost" onclick="closeTestModal()">إغلاق</button>
-    </div>
-  </div>
-</div>
-
-<script>
-  const PROXY_BASE = 'https://alankaboot-proxy.kamlnot61.workers.dev';
-  const ADMIN_KEY  = 'ANKABOOT_ADMIN_2026_CHANGE_ME';
-  const ADMIN_LOGIN_CODE = 'ANKABOOT_ADMIN_2026_CHANGE_ME';
-
-  const BROKER = 'wss://broker.emqx.io:8084/mqtt';
-  const TOPIC_CMD   = 'kwtspta_9f3a2b1c/cmd';
-  const TOPIC_DATA  = 'kwtspta_9f3a2b1c/data';
-  const TOPIC_HB    = 'kwtspta_9f3a2b1c/hb';
-  const TOPIC_CODES = 'kwtspta_9f3a2b1c/codes';
-
-  /* ============ تسجيل دخول الأدمن ============ */
-  let isAdminAuthed = false;
-  let adminClient = null;
-
-  function submitAdminLogin(){
-    const v = document.getElementById('adminCode').value.trim();
-    const msg = document.getElementById('loginMsg');
-    const inp = document.getElementById('adminCode');
-
-    if(v === ADMIN_LOGIN_CODE){
-      isAdminAuthed = true;
-      msg.style.color = '#4ade80';
-      msg.textContent = '✓ تم التحقق، جاري الدخول...';
-      setTimeout(()=>{
-        document.getElementById('adminLogin').classList.add('hide');
-        setTimeout(()=>{
-          document.getElementById('adminLogin').style.display = 'none';
-          initAdmin();
-        }, 400);
-      }, 400);
-    } else {
-      inp.classList.add('err');
-      msg.textContent = '❌ كود غير صحيح';
-      setTimeout(()=> inp.classList.remove('err'), 700);
-    }
-  }
-
-  document.addEventListener('DOMContentLoaded', ()=>{
-    const inp = document.getElementById('adminCode');
-    if(inp){
-      inp.addEventListener('keypress', e=>{
-        if(e.key === 'Enter') submitAdminLogin();
-      });
-    }
-  });
-
-  /* ============ باقي منطق الأدمن ============ */
-  const connStatus = document.getElementById('connStatus');
-  const viewers = new Map();
-  let categories = [];
-  let isLoaded = false;
-  let publishTimeout = null;
-  let testHls = null;
-  let activationCodes = [];
-
-  function initAdmin(){
-    adminClient = mqtt.connect(BROKER, {
-      clientId: 'admin_' + Math.random().toString(16).slice(2,10)
-    });
-
-    adminClient.on('connect', () => {
-      setConn('online', '✅ متصل');
-      adminClient.subscribe(TOPIC_HB);
-      adminClient.subscribe(TOPIC_DATA);
-      adminClient.subscribe(TOPIC_CODES);
-      setTimeout(() => {
-        if (!isLoaded) {
-          loadLocal();
-          isLoaded = true;
-          hideLoading();
-          render();
-          renderCodes();
-          publishData();
-          publishCodes();
-        }
-      }, 1500);
-    });
-
-    adminClient.on('error', () => {
-      setConn('offline', '❌ فشل الاتصال');
-      if (!isLoaded) {
-        loadLocal();
-        isLoaded = true;
-        hideLoading();
-        render();
-        renderCodes();
-      }
-    });
-
-    adminClient.on('message', (topic, message) => {
-      try {
-        if (topic === TOPIC_HB) {
-          const d = JSON.parse(message.toString());
-          viewers.set(d.id, Date.now());
-          return;
-        }
-        if (topic === TOPIC_DATA && !isLoaded) {
-          const data = JSON.parse(message.toString());
-          if (Array.isArray(data)) {
-            categories = data;
-            isLoaded = true;
-            hideLoading();
-            render();
-          }
-        }
-        if (topic === TOPIC_CODES) {
-          const data = JSON.parse(message.toString());
-          if (Array.isArray(data)) {
-            const local = localStorage.getItem('activation_codes_v2');
-            if (!local || data.length > 0) {
-              activationCodes = data;
-              localStorage.setItem('activation_codes_v2', JSON.stringify(activationCodes));
-            }
-            renderCodes();
-          }
-        }
-      } catch (e) {}
-    });
-
-    setInterval(() => {
-      const now = Date.now();
-      for (const [id, t] of viewers) if (now - t > 15000) viewers.delete(id);
-      document.getElementById('viewerCount').textContent = viewers.size;
-    }, 5000);
-
-    window.addEventListener('beforeunload', () => {
-      if (categories.length && adminClient) {
-        try { adminClient.publish(TOPIC_DATA, JSON.stringify(categories), { retain: true }); } catch (e) {}
-      }
-      if (activationCodes.length && adminClient) {
-        try { adminClient.publish(TOPIC_CODES, JSON.stringify(activationCodes), { retain: true }); } catch (e) {}
-      }
-    });
-  }
-
-  function setConn(state, text) {
-    connStatus.className = 'conn ' + state;
-    connStatus.textContent = text;
-  }
-
-  function loadLocal() {
-    const saved = localStorage.getItem('cats_data_v1');
-    categories = saved ? (JSON.parse(saved) || []) : [];
-    const savedCodes = localStorage.getItem('activation_codes_v2') || localStorage.getItem('activation_codes_v1');
-    activationCodes = savedCodes ? (JSON.parse(savedCodes) || []) : [];
-  }
-
-  function hideLoading() {
-    const l = document.getElementById('loading');
-    l.classList.add('hide');
-    setTimeout(() => l.style.display = 'none', 500);
-  }
-
-  function render() {
-    const c = document.getElementById('catsList');
-    c.innerHTML = '';
-
-    if (!categories.length) {
-      c.innerHTML = '<div style="text-align:center;padding:40px;color:#8a8a9a;font-size:13px;line-height:1.8">لا توجد أقسام. اضغط "➕ إضافة قسم" للبدء.</div>';
-      document.getElementById('chCount').textContent = 0;
-      document.getElementById('liveCount').textContent = 0;
-      return;
-    }
-
-    let totalCh = 0, totalLive = 0;
-
-    categories.forEach((cat, ci) => {
-      const chCount = cat.channels ? cat.channels.length : 0;
-      const collapsed = cat.collapsed ? 'collapsed' : '';
-
-      const catDiv = document.createElement('div');
-      catDiv.className = 'cat-card ' + collapsed;
-
-      catDiv.innerHTML = `
-        <div class="cat-head" onclick="toggleCat(${ci}, event)">
-          <div class="cat-title">
-            <img src="${escapeAttr(cat.logo || '')}" onerror="this.style.opacity=.2">
-            <div class="info">
-              <div class="nm">${escapeHtml(cat.name || 'قسم')}</div>
-              <div class="cnt">${chCount} قناة</div>
-            </div>
-          </div>
-          <span class="expand-arrow">▼</span>
-          <button class="btn danger small" onclick="removeCategory(${ci}, event)">🗑 حذف القسم</button>
-        </div>
-
-        <div class="cat-body">
-          <div class="row2">
-            <div class="field">
-              <label>اسم القسم</label>
-              <input value="${escapeAttr(cat.name || '')}" oninput="updCat(${ci},'name',this.value)" onchange="saveNow()" placeholder="beIN Sports">
-            </div>
-            <div class="field">
-              <label>رابط لوجو القسم</label>
-              <input type="url" value="${escapeAttr(cat.logo || '')}" oninput="updCat(${ci},'logo',this.value)" onchange="saveNow()" placeholder="https://...png">
-            </div>
-          </div>
-
-          <div style="margin-top:16px">
-            ${(cat.channels || []).map((ch, chi) => renderChannel(ci, chi, ch)).join('')}
-          </div>
-
-          <button class="add-btn sub" onclick="addChannel(${ci})">➕ إضافة قناة في "${escapeHtml(cat.name || 'القسم')}"</button>
-        </div>
-      `;
-
-      c.appendChild(catDiv);
-
-      totalCh += chCount;
-      totalLive += (cat.channels || []).filter(x => x.live).length;
-    });
-
-    document.getElementById('chCount').textContent = totalCh;
-    document.getElementById('liveCount').textContent = totalLive;
-  }
-
-  function renderChannel(ci, chi, ch) {
-    const hasToken = !!ch.token;
-    const badge = ch.live ? '<span class="badge live">مباشر</span>' : '<span class="badge off">متوقف</span>';
-    const tokBadge = hasToken ? '<span class="badge tok">🔐 توكن</span>' : '';
-
-    return `
-      <div class="ch-card ${ch.live ? 'live' : ''} ${hasToken ? 'has-token' : ''}">
-        <img class="logo-preview" src="${escapeAttr(ch.logo || '')}" onerror="this.style.opacity=.2">
-        <div class="ch-body">
-          <div class="ch-head">
-            <span class="badge">${escapeHtml(ch.name || 'قناة')}</span>
-            <span style="display:flex;gap:6px;flex-wrap:wrap">${tokBadge}${badge}</span>
-          </div>
-
-          <div class="row2">
-            <div class="field">
-              <label>اسم القناة</label>
-              <input value="${escapeAttr(ch.name || '')}" oninput="updCh(${ci},${chi},'name',this.value)" onchange="saveNow()" placeholder="beIN Sports 1">
-            </div>
-            <div class="field">
-              <label>رابط اللوجو</label>
-              <input type="url" value="${escapeAttr(ch.logo || '')}" oninput="updCh(${ci},${chi},'logo',this.value)" onchange="saveNow()" placeholder="https://...png">
-            </div>
-          </div>
-
-          <div class="field">
-            <label>🔒 رابط البث (m3u8) — للأدمن فقط</label>
-            <input type="url" value="${escapeAttr(ch.url || '')}" oninput="updCh(${ci},${chi},'url',this.value)" onchange="saveNow()" placeholder="https://example.com/stream.m3u8">
-          </div>
-
-          ${hasToken ? `<div class="token-box">${escapeHtml(ch.token)}</div>` : ''}
-
-          <div class="actions">
-            <button class="btn blue small" onclick="testLink(${ci},${chi})">🔍 تجربة</button>
-            ${ch.live
-              ? `<button class="btn stop small" onclick="setLive(${ci},${chi},false)">■ إيقاف</button>
-                 <button class="btn play small" onclick="restart(${ci},${chi})">🔄 إعادة</button>`
-              : `<button class="btn play small" onclick="setLive(${ci},${chi},true)">▶ تشغيل</button>`
-            }
-            <button class="btn blue small" onclick="genToken(${ci},${chi})">🔐 توكن</button>
-            <button class="btn danger small" onclick="removeChannel(${ci},${chi})">🗑</button>
-          </div>
-        </div>
-      </div>
-    `;
-  }
-
-  function escapeHtml(s) {
-    return String(s).replace(/[&<>"']/g, ch => ({
-      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-    }[ch]));
-  }
-  function escapeAttr(s) { return escapeHtml(s); }
-
-  function toggleCat(ci, e) {
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
-    categories[ci].collapsed = !categories[ci].collapsed;
-    render();
-    localStorage.setItem('cats_data_v1', JSON.stringify(categories));
-  }
-
-  function updCat(ci, key, value) {
-    categories[ci][key] = value;
-    localStorage.setItem('cats_data_v1', JSON.stringify(categories));
-    scheduleSave();
-  }
-  function updCh(ci, chi, key, value) {
-    categories[ci].channels[chi][key] = value;
-    localStorage.setItem('cats_data_v1', JSON.stringify(categories));
-    scheduleSave();
-  }
-
-  function saveNow() {
-    localStorage.setItem('cats_data_v1', JSON.stringify(categories));
-    publishData();
-  }
-  function scheduleSave() {
-    clearTimeout(publishTimeout);
-    publishTimeout = setTimeout(saveNow, 800);
-  }
-
-  function publishData() {
-    try {
-      setConn('saving', '💾 جاري الحفظ...');
-      adminClient.publish(TOPIC_DATA, JSON.stringify(categories), { retain: true }, () => {
-        setConn('online', '✅ متصل');
-        showSaved();
-      });
-    } catch (e) {}
-  }
-
-  function showSaved() {
-    const s = document.getElementById('saveIndicator');
-    s.classList.add('show');
-    setTimeout(() => s.classList.remove('show'), 1500);
-  }
-
-  function addCategory() {
-    categories.push({
-      id: 'cat_' + Date.now() + '_' + Math.random().toString(36).slice(2,5),
-      name: 'قسم جديد',
-      logo: '',
-      collapsed: false,
-      channels: []
-    });
-    render();
-    saveNow();
-    showStatus('✓ تمت إضافة القسم', 'ok');
-  }
-
-  function removeCategory(ci, e) {
-    e.stopPropagation();
-    if (!confirm('متأكد من حذف القسم "' + (categories[ci].name || '') + '" وكل قنواته؟')) return;
-    (categories[ci].channels || []).forEach(ch => {
-      if (ch.live) adminClient.publish(TOPIC_CMD, JSON.stringify({ action: 'stop', channelId: ch.id }));
-    });
-    categories.splice(ci, 1);
-    render();
-    saveNow();
-    showStatus('✓ تم حذف القسم', 'ok');
-  }
-
-  function addChannel(ci) {
-    if (!categories[ci].channels) categories[ci].channels = [];
-    categories[ci].channels.push({
-      id: 'ch_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
-      name: 'قناة جديدة',
-      logo: '',
-      url: '',
-      token: '',
-      _tokenUrl: '',
-      live: false
-    });
-    render();
-    saveNow();
-    showStatus('✓ تمت إضافة القناة', 'ok');
-  }
-
-  function removeChannel(ci, chi) {
-    const ch = categories[ci].channels[chi];
-    if (!confirm('حذف "' + (ch.name || '') + '"؟')) return;
-    if (ch.live) adminClient.publish(TOPIC_CMD, JSON.stringify({ action: 'stop', channelId: ch.id }));
-    categories[ci].channels.splice(chi, 1);
-    render();
-    saveNow();
-    showStatus('✓ تم الحذف', 'ok');
-  }
-
-  function testLink(ci, chi) {
-    const ch = categories[ci].channels[chi];
-    const url = (ch.url || '').trim();
-    if (!url) { showStatus('❌ اكتب رابط البث الأول', 'err'); return; }
-
-    const modal = document.getElementById('testModal');
-    const video = document.getElementById('testVideo');
-    modal.style.display = 'flex';
-
-    if (testHls) { testHls.destroy(); testHls = null; }
-    video.pause(); video.removeAttribute('src'); video.load();
-
-    if (Hls.isSupported()) {
-      testHls = new Hls({ lowLatencyMode: true, maxBufferLength: 30 });
-      testHls.loadSource(url);
-      testHls.attachMedia(video);
-      testHls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(e => console.log(e)));
-      testHls.on(Hls.Events.ERROR, (e, d) => {
-        if (d.fatal) showStatus('❌ الرابط لا يعمل أو به مشكلة: ' + d.details, 'err');
-      });
-    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-      video.src = url;
-      video.play().catch(e => console.log(e));
-    }
-  }
-
-  function closeTestModal() {
-    document.getElementById('testModal').style.display = 'none';
-    const video = document.getElementById('testVideo');
-    video.pause();
-    if (testHls) { testHls.destroy(); testHls = null; }
-    video.removeAttribute('src'); video.load();
-  }
-
-  async function genToken(ci, chi) {
-    const ch = categories[ci].channels[chi];
-    const origUrl = (ch.url || '').trim();
-    if (!origUrl) { showStatus('❌ اكتب رابط البث الأول', 'err'); return null; }
-
-    showStatus('🔐 جاري توليد التوكن...', 'info');
-    try {
-      const res = await fetch(
-        PROXY_BASE + '/token?key=' + encodeURIComponent(ADMIN_KEY) +
-        '&url=' + encodeURIComponent(origUrl)
-      );
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      const token = (await res.text()).trim();
-      if (!token || token.length < 20) throw new Error('توكن غير صالح');
-
-      ch.token = token;
-      ch._tokenUrl = origUrl;
-      saveNow();
-      render();
-      showStatus('✓ تم توليد التوكن ✅', 'ok');
-      return token;
-    } catch (err) {
-      showStatus('❌ فشل: ' + err.message, 'err');
-      return null;
-    }
-  }
-
-  async function setLive(ci, chi, status) {
-    const ch = categories[ci].channels[chi];
-
-    if (!status) {
-      ch.live = false;
-      render();
-      saveNow();
-      adminClient.publish(TOPIC_CMD, JSON.stringify({ action: 'stop', channelId: ch.id }));
-      showStatus('✓ تم الإيقاف', 'ok');
-      return;
-    }
-
-    const origUrl = (ch.url || '').trim();
-    if (!origUrl) { showStatus('❌ اكتب رابط البث الأول', 'err'); return; }
-
-    if (!ch.token || ch._tokenUrl !== origUrl) {
-      showStatus('🔐 جاري توليد التوكن...', 'info');
-      const tok = await genToken(ci, chi);
-      if (!tok) return;
-    }
-
-    ch.live = true;
-    render();
-    saveNow();
-
-    adminClient.publish(TOPIC_CMD, JSON.stringify({
-      action: 'play',
-      channelId: ch.id,
-      token: ch.token,
-      name: ch.name,
-      ts: Date.now()
-    }));
-
-    showStatus('✓ تم التشغيل، سيتم تحويل المشاهدين للقناة', 'ok');
-  }
-
-  function restart(ci, chi) {
-    const ch = categories[ci].channels[chi];
-    if (!ch.live) return;
-    adminClient.publish(TOPIC_CMD, JSON.stringify({
-      action: 'play',
-      channelId: ch.id,
-      token: ch.token,
-      name: ch.name,
-      ts: Date.now()
-    }));
-    showStatus('✓ تم إعادة التشغيل', 'ok');
-  }
-
-  function stopAll() {
-    if (!confirm('إيقاف كل البث؟')) return;
-    categories.forEach(cat => (cat.channels || []).forEach(ch => ch.live = false));
-    render();
-    saveNow();
-    adminClient.publish(TOPIC_CMD, JSON.stringify({ action: 'stopAll' }));
-    showStatus('✓ تم إيقاف الكل', 'ok');
-  }
-
-  function showStatus(msg, type) {
-    const s = document.getElementById('statusMsg');
-    s.textContent = msg;
-    s.className = 'status ' + type;
-    setTimeout(() => { s.className = 'status'; }, 4000);
-  }
-
-  function reloadFromServer() {
-    if (!confirm('إعادة تحميل من السيرفر؟')) return;
-    localStorage.removeItem('cats_data_v1');
-    location.reload();
-  }
-
-  function resetAll() {
-    if (!confirm('مسح كل الأقسام والقنوات؟')) return;
-    categories = [];
-    localStorage.setItem('cats_data_v1', JSON.stringify(categories));
-    render();
-    saveNow();
-    showStatus('✓ تم المسح', 'ok');
-  }
-
-  /* ============ 🎫 أكواد التفعيل ============ */
-  function generateCodes() {
-    const count = Math.min(100, Math.max(1, parseInt(document.getElementById('genCount').value) || 1));
-    const value = Math.min(99999, Math.max(1, parseInt(document.getElementById('genDuration').value) || 24));
-    const unit = document.getElementById('genUnit').value || 'hour';
-    const prefix = (document.getElementById('genPrefix').value || '')
-      .replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 4);
-
-    /* تحويل الوحدة إلى دقائق */
-    let durationMin;
-    if (unit === 'min')       durationMin = value;
-    else if (unit === 'day')  durationMin = value * 24 * 60;
-    else                      durationMin = value * 60;  // hour
-
-    if (!Array.isArray(activationCodes)) activationCodes = [];
-
-    const newCodes = [];
-    for (let i = 0; i < count; i++) {
-      let code;
-      let safety = 0;
-      do {
-        code = generateOneCode(prefix);
-        safety++;
-      } while (activationCodes.some(c => c.code === code) && safety < 50);
-      newCodes.push({
-        code: code,
-        durationMin: durationMin,
-        active: true,
-        createdAt: Date.now()
-      });
-    }
-
-    activationCodes = activationCodes.concat(newCodes);
-    publishCodes();
-    renderCodes();
-
-    const unitAr = unit === 'min' ? 'دقيقة' : (unit === 'day' ? 'يوم' : 'ساعة');
-    showCodesStatus(`✓ تم توليد ${count} كود بمدة ${value} ${unitAr}`, 'ok');
-  }
-
-  function generateOneCode(prefix) {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    let rand = '';
-    const total = 8 - (prefix ? prefix.length : 0);
-    for (let i = 0; i < total; i++) {
-      rand += chars[Math.floor(Math.random() * chars.length)];
-    }
-    const body = (prefix ? prefix : '') + rand;
-    return body.slice(0, 4).toUpperCase() + '-' + body.slice(4, 8).toUpperCase();
-  }
-
-  function toggleCode(index) {
-    if (!activationCodes[index]) return;
-    activationCodes[index].active = !activationCodes[index].active;
-    publishCodes();
-    renderCodes();
-    showCodesStatus(activationCodes[index].active ? '✓ تم تفعيل الكود' : '✓ تم تعطيل الكود', 'ok');
-  }
-
-  function removeCode(index) {
-    const c = activationCodes[index];
-    if (!c) return;
-    if (!confirm('حذف الكود "' + c.code + '"؟')) return;
-    activationCodes.splice(index, 1);
-    publishCodes();
-    renderCodes();
-    showCodesStatus('✓ تم حذف الكود', 'ok');
-  }
-
-  function deleteAllCodes() {
-    if (!activationCodes.length) return;
-    if (!confirm('حذف كل الأكواد (' + activationCodes.length + ')؟')) return;
-    activationCodes = [];
-    publishCodes();
-    renderCodes();
-    showCodesStatus('✓ تم حذف كل الأكواد', 'ok');
-  }
-
-  function copyCode(code) {
-    const doFallback = () => {
-      const ta = document.createElement('textarea');
-      ta.value = code;
-      document.body.appendChild(ta);
-      ta.select();
-      try { document.execCommand('copy'); } catch(e){}
-      document.body.removeChild(ta);
-      showCodesStatus('✓ تم نسخ الكود: ' + code, 'ok');
-    };
-    if (navigator.clipboard && window.isSecureContext) {
-      navigator.clipboard.writeText(code).then(() => {
-        showCodesStatus('✓ تم نسخ الكود: ' + code, 'ok');
-      }).catch(doFallback);
-    } else {
-      doFallback();
-    }
-  }
-
-  function publishCodes() {
-    try {
-      setConn('saving', '💾 جاري حفظ الأكواد...');
-      localStorage.setItem('activation_codes_v2', JSON.stringify(activationCodes));
-      adminClient.publish(TOPIC_CODES, JSON.stringify(activationCodes), { retain: true }, () => {
-        setConn('online', '✅ متصل');
-        showSaved();
-      });
-    } catch(e){}
-  }
-
-  function fmtDuration(min){
-    if(!min) return '—';
-    if(min >= 1440){
-      const d = Math.floor(min/1440);
-      const rest = min - d*1440;
-      if(rest === 0) return d + ' يوم';
-      const h = Math.floor(rest/60);
-      return d + ' يوم' + (h ? ' و' + h + ' س' : '');
-    }
-    if(min >= 60){
-      const h = Math.floor(min/60);
-      const m = min % 60;
-      return h + ' ساعة' + (m ? ' و' + m + ' د' : '');
-    }
-    return min + ' دقيقة';
-  }
-
-  function renderCodes() {
-    const wrap = document.getElementById('codesList');
-    const totalEl = document.getElementById('codeTotal');
-    const activeEl = document.getElementById('codeActive');
-    const disabledEl = document.getElementById('codeDisabled');
-
-    if (!Array.isArray(activationCodes)) activationCodes = [];
-
-    if (totalEl) totalEl.textContent = activationCodes.length;
-    if (activeEl) activeEl.textContent = activationCodes.filter(c => c.active !== false).length;
-    if (disabledEl) disabledEl.textContent = activationCodes.filter(c => c.active === false).length;
-
-    if (!wrap) return;
-
-    if (!activationCodes.length) {
-      wrap.innerHTML = '<div style="text-align:center;padding:30px;color:#8a8a9a;font-size:12.5px;grid-column:1/-1">لا توجد أكواد حالياً. اضغط "🎫 توليد الأكواد" للبدء.</div>';
-      return;
-    }
-
-    const sorted = activationCodes
-      .map((c, i) => ({ ...c, _i: i }))
-      .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-
-    wrap.innerHTML = sorted.map(c => {
-      const off = c.active === false ? ' off' : '';
-      const created = c.createdAt
-        ? new Date(c.createdAt).toLocaleString('ar-EG', { dateStyle:'short', timeStyle:'short' })
-        : '—';
-      const durMin = c.durationMin || (c.duration ? c.duration * 60 : 0);
-      return `
-        <div class="code-card${off}">
-          <div class="cc-code" onclick="copyCode('${c.code}')" title="اضغط للنسخ">
-            <span>${c.code}</span>
-            <svg class="copy-ic" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
-          </div>
-          <div class="cc-meta">
-            <span class="chip">⏱ ${fmtDuration(durMin)}</span>
-            <span class="chip">${c.active === false ? '🚫 معطّل' : '✅ فعّال'}</span>
-          </div>
-          <div class="cc-meta" style="margin-top:6px;font-size:10px;opacity:.7">
-            📅 ${created}
-          </div>
-          <div class="cc-actions">
-            <button class="btn ${c.active === false ? 'play' : 'ghost'} small" onclick="toggleCode(${c._i})">
-              ${c.active === false ? '✓ تفعيل' : '⏸ تعطيل'}
-            </button>
-            <button class="btn danger small" onclick="removeCode(${c._i})">🗑 حذف</button>
-          </div>
-        </div>
-      `;
-    }).join('');
-  }
-
-  function showCodesStatus(msg, type) {
-    const s = document.getElementById('codesStatus');
-    if (!s) return;
-    s.textContent = msg;
-    s.className = 'status ' + type;
-    setTimeout(() => { s.className = 'status'; }, 3500);
-  }
-</script>
-</body>
-</html><!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>لوحة التحكم - Alankaboot Sport</title>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js"></script>
-<style>
-  *{box-sizing:border-box;font-family:'Cairo',sans-serif;margin:0;padding:0;
-    -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
-  :root{
-    --bg:#0a0a0f;--bg-2:#12121a;
-    --card:rgba(255,255,255,0.035);--card-2:rgba(255,255,255,0.055);
-    --border:rgba(255,255,255,0.08);--border-hi:rgba(255,255,255,0.14);
-    --accent:#e11d2e;--accent-2:#ff3b52;--accent-glow:rgba(225,29,46,.45);
-    --green:#22c55e;--green-glow:rgba(34,197,94,.4);
-    --blue:#3b82f6;--blue-glow:rgba(59,130,246,.4);
-    --text:#ffffff;--text-dim:#8a8a9a;--text-mute:#5a5a68;
-    --r-sm:10px;--r:16px;--r-lg:20px;--r-xl:26px;
-  }
-  body{
-    background:
-      radial-gradient(1200px 600px at 50% -10%,rgba(225,29,46,.14),transparent 60%),
-      radial-gradient(900px 500px at 100% 100%,rgba(59,130,246,.08),transparent 60%),
-      radial-gradient(900px 500px at 0% 60%,rgba(225,29,46,.06),transparent 60%),
-      #0a0a0f;
-    color:var(--text);padding:18px;min-height:100vh;
-    position:relative;overflow-x:hidden}
-  body::before{
-    content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
-    background-image:
-      linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),
-      linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px);
-    background-size:44px 44px;
-    mask-image:radial-gradient(ellipse at 50% 0%,black 20%,transparent 75%);
-    -webkit-mask-image:radial-gradient(ellipse at 50% 0%,black 20%,transparent 75%)}
-  h1{text-align:center;color:#fff;font-size:24px;font-weight:800;
-    margin-bottom:8px;letter-spacing:-.3px;
-    background:linear-gradient(180deg,#fff 40%,#b0b0be 100%);
-    -webkit-background-clip:text;background-clip:text;
-    -webkit-text-fill-color:transparent;position:relative;z-index:1}
-  .sub{text-align:center;color:var(--text-dim);font-size:12.5px;
-    margin-bottom:18px;font-weight:500;position:relative;z-index:1}
-  .conn{text-align:center;font-size:12.5px;padding:11px 14px;
-    border-radius:var(--r);background:var(--card);
-    border:1px solid var(--border);margin-bottom:18px;
-    font-weight:700;backdrop-filter:blur(20px);
-    -webkit-backdrop-filter:blur(20px);position:relative;z-index:1;
-    display:flex;align-items:center;justify-content:center;gap:8px;transition:.3s}
-  .conn::before{content:'';width:8px;height:8px;border-radius:50%;
-    background:currentColor;box-shadow:0 0 12px currentColor;
-    animation:pulse 2s ease-in-out infinite}
-  @keyframes pulse{50%{opacity:.4;transform:scale(.85)}}
-  .conn.online{color:var(--green)}
-  .conn.offline{color:#ef4444}
-  .conn.saving{color:#fbbf24}
-  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
-    gap:12px;margin-bottom:18px;position:relative;z-index:1}
-  .stat-card{background:linear-gradient(180deg,var(--card-2),var(--card));
-    padding:20px 16px;border-radius:var(--r-lg);
-    border:1px solid var(--border);text-align:center;
-    backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
-    position:relative;overflow:hidden;transition:.3s}
-  .stat-card::before{content:'';position:absolute;inset:0;border-radius:inherit;
-    padding:1px;background:linear-gradient(180deg,rgba(255,255,255,.1),transparent 60%);
-    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
-    -webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
-  .stat-card:hover{transform:translateY(-2px);border-color:var(--border-hi)}
-  .stat-card .num{font-size:32px;font-weight:800;color:var(--green);
-    line-height:1;letter-spacing:-1px;
-    text-shadow:0 0 30px var(--green-glow)}
-  .stat-card.live .num{color:var(--accent-2);
-    text-shadow:0 0 30px var(--accent-glow)}
-  .stat-card .lbl{font-size:11.5px;color:var(--text-dim);margin-top:8px;font-weight:600}
-  .top-actions{display:flex;gap:10px;margin-bottom:18px;
-    flex-wrap:wrap;position:relative;z-index:1}
-  .top-actions button{flex:1;min-width:140px}
-  .section{background:linear-gradient(180deg,var(--card-2),var(--card));
-    border-radius:var(--r-xl);padding:20px;margin-bottom:18px;
-    border:1px solid var(--border);position:relative;z-index:1;
-    backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
-    box-shadow:0 20px 60px rgba(0,0,0,.4)}
-  .section h2{color:#fff;margin:0 0 16px;font-size:16px;font-weight:800;
-    display:flex;align-items:center;gap:10px;
-    padding-bottom:14px;border-bottom:1px solid var(--border)}
-  .section h2::before{content:'';width:3px;height:18px;border-radius:4px;
-    background:linear-gradient(180deg,var(--accent-2),var(--accent));
-    box-shadow:0 0 12px var(--accent-glow)}
-  .info-box{background:linear-gradient(135deg,rgba(59,130,246,.08),rgba(59,130,246,.03));
-    border:1px solid rgba(59,130,246,.22);
-    padding:14px 16px;border-radius:var(--r);
-    font-size:12.5px;color:#93b8f5;margin-bottom:16px;
-    line-height:1.75;font-weight:500;
-    display:flex;gap:10px;align-items:flex-start}
-  .info-box::before{content:'💡';font-size:16px;flex-shrink:0;line-height:1.4}
-  .cat-card{background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02));
+  .add-btn.sub:hover{box-shadow:0 10px 26px var(--blue-glow),inset 0 1px 0 rgba(255,255,255,.25)}
+
+  /* ================= Cat Card ================= */
+  .cat-card{
+    background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02));
     padding:16px;border-radius:var(--r-lg);margin-bottom:14px;
     border:1px solid var(--border);transition:.3s;
     position:relative;overflow:hidden}
-  .cat-card::before{content:'';position:absolute;top:0;right:0;bottom:0;width:3px;
+  .cat-card::before{
+    content:'';position:absolute;top:0;right:0;bottom:0;width:3px;
     background:linear-gradient(180deg,var(--accent-2),var(--accent));
     border-radius:0 var(--r-lg) var(--r-lg) 0;
     box-shadow:0 0 20px var(--accent-glow)}
   .cat-card:hover{border-color:var(--border-hi)}
-  .cat-head{display:flex;justify-content:space-between;align-items:center;gap:10px;
+
+  .cat-head{
+    display:flex;justify-content:space-between;align-items:center;gap:10px;
     margin-bottom:12px;flex-wrap:wrap;cursor:pointer;transition:.2s}
   .cat-head:hover{opacity:.9}
   .cat-head .cat-title{display:flex;align-items:center;gap:12px;flex:1;min-width:180px}
-  .cat-head .cat-title img{width:48px;height:48px;object-fit:contain;background:rgba(255,255,255,.03);
-    border-radius:12px;padding:4px;border:1px solid var(--border);transition:.3s}
+  .cat-head .cat-title img{
+    width:48px;height:48px;object-fit:contain;background:rgba(255,255,255,.03);
+    border-radius:12px;padding:4px;border:1px solid var(--border);
+    transition:.3s}
   .cat-card:hover .cat-head .cat-title img{border-color:var(--accent);
     box-shadow:0 0 20px var(--accent-glow)}
   .cat-head .cat-title .info{display:flex;flex-direction:column;gap:3px;flex:1}
-  .cat-head .cat-title .info .nm{color:#fff;font-weight:800;font-size:14.5px;letter-spacing:-.2px}
+  .cat-head .cat-title .info .nm{color:#fff;font-weight:800;font-size:14.5px;
+    letter-spacing:-.2px}
   .cat-head .cat-title .info .cnt{color:var(--text-dim);font-size:11.5px;font-weight:600}
-  .expand-arrow{color:var(--accent-2);font-size:14px;font-weight:900;transition:.3s;
+  .expand-arrow{
+    color:var(--accent-2);font-size:14px;font-weight:900;transition:.3s;
     width:28px;height:28px;display:flex;align-items:center;justify-content:center;
     background:rgba(225,29,46,.12);border-radius:50%;
     border:1px solid rgba(225,29,46,.25)}
   .cat-card.collapsed .expand-arrow{transform:rotate(-90deg)}
   .cat-card.collapsed .cat-body{display:none}
   .cat-body{padding-top:14px;border-top:1px dashed var(--border)}
-  .ch-card{background:rgba(0,0,0,.25);padding:14px;border-radius:var(--r);
+
+  /* ================= Channel Card ================= */
+  .ch-card{
+    background:rgba(0,0,0,.25);padding:14px;border-radius:var(--r);
     margin-bottom:12px;border:1px solid var(--border);
     transition:.3s;display:grid;grid-template-columns:76px 1fr;gap:14px;
     position:relative;overflow:hidden}
-  .ch-card::before{content:'';position:absolute;top:0;right:0;bottom:0;width:3px;
+  .ch-card::before{
+    content:'';position:absolute;top:0;right:0;bottom:0;width:3px;
     background:#4a4a56;border-radius:0 var(--r) var(--r) 0;transition:.3s}
   .ch-card.live::before{background:linear-gradient(180deg,#4ade80,#22c55e);
     box-shadow:0 0 20px var(--green-glow)}
@@ -1279,85 +280,79 @@
     box-shadow:0 0 20px var(--blue-glow)}
   .ch-card.live{background:linear-gradient(135deg,rgba(34,197,94,.06),rgba(0,0,0,.25))}
   .ch-card:hover{border-color:var(--border-hi)}
-  .ch-card .logo-preview{width:76px;height:76px;object-fit:contain;background:rgba(255,255,255,.03);
+  .ch-card .logo-preview{
+    width:76px;height:76px;object-fit:contain;background:rgba(255,255,255,.03);
     border-radius:14px;padding:6px;border:1px solid var(--border)}
   .ch-card .ch-body{display:flex;flex-direction:column;gap:9px}
   .ch-card .ch-head{display:flex;justify-content:space-between;
     align-items:center;gap:8px;flex-wrap:wrap}
-  .badge{background:linear-gradient(135deg,var(--accent),#a30f1f);
+
+  /* ================= Badges ================= */
+  .badge{
+    background:linear-gradient(135deg,var(--accent),#a30f1f);
     color:#fff;padding:4px 12px;border-radius:100px;
     font-size:10.5px;font-weight:700;letter-spacing:.2px;
     box-shadow:0 4px 12px rgba(225,29,46,.25)}
-  .badge.live{background:linear-gradient(135deg,#4ade80,#16a34a);
+  .badge.live{
+    background:linear-gradient(135deg,#4ade80,#16a34a);
     box-shadow:0 4px 12px var(--green-glow);
     display:inline-flex;align-items:center;gap:5px}
-  .badge.live::before{content:'';width:6px;height:6px;border-radius:50%;background:#fff;
+  .badge.live::before{
+    content:'';width:6px;height:6px;border-radius:50%;background:#fff;
     animation:blink 1.2s infinite}
   @keyframes blink{50%{opacity:.35}}
   .badge.off{background:#2a2a34;color:#8a8a9a;box-shadow:none}
   .badge.tok{background:linear-gradient(135deg,#60a5fa,#2563eb);
     box-shadow:0 4px 12px var(--blue-glow)}
-  .field{display:flex;flex-direction:column;gap:5px}
-  .field label{font-size:10.5px;color:var(--text-dim);font-weight:600;letter-spacing:.2px}
-  .field input,.field select{width:100%;background:rgba(0,0,0,.4);
-    border:1px solid var(--border);color:#fff;
-    padding:10px 12px;border-radius:var(--r-sm);
-    font-size:12.5px;font-family:'Cairo',sans-serif;
-    transition:.25s;font-weight:500}
-  .field input::placeholder{color:var(--text-mute)}
-  .field input:focus,.field select:focus{outline:none;border-color:var(--accent);
-    background:rgba(225,29,46,.04);
-    box-shadow:0 0 0 3px rgba(225,29,46,.12),0 0 20px var(--accent-glow)}
-  .field input[type="url"]{direction:ltr;font-size:11.5px;text-align:left}
-  .field select{cursor:pointer;appearance:none;
-    background-image:linear-gradient(45deg,transparent 50%,var(--text-dim) 50%),linear-gradient(135deg,var(--text-dim) 50%,transparent 50%);
-    background-position:calc(0% + 12px) 50%,calc(0% + 18px) 50%;
-    background-size:6px 6px,6px 6px;background-repeat:no-repeat;
-    padding-left:32px}
-  .field select option{background:#1a1a22;color:#fff}
-  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .token-box{background:rgba(59,130,246,.08);
+
+  .token-box{
+    background:rgba(59,130,246,.08);
     border:1px solid rgba(59,130,246,.25);
     padding:9px 11px;border-radius:var(--r-sm);
     font-size:10.5px;color:#93b8f5;word-break:break-all;
     direction:ltr;text-align:left;font-family:ui-monospace,Menlo,monospace;
     line-height:1.5}
   .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
-  .btn{background:linear-gradient(180deg,var(--accent-2),var(--accent));
-    color:#fff;border:none;padding:10px 18px;border-radius:100px;
-    font-weight:700;cursor:pointer;font-size:12.5px;
-    font-family:'Cairo',sans-serif;transition:.25s;
-    display:inline-flex;align-items:center;justify-content:center;gap:6px;
-    box-shadow:0 4px 14px rgba(225,29,46,.3),inset 0 1px 0 rgba(255,255,255,.15);
-    position:relative;letter-spacing:.2px}
-  .btn:hover{transform:translateY(-1px);
-    box-shadow:0 8px 24px rgba(225,29,46,.45),inset 0 1px 0 rgba(255,255,255,.2)}
-  .btn:active{transform:translateY(0)}
-  .btn.play{background:linear-gradient(180deg,#4ade80,#16a34a);
-    box-shadow:0 4px 14px var(--green-glow),inset 0 1px 0 rgba(255,255,255,.2)}
-  .btn.stop{background:linear-gradient(180deg,#f87171,#dc2626);
-    box-shadow:0 4px 14px rgba(220,38,38,.35),inset 0 1px 0 rgba(255,255,255,.2)}
-  .btn.danger{background:linear-gradient(180deg,#a30f1f,#6b0a15);
-    box-shadow:0 4px 14px rgba(107,10,21,.4),inset 0 1px 0 rgba(255,255,255,.1)}
-  .btn.blue{background:linear-gradient(180deg,#60a5fa,#2563eb);
-    box-shadow:0 4px 14px var(--blue-glow),inset 0 1px 0 rgba(255,255,255,.2)}
-  .btn.ghost{background:rgba(255,255,255,.05);color:#fff;
-    border:1px solid var(--border);box-shadow:none}
-  .btn.ghost:hover{background:rgba(255,255,255,.09);border-color:var(--border-hi);
-    box-shadow:0 4px 14px rgba(0,0,0,.3)}
-  .btn.small{padding:7px 12px;font-size:11.5px}
-  .add-btn{width:100%;background:linear-gradient(180deg,#4ade80,#16a34a);
-    color:#fff;border:none;padding:15px;border-radius:var(--r);
-    font-weight:800;font-size:14px;cursor:pointer;
-    font-family:'Cairo',sans-serif;margin-top:8px;transition:.25s;
-    box-shadow:0 8px 24px var(--green-glow),inset 0 1px 0 rgba(255,255,255,.2);
-    letter-spacing:.2px}
-  .add-btn:hover{transform:translateY(-2px);
-    box-shadow:0 12px 32px var(--green-glow),inset 0 1px 0 rgba(255,255,255,.25)}
-  .add-btn.sub{background:linear-gradient(180deg,#60a5fa,#2563eb);
-    box-shadow:0 6px 18px var(--blue-glow),inset 0 1px 0 rgba(255,255,255,.2);
-    padding:12px;font-size:12.5px;margin-top:8px}
-  .status{padding:12px 16px;border-radius:var(--r);font-size:12.5px;
+
+  /* ================= Code Items ================= */
+  .code-item{
+    display:flex;align-items:center;gap:10px;
+    background:rgba(0,0,0,.3);
+    border:1px solid var(--border);border-radius:var(--r);
+    padding:13px 15px;margin-bottom:9px;
+    transition:.3s;position:relative;overflow:hidden}
+  .code-item::before{
+    content:'';position:absolute;top:0;right:0;bottom:0;width:3px;
+    background:linear-gradient(180deg,var(--purple),#6d28d9);
+    border-radius:0 var(--r) var(--r) 0;
+    box-shadow:0 0 20px var(--purple-glow)}
+  .code-item:hover{border-color:var(--border-hi)}
+  .code-item .code-val{
+    flex:1;font-family:ui-monospace,Menlo,monospace;
+    font-size:14.5px;font-weight:800;color:#fff;
+    letter-spacing:1.5px;direction:ltr;text-align:center;
+    text-shadow:0 0 20px var(--purple-glow)}
+  .code-item .code-tag{
+    background:rgba(34,197,94,.12);color:#4ade80;
+    font-size:10px;font-weight:800;padding:4px 10px;
+    border-radius:100px;border:1px solid rgba(34,197,94,.3);
+    display:inline-flex;align-items:center;gap:4px}
+  .code-item .code-tag::before{
+    content:'';width:5px;height:5px;border-radius:50%;background:#4ade80;
+    box-shadow:0 0 6px #4ade80;animation:blink 1.2s infinite}
+  .code-del{
+    background:rgba(239,68,68,.15);
+    border:1px solid rgba(239,68,68,.3);
+    color:#f87171;width:36px;height:36px;border-radius:var(--r-sm);
+    cursor:pointer;display:flex;justify-content:center;align-items:center;
+    padding:0;transition:.2s;flex-shrink:0}
+  .code-del:hover{background:rgba(239,68,68,.3);transform:scale(1.05)}
+  .code-del:active{transform:scale(.95)}
+  .code-del svg{width:16px;height:16px;fill:currentColor}
+
+  /* ================= Status & Toast ================= */
+  .status{
+    padding:12px 16px;border-radius:var(--r);font-size:12.5px;
     margin-top:12px;text-align:center;font-weight:700;display:none}
   .status.ok{background:rgba(34,197,94,.1);color:#4ade80;
     border:1px solid rgba(34,197,94,.3);display:block}
@@ -1365,112 +360,36 @@
     border:1px solid rgba(239,68,68,.3);display:block}
   .status.info{background:rgba(59,130,246,.1);color:#60a5fa;
     border:1px solid rgba(59,130,246,.3);display:block}
-  #loading{position:fixed;inset:0;background:#0a0a0f;z-index:9999;
+
+  .empty-hint{
+    text-align:center;padding:36px 20px;color:var(--text-dim);
+    font-size:13px;font-weight:600;line-height:1.9}
+
+  /* ================= Loading ================= */
+  #loading{
+    position:fixed;inset:0;background:#0a0a0f;z-index:9999;
     display:flex;flex-direction:column;justify-content:center;align-items:center;
     gap:22px;transition:opacity .5s}
   #loading.hide{opacity:0;pointer-events:none}
-  .spinner{width:52px;height:52px;
+  .spinner{
+    width:52px;height:52px;
     border:3px solid rgba(225,29,46,.15);
     border-top-color:var(--accent-2);border-radius:50%;
-    animation:spin 1s linear infinite;box-shadow:0 0 30px var(--accent-glow)}
+    animation:spin 1s linear infinite;
+    box-shadow:0 0 30px var(--accent-glow)}
   @keyframes spin{to{transform:rotate(360deg)}}
   .loading-txt{color:var(--accent-2);font-weight:700;font-size:14px;
     letter-spacing:.3px;animation:pulse2 1.4s ease-in-out infinite}
   @keyframes pulse2{50%{opacity:.5}}
-  .save-indicator{position:fixed;bottom:20px;left:50%;
-    transform:translateX(-50%) translateY(10px);
+
+  .save-indicator{
+    position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(10px);
     background:linear-gradient(180deg,#4ade80,#16a34a);color:#fff;
     padding:11px 26px;border-radius:100px;font-weight:800;font-size:13px;
     box-shadow:0 12px 32px var(--green-glow),inset 0 1px 0 rgba(255,255,255,.25);
     opacity:0;transition:.35s cubic-bezier(.34,1.56,.64,1);
     pointer-events:none;z-index:99999}
   .save-indicator.show{opacity:1;transform:translateX(-50%) translateY(0)}
-  #testModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);
-    z-index:100000;justify-content:center;align-items:center;
-    flex-direction:column;padding:20px;backdrop-filter:blur(5px)}
-  .test-modal-content{width:100%;max-width:800px;background:#12121a;
-    border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,0.1);
-    padding:20px;box-shadow:0 20px 60px rgba(0,0,0,0.8)}
-  .test-modal-content h3{color:#fff;margin-bottom:15px;font-size:16px}
-  .test-modal-content video{width:100%;aspect-ratio:16/9;background:#000;
-    border-radius:8px;border:1px solid var(--border)}
-  .test-modal-actions{margin-top:15px;text-align:right}
-  .code-gen-row{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:12px}
-  .code-gen-row .field input,.code-gen-row .field select{text-align:center;font-weight:800}
-  .code-gen-row .field select{text-align:right;font-weight:600}
-  .codes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
-    gap:10px;margin-top:8px}
-  .code-card{background:linear-gradient(180deg,rgba(34,197,94,.08),rgba(34,197,94,.02));
-    border:1px solid rgba(34,197,94,.28);border-radius:var(--r);
-    padding:12px 14px;position:relative;overflow:hidden;transition:.3s}
-  .code-card.off{opacity:.55;
-    background:linear-gradient(180deg,rgba(120,120,130,.08),rgba(0,0,0,.2));
-    border-color:var(--border)}
-  .code-card::after{content:'';position:absolute;top:0;right:0;bottom:0;width:3px;
-    background:linear-gradient(180deg,#4ade80,#16a34a);
-    border-radius:0 var(--r) var(--r) 0;
-    box-shadow:0 0 20px var(--green-glow)}
-  .code-card.off::after{background:#4a4a56;box-shadow:none}
-  .code-card .cc-code{font-family:ui-monospace,Menlo,monospace;font-size:17px;
-    font-weight:800;color:#4ade80;letter-spacing:2px;direction:ltr;
-    text-align:left;margin-bottom:8px;cursor:pointer;transition:.2s;
-    display:flex;align-items:center;justify-content:space-between;gap:6px}
-  .code-card.off .cc-code{color:#8a8a9a}
-  .code-card .cc-code:active{transform:scale(.98);color:#fff}
-  .code-card .cc-code .copy-ic{width:18px;height:18px;fill:currentColor;
-    opacity:.5;flex-shrink:0}
-  .code-card .cc-meta{display:flex;gap:8px;flex-wrap:wrap;font-size:10.5px;
-    color:var(--text-dim);font-weight:600}
-  .code-card .cc-meta .chip{display:inline-flex;align-items:center;gap:3px;
-    padding:3px 8px;border-radius:100px;
-    background:rgba(255,255,255,.06);border:1px solid var(--border)}
-  .code-card .cc-actions{margin-top:10px;display:flex;gap:6px;flex-wrap:wrap}
-
-  /* ============ شاشة تسجيل الدخول للأدمن ============ */
-  #adminLogin{position:fixed;inset:0;z-index:999998;
-    display:flex;justify-content:center;align-items:center;padding:22px;
-    background:
-      radial-gradient(ellipse at 25% 15%, rgba(225,29,46,.30), transparent 55%),
-      radial-gradient(ellipse at 75% 85%, rgba(139,92,246,.25), transparent 55%),
-      #05050a;transition:opacity .4s}
-  #adminLogin.hide{opacity:0;pointer-events:none}
-  .login-card{position:relative;z-index:2;width:100%;max-width:380px;
-    background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.025));
-    border:1px solid rgba(255,255,255,.10);border-radius:28px;
-    padding:36px 24px 26px;text-align:center;
-    backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
-    box-shadow:0 25px 60px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.12);
-    animation:lockCardIn .7s cubic-bezier(.22,1,.36,1) both}
-  @keyframes lockCardIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
-  .login-icon{width:80px;height:80px;margin:0 auto 16px;border-radius:50%;
-    background:linear-gradient(180deg,var(--accent-2),var(--accent));
-    display:flex;justify-content:center;align-items:center;
-    box-shadow:0 0 30px var(--accent-glow),inset 0 1px 0 rgba(255,255,255,.3)}
-  .login-icon svg{width:38px;height:38px;fill:#fff}
-  .login-title{font-size:22px;font-weight:900;letter-spacing:-.4px;color:#fff;
-    margin-bottom:6px;line-height:1.1}
-  .login-sub{color:rgba(255,255,255,.6);font-size:12.5px;font-weight:600;
-    margin-bottom:22px}
-  .login-input{width:100%;background:rgba(0,0,0,.45);
-    border:1.5px solid rgba(255,255,255,.10);color:#fff;
-    padding:15px 16px;border-radius:14px;font-size:15px;font-weight:800;
-    text-align:center;font-family:ui-monospace,Menlo,'Cairo',monospace;
-    direction:ltr;letter-spacing:1.5px;outline:none;transition:.25s;
-    margin-bottom:12px}
-  .login-input:focus{border-color:var(--accent-2);background:rgba(225,29,46,.06)}
-  .login-input.err{border-color:#ef4444;animation:shake .5s}
-  @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}
-    40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
-  .login-btn{width:100%;padding:15px;border-radius:14px;border:none;
-    background:linear-gradient(180deg,#ff3b52,#e11d2e);color:#fff;
-    font-size:14.5px;font-weight:800;font-family:'Cairo',sans-serif;
-    cursor:pointer;transition:transform .15s;
-    box-shadow:0 8px 20px var(--accent-glow),inset 0 1px 0 rgba(255,255,255,.22);
-    display:flex;align-items:center;justify-content:center;gap:8px}
-  .login-btn:active{transform:scale(.97)}
-  .login-btn svg{width:17px;height:17px;fill:#fff}
-  .login-msg{margin-top:14px;font-size:12.5px;font-weight:700;
-    min-height:20px;line-height:1.5;color:#f87171}
 
   @media(max-width:600px){
     body{padding:14px}
@@ -1478,29 +397,11 @@
     .ch-card{grid-template-columns:1fr}
     .ch-card .logo-preview{margin:0 auto}
     .row2{grid-template-columns:1fr}
-    .code-gen-row{grid-template-columns:1fr 1fr}
+    .tab{font-size:12px;padding:10px 6px}
   }
 </style>
 </head>
 <body>
-
-<!-- ============ شاشة تسجيل دخول الأدمن ============ -->
-<div id="adminLogin">
-  <div class="login-card">
-    <div class="login-icon">
-      <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>
-    </div>
-    <div class="login-title">لوحة تحكم الأدمن</div>
-    <div class="login-sub">أدخل كود الأدمن للدخول</div>
-    <input type="password" id="adminCode" class="login-input"
-           placeholder="• • • • • • • •" autocomplete="off" spellcheck="false">
-    <button class="login-btn" onclick="submitAdminLogin()">
-      <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm3 12c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>
-      <span>دخول</span>
-    </button>
-    <div class="login-msg" id="loginMsg"></div>
-  </div>
-</div>
 
 <div id="loading">
   <div class="spinner"></div>
@@ -1508,784 +409,655 @@
 </div>
 
 <h1>لوحة تحكم Alankaboot Sport</h1>
-<div class="sub">أضف أقسام → ضيف قنوات جوه كل قسم → تظهر للمستخدمين تلقائياً</div>
+<div class="sub">إدارة الأقسام والقنوات وأكواد التفعيل</div>
 <div class="conn offline" id="connStatus">جاري الاتصال...</div>
 
 <div class="stats">
   <div class="stat-card"><div class="num" id="viewerCount">0</div><div class="lbl">مشاهدين الآن</div></div>
   <div class="stat-card live"><div class="num" id="liveCount">0</div><div class="lbl">قنوات مباشرة</div></div>
   <div class="stat-card"><div class="num" id="chCount">0</div><div class="lbl">إجمالي القنوات</div></div>
+  <div class="stat-card codes"><div class="num" id="codeCount">0</div><div class="lbl">أكواد نشطة</div></div>
 </div>
 
-<div class="top-actions">
-  <button class="btn ghost" onclick="reloadFromServer()">🔄 إعادة تحميل</button>
-  <button class="btn ghost" onclick="stopAll()">⏹ إيقاف كل البث</button>
-  <button class="btn ghost" onclick="resetAll()">↺ مسح الكل</button>
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('channels', this)">
+    <span class="tab-icon">📺</span> <span>الأقسام والقنوات</span>
+  </button>
+  <button class="tab" onclick="switchTab('codes', this)">
+    <span class="tab-icon">🎟️</span> <span>أكواد التفعيل</span>
+  </button>
+  <button class="tab" onclick="switchTab('tools', this)">
+    <span class="tab-icon">⚙️</span> <span>أدوات</span>
+  </button>
 </div>
 
-<div class="section">
-  <h2>🎫 أكواد التفعيل</h2>
-  <div class="info-box">
-    <div>
-      <b>طريقة الاستخدام:</b> حدد العدد والمدة (دقائق / ساعات / أيام) واضغط "توليد" → هيظهر الجدول أسفل → اضغط على الكود لنسخه.
-      <br><br>
-      <b>ملاحظة:</b> الكود يبدأ العد من لحظة التفعيل بالوقت الحقيقي (الساعة بتاعة الموبايل) حتى لو المستخدم قفل التطبيق. لما تخلص المدة، يتقفل تلقائياً. ولو عطّلت أو حذفت الكود، المستخدمين الفعّالين به يتم طردهم فوراً.
+<!-- ================= Tab: Channels ================= -->
+<div class="tab-content active" id="tab-channels">
+  <div class="section">
+    <h2>الأقسام والقنوات</h2>
+    <div class="info-box">
+      <div>
+        <b>الطريقة:</b> ضيف قسم (مثل beIN Sports) → جواه ضيف القنوات → اضغط "▶ تشغيل مباشر" على القناة اللي عايزها.
+      </div>
     </div>
+    <div id="catsList"></div>
+    <button class="add-btn" onclick="addCategory()">➕ إضافة قسم جديد</button>
+    <div class="status" id="statusMsg"></div>
   </div>
-
-  <div class="stats" style="margin-bottom:14px">
-    <div class="stat-card"><div class="num" id="codeTotal">0</div><div class="lbl">إجمالي الأكواد</div></div>
-    <div class="stat-card live"><div class="num" id="codeActive">0</div><div class="lbl">أكواد فعّالة</div></div>
-    <div class="stat-card"><div class="num" id="codeDisabled">0</div><div class="lbl">أكواد معطّلة</div></div>
-  </div>
-
-  <div class="code-gen-row">
-    <div class="field">
-      <label>عدد الأكواد</label>
-      <input type="number" id="genCount" value="1" min="1" max="100">
-    </div>
-    <div class="field">
-      <label>المدة</label>
-      <input type="number" id="genDuration" value="24" min="1" max="99999">
-    </div>
-    <div class="field">
-      <label>الوحدة</label>
-      <select id="genUnit">
-        <option value="min">دقائق</option>
-        <option value="hour" selected>ساعات</option>
-        <option value="day">أيام</option>
-      </select>
-    </div>
-    <div class="field">
-      <label>بادئة (اختياري)</label>
-      <input type="text" id="genPrefix" placeholder="VIP" maxlength="4" style="text-transform:uppercase">
-    </div>
-  </div>
-
-  <button class="add-btn" onclick="generateCodes()">🎫 توليد الأكواد</button>
-  <button class="add-btn sub" onclick="deleteAllCodes()">🗑 حذف كل الأكواد</button>
-
-  <div id="codesList" class="codes-grid" style="margin-top:16px"></div>
-  <div class="status" id="codesStatus"></div>
 </div>
 
-<div class="section">
-  <h2>الأقسام والقنوات</h2>
-  <div class="info-box">
-    <div>
-      <b>الطريقة:</b> ضيف قسم (مثل beIN Sports) → جواه ضيف القنوات (beIN 1, 2, 3...) → اضغط "🔍 تجربة" للتأكد من أن الرابط يعمل → ثم "🔐 توكن" لتوليد الرابط المشفر → وأخيراً "▶ تشغيل مباشر".
-      <br><br>
-      <b>ملاحظة هامة:</b> عند الضغط على "تشغيل" لأي قناة، سيتم تحويل جميع المشاهدين إلى هذه القناة تلقائياً.
+<!-- ================= Tab: Codes ================= -->
+<div class="tab-content" id="tab-codes">
+  <div class="section">
+    <h2>توليد كود تفعيل جديد</h2>
+    <div class="info-box">
+      <div>
+        <b>ملاحظة:</b> لما تحذف كود، كل المستخدمين اللي بيدخلوا بالكود ده هيتم طردهم تلقائياً في نفس اللحظة.
+      </div>
+    </div>
+    <div class="field mono" style="margin-bottom:14px">
+      <label>الكود (اتركه فاضي لتوليده تلقائياً)</label>
+      <input type="text" id="newCodeInput" placeholder="مثال: c4f19fc2" maxlength="30">
+    </div>
+    <button class="btn purple block" onclick="generateCode()" style="padding:14px;font-size:14px">
+      🎟️ توليد ونشر الكود
+    </button>
+  </div>
+
+  <div class="section">
+    <h2>الأكواد النشطة <span class="count-badge" id="codesCountBadge">0</span></h2>
+    <div id="codesList"></div>
+  </div>
+
+  <div class="section">
+    <h2>إجراءات سريعة</h2>
+    <div class="top-actions" style="margin-bottom:10px">
+      <button class="btn blue" onclick="forceLoadCodes()">🔄 تحميل من السيرفر</button>
+      <button class="btn ghost" onclick="publishCodes()">📡 إعادة نشر الأكواد</button>
+    </div>
+    <button class="btn danger block" onclick="clearAllCodes()">🗑 حذف كل الأكواد</button>
+  </div>
+</div>
+
+<!-- ================= Tab: Tools ================= -->
+<div class="tab-content" id="tab-tools">
+  <div class="section">
+    <h2>إجراءات عامة</h2>
+    <div class="top-actions">
+      <button class="btn ghost" onclick="reloadFromServer()">🔄 إعادة تحميل الكل</button>
+      <button class="btn stop" onclick="stopAll()">⏹ إيقاف كل البث</button>
+      <button class="btn danger" onclick="resetAll()">↺ مسح كل الأقسام</button>
     </div>
   </div>
-  <div id="catsList"></div>
-  <button class="add-btn" onclick="addCategory()">➕ إضافة قسم جديد</button>
-  <div class="status" id="statusMsg"></div>
+
+  <div class="section">
+    <h2>إرسال أمر تشغيل عام</h2>
+    <div class="field" style="margin-bottom:10px">
+      <label>توكن البث</label>
+      <input type="text" id="broadcastToken" placeholder="الصق التوكن">
+    </div>
+    <button class="btn play block" onclick="broadcastPlay()">▶ تشغيل عند كل المستخدمين</button>
+  </div>
 </div>
 
 <div class="save-indicator" id="saveIndicator">✓ تم الحفظ</div>
 
-<div id="testModal">
-  <div class="test-modal-content">
-    <h3>🔍 معاينة الرابط قبل التشفير</h3>
-    <video id="testVideo" controls playsinline></video>
-    <div class="test-modal-actions">
-      <button class="btn ghost" onclick="closeTestModal()">إغلاق</button>
-    </div>
-  </div>
-</div>
-
 <script>
-  const PROXY_BASE = 'https://alankaboot-proxy.kamlnot61.workers.dev';
-  const ADMIN_KEY  = 'ANKABOOT_ADMIN_2026_CHANGE_ME';
-  const ADMIN_LOGIN_CODE = 'ANKABOOT_ADMIN_2026_CHANGE_ME';
+/* ================== الإعدادات ================== */
+const PROXY_BASE = 'https://alankaboot-proxy.kamlnot61.workers.dev';
+const ADMIN_KEY  = 'ANKABOOT_ADMIN_2026_CHANGE_ME';
 
-  const BROKER = 'wss://broker.emqx.io:8084/mqtt';
-  const TOPIC_CMD   = 'kwtspta_9f3a2b1c/cmd';
-  const TOPIC_DATA  = 'kwtspta_9f3a2b1c/data';
-  const TOPIC_HB    = 'kwtspta_9f3a2b1c/hb';
-  const TOPIC_CODES = 'kwtspta_9f3a2b1c/codes';
+const BROKER     = 'wss://broker.emqx.io:8084/mqtt';
+const TOPIC_CMD  = 'kwtspta_9f3a2b1c/cmd';
+const TOPIC_DATA = 'kwtspta_9f3a2b1c/data';
+const TOPIC_HB   = 'kwtspta_9f3a2b1c/hb';
+const TOPIC_CODES = 'kwtspta_9f3a2b1c/codes';
 
-  /* ============ تسجيل دخول الأدمن ============ */
-  let isAdminAuthed = false;
-  let adminClient = null;
+const STORAGE_CATS = 'cats_data_v1';
+const STORAGE_CODES = 'admin_codes_v1';
 
-  function submitAdminLogin(){
-    const v = document.getElementById('adminCode').value.trim();
-    const msg = document.getElementById('loginMsg');
-    const inp = document.getElementById('adminCode');
+const client = mqtt.connect(BROKER, {
+  clientId: 'admin_' + Math.random().toString(16).slice(2,10)
+});
 
-    if(v === ADMIN_LOGIN_CODE){
-      isAdminAuthed = true;
-      msg.style.color = '#4ade80';
-      msg.textContent = '✓ تم التحقق، جاري الدخول...';
-      setTimeout(()=>{
-        document.getElementById('adminLogin').classList.add('hide');
-        setTimeout(()=>{
-          document.getElementById('adminLogin').style.display = 'none';
-          initAdmin();
-        }, 400);
-      }, 400);
-    } else {
-      inp.classList.add('err');
-      msg.textContent = '❌ كود غير صحيح';
-      setTimeout(()=> inp.classList.remove('err'), 700);
+const connStatus = document.getElementById('connStatus');
+const viewers = new Map();
+let categories = [];
+let codes = [];
+let isLoaded = false;
+let publishTimeout = null;
+let codesLoadedFromServer = false;
+
+/* ================== MQTT ================== */
+client.on('connect', () => {
+  setConn('online', '✅ متصل');
+  client.subscribe(TOPIC_HB);
+  client.subscribe(TOPIC_DATA);
+  client.subscribe(TOPIC_CODES);
+
+  setTimeout(() => {
+    if (!isLoaded) {
+      loadLocal();
+      isLoaded = true;
+      hideLoading();
+      render();
+      renderCodes();
+      /* ننشر بس لو مفيش على السيرفر */
+      if (!codesLoadedFromServer && codes.length) publishCodes();
     }
+  }, 1500);
+});
+
+client.on('error', () => {
+  setConn('offline', '❌ فشل الاتصال');
+  if (!isLoaded) {
+    loadLocal();
+    isLoaded = true;
+    hideLoading();
+    render();
+    renderCodes();
   }
+});
 
-  document.addEventListener('DOMContentLoaded', ()=>{
-    const inp = document.getElementById('adminCode');
-    if(inp){
-      inp.addEventListener('keypress', e=>{
-        if(e.key === 'Enter') submitAdminLogin();
-      });
+client.on('message', (topic, message) => {
+  try {
+    if (topic === TOPIC_HB) {
+      const d = JSON.parse(message.toString());
+      viewers.set(d.id, Date.now());
+      return;
     }
-  });
 
-  /* ============ باقي منطق الأدمن ============ */
-  const connStatus = document.getElementById('connStatus');
-  const viewers = new Map();
-  let categories = [];
-  let isLoaded = false;
-  let publishTimeout = null;
-  let testHls = null;
-  let activationCodes = [];
-
-  function initAdmin(){
-    adminClient = mqtt.connect(BROKER, {
-      clientId: 'admin_' + Math.random().toString(16).slice(2,10)
-    });
-
-    adminClient.on('connect', () => {
-      setConn('online', '✅ متصل');
-      adminClient.subscribe(TOPIC_HB);
-      adminClient.subscribe(TOPIC_DATA);
-      adminClient.subscribe(TOPIC_CODES);
-      setTimeout(() => {
-        if (!isLoaded) {
-          loadLocal();
-          isLoaded = true;
-          hideLoading();
-          render();
-          renderCodes();
-          publishData();
-          publishCodes();
-        }
-      }, 1500);
-    });
-
-    adminClient.on('error', () => {
-      setConn('offline', '❌ فشل الاتصال');
-      if (!isLoaded) {
-        loadLocal();
+    if (topic === TOPIC_DATA && !isLoaded) {
+      const data = JSON.parse(message.toString());
+      if (Array.isArray(data)) {
+        categories = data;
         isLoaded = true;
         hideLoading();
         render();
+      }
+      return;
+    }
+
+    if (topic === TOPIC_CODES) {
+      if (codesLoadedFromServer) return;
+      codesLoadedFromServer = true;
+      const data = JSON.parse(message.toString());
+      if (Array.isArray(data.codes)) {
+        if (!codes.length) {
+          codes = data.codes.map(c => String(c).toLowerCase());
+        } else {
+          const merged = new Set([...codes, ...data.codes.map(c => String(c).toLowerCase())]);
+          codes = Array.from(merged);
+        }
+        saveCodes();
         renderCodes();
       }
-    });
-
-    adminClient.on('message', (topic, message) => {
-      try {
-        if (topic === TOPIC_HB) {
-          const d = JSON.parse(message.toString());
-          viewers.set(d.id, Date.now());
-          return;
-        }
-        if (topic === TOPIC_DATA && !isLoaded) {
-          const data = JSON.parse(message.toString());
-          if (Array.isArray(data)) {
-            categories = data;
-            isLoaded = true;
-            hideLoading();
-            render();
-          }
-        }
-        if (topic === TOPIC_CODES) {
-          const data = JSON.parse(message.toString());
-          if (Array.isArray(data)) {
-            const local = localStorage.getItem('activation_codes_v2');
-            if (!local || data.length > 0) {
-              activationCodes = data;
-              localStorage.setItem('activation_codes_v2', JSON.stringify(activationCodes));
-            }
-            renderCodes();
-          }
-        }
-      } catch (e) {}
-    });
-
-    setInterval(() => {
-      const now = Date.now();
-      for (const [id, t] of viewers) if (now - t > 15000) viewers.delete(id);
-      document.getElementById('viewerCount').textContent = viewers.size;
-    }, 5000);
-
-    window.addEventListener('beforeunload', () => {
-      if (categories.length && adminClient) {
-        try { adminClient.publish(TOPIC_DATA, JSON.stringify(categories), { retain: true }); } catch (e) {}
-      }
-      if (activationCodes.length && adminClient) {
-        try { adminClient.publish(TOPIC_CODES, JSON.stringify(activationCodes), { retain: true }); } catch (e) {}
-      }
-    });
-  }
-
-  function setConn(state, text) {
-    connStatus.className = 'conn ' + state;
-    connStatus.textContent = text;
-  }
-
-  function loadLocal() {
-    const saved = localStorage.getItem('cats_data_v1');
-    categories = saved ? (JSON.parse(saved) || []) : [];
-    const savedCodes = localStorage.getItem('activation_codes_v2') || localStorage.getItem('activation_codes_v1');
-    activationCodes = savedCodes ? (JSON.parse(savedCodes) || []) : [];
-  }
-
-  function hideLoading() {
-    const l = document.getElementById('loading');
-    l.classList.add('hide');
-    setTimeout(() => l.style.display = 'none', 500);
-  }
-
-  function render() {
-    const c = document.getElementById('catsList');
-    c.innerHTML = '';
-
-    if (!categories.length) {
-      c.innerHTML = '<div style="text-align:center;padding:40px;color:#8a8a9a;font-size:13px;line-height:1.8">لا توجد أقسام. اضغط "➕ إضافة قسم" للبدء.</div>';
-      document.getElementById('chCount').textContent = 0;
-      document.getElementById('liveCount').textContent = 0;
-      return;
     }
+  } catch (e) {}
+});
 
-    let totalCh = 0, totalLive = 0;
+function setConn(state, text) {
+  connStatus.className = 'conn ' + state;
+  connStatus.textContent = text;
+}
 
-    categories.forEach((cat, ci) => {
-      const chCount = cat.channels ? cat.channels.length : 0;
-      const collapsed = cat.collapsed ? 'collapsed' : '';
+function loadLocal() {
+  const savedCats = localStorage.getItem(STORAGE_CATS);
+  categories = savedCats ? (JSON.parse(savedCats) || []) : [];
+  const savedCodes = localStorage.getItem(STORAGE_CODES);
+  codes = savedCodes ? (JSON.parse(savedCodes) || []) : [];
+}
 
-      const catDiv = document.createElement('div');
-      catDiv.className = 'cat-card ' + collapsed;
+function hideLoading() {
+  const l = document.getElementById('loading');
+  l.classList.add('hide');
+  setTimeout(() => l.style.display = 'none', 500);
+}
 
-      catDiv.innerHTML = `
-        <div class="cat-head" onclick="toggleCat(${ci}, event)">
-          <div class="cat-title">
-            <img src="${escapeAttr(cat.logo || '')}" onerror="this.style.opacity=.2">
-            <div class="info">
-              <div class="nm">${escapeHtml(cat.name || 'قسم')}</div>
-              <div class="cnt">${chCount} قناة</div>
-            </div>
-          </div>
-          <span class="expand-arrow">▼</span>
-          <button class="btn danger small" onclick="removeCategory(${ci}, event)">🗑 حذف القسم</button>
-        </div>
+setInterval(() => {
+  const now = Date.now();
+  for (const [id, t] of viewers) if (now - t > 15000) viewers.delete(id);
+  document.getElementById('viewerCount').textContent = viewers.size;
+}, 5000);
 
-        <div class="cat-body">
-          <div class="row2">
-            <div class="field">
-              <label>اسم القسم</label>
-              <input value="${escapeAttr(cat.name || '')}" oninput="updCat(${ci},'name',this.value)" onchange="saveNow()" placeholder="beIN Sports">
-            </div>
-            <div class="field">
-              <label>رابط لوجو القسم</label>
-              <input type="url" value="${escapeAttr(cat.logo || '')}" oninput="updCat(${ci},'logo',this.value)" onchange="saveNow()" placeholder="https://...png">
-            </div>
-          </div>
+/* ================== Tabs ================== */
+function switchTab(name, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+}
 
-          <div style="margin-top:16px">
-            ${(cat.channels || []).map((ch, chi) => renderChannel(ci, chi, ch)).join('')}
-          </div>
+/* ================== Rendering: Categories ================== */
+function render() {
+  const c = document.getElementById('catsList');
+  c.innerHTML = '';
 
-          <button class="add-btn sub" onclick="addChannel(${ci})">➕ إضافة قناة في "${escapeHtml(cat.name || 'القسم')}"</button>
-        </div>
-      `;
-
-      c.appendChild(catDiv);
-
-      totalCh += chCount;
-      totalLive += (cat.channels || []).filter(x => x.live).length;
-    });
-
-    document.getElementById('chCount').textContent = totalCh;
-    document.getElementById('liveCount').textContent = totalLive;
+  if (!categories.length) {
+    c.innerHTML = '<div class="empty-hint">📺<br>لا توجد أقسام بعد<br>اضغط "➕ إضافة قسم" للبدء</div>';
+    document.getElementById('chCount').textContent = 0;
+    document.getElementById('liveCount').textContent = 0;
+    return;
   }
 
-  function renderChannel(ci, chi, ch) {
-    const hasToken = !!ch.token;
-    const badge = ch.live ? '<span class="badge live">مباشر</span>' : '<span class="badge off">متوقف</span>';
-    const tokBadge = hasToken ? '<span class="badge tok">🔐 توكن</span>' : '';
+  let totalCh = 0, totalLive = 0;
 
-    return `
-      <div class="ch-card ${ch.live ? 'live' : ''} ${hasToken ? 'has-token' : ''}">
-        <img class="logo-preview" src="${escapeAttr(ch.logo || '')}" onerror="this.style.opacity=.2">
-        <div class="ch-body">
-          <div class="ch-head">
-            <span class="badge">${escapeHtml(ch.name || 'قناة')}</span>
-            <span style="display:flex;gap:6px;flex-wrap:wrap">${tokBadge}${badge}</span>
-          </div>
+  categories.forEach((cat, ci) => {
+    const chCount = cat.channels ? cat.channels.length : 0;
+    const collapsed = cat.collapsed ? 'collapsed' : '';
 
-          <div class="row2">
-            <div class="field">
-              <label>اسم القناة</label>
-              <input value="${escapeAttr(ch.name || '')}" oninput="updCh(${ci},${chi},'name',this.value)" onchange="saveNow()" placeholder="beIN Sports 1">
-            </div>
-            <div class="field">
-              <label>رابط اللوجو</label>
-              <input type="url" value="${escapeAttr(ch.logo || '')}" oninput="updCh(${ci},${chi},'logo',this.value)" onchange="saveNow()" placeholder="https://...png">
-            </div>
-          </div>
+    const catDiv = document.createElement('div');
+    catDiv.className = 'cat-card ' + collapsed;
 
-          <div class="field">
-            <label>🔒 رابط البث (m3u8) — للأدمن فقط</label>
-            <input type="url" value="${escapeAttr(ch.url || '')}" oninput="updCh(${ci},${chi},'url',this.value)" onchange="saveNow()" placeholder="https://example.com/stream.m3u8">
-          </div>
-
-          ${hasToken ? `<div class="token-box">${escapeHtml(ch.token)}</div>` : ''}
-
-          <div class="actions">
-            <button class="btn blue small" onclick="testLink(${ci},${chi})">🔍 تجربة</button>
-            ${ch.live
-              ? `<button class="btn stop small" onclick="setLive(${ci},${chi},false)">■ إيقاف</button>
-                 <button class="btn play small" onclick="restart(${ci},${chi})">🔄 إعادة</button>`
-              : `<button class="btn play small" onclick="setLive(${ci},${chi},true)">▶ تشغيل</button>`
-            }
-            <button class="btn blue small" onclick="genToken(${ci},${chi})">🔐 توكن</button>
-            <button class="btn danger small" onclick="removeChannel(${ci},${chi})">🗑</button>
+    catDiv.innerHTML = `
+      <div class="cat-head" onclick="toggleCat(${ci}, event)">
+        <div class="cat-title">
+          <img src="${escapeAttr(cat.logo || '')}" onerror="this.style.opacity=.2">
+          <div class="info">
+            <div class="nm">${escapeHtml(cat.name || 'قسم')}</div>
+            <div class="cnt">${chCount} قناة</div>
           </div>
         </div>
+        <span class="expand-arrow">▼</span>
+        <button class="btn danger small" onclick="removeCategory(${ci}, event)">🗑 حذف القسم</button>
+      </div>
+
+      <div class="cat-body">
+        <div class="row2">
+          <div class="field">
+            <label>اسم القسم</label>
+            <input value="${escapeAttr(cat.name || '')}" oninput="updCat(${ci},'name',this.value)" onchange="saveNow()" placeholder="beIN Sports">
+          </div>
+          <div class="field">
+            <label>رابط لوجو القسم</label>
+            <input type="url" value="${escapeAttr(cat.logo || '')}" oninput="updCat(${ci},'logo',this.value)" onchange="saveNow()" placeholder="https://...png">
+          </div>
+        </div>
+
+        <div style="margin-top:16px">
+          ${(cat.channels || []).map((ch, chi) => renderChannel(ci, chi, ch)).join('')}
+        </div>
+
+        <button class="add-btn sub" onclick="addChannel(${ci})">➕ إضافة قناة في "${escapeHtml(cat.name || 'القسم')}"</button>
       </div>
     `;
-  }
 
-  function escapeHtml(s) {
-    return String(s).replace(/[&<>"']/g, ch => ({
-      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-    }[ch]));
-  }
-  function escapeAttr(s) { return escapeHtml(s); }
+    c.appendChild(catDiv);
+    totalCh += chCount;
+    totalLive += (cat.channels || []).filter(x => x.live).length;
+  });
 
-  function toggleCat(ci, e) {
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
-    categories[ci].collapsed = !categories[ci].collapsed;
-    render();
-    localStorage.setItem('cats_data_v1', JSON.stringify(categories));
-  }
+  document.getElementById('chCount').textContent = totalCh;
+  document.getElementById('liveCount').textContent = totalLive;
+}
 
-  function updCat(ci, key, value) {
-    categories[ci][key] = value;
-    localStorage.setItem('cats_data_v1', JSON.stringify(categories));
-    scheduleSave();
-  }
-  function updCh(ci, chi, key, value) {
-    categories[ci].channels[chi][key] = value;
-    localStorage.setItem('cats_data_v1', JSON.stringify(categories));
-    scheduleSave();
-  }
+function renderChannel(ci, chi, ch) {
+  const hasToken = !!ch.token;
+  const badge = ch.live ? '<span class="badge live">مباشر</span>' : '<span class="badge off">متوقف</span>';
+  const tokBadge = hasToken ? '<span class="badge tok">🔐 توكن</span>' : '';
 
-  function saveNow() {
-    localStorage.setItem('cats_data_v1', JSON.stringify(categories));
-    publishData();
-  }
-  function scheduleSave() {
-    clearTimeout(publishTimeout);
-    publishTimeout = setTimeout(saveNow, 800);
-  }
+  return `
+    <div class="ch-card ${ch.live ? 'live' : ''} ${hasToken ? 'has-token' : ''}">
+      <img class="logo-preview" src="${escapeAttr(ch.logo || '')}" onerror="this.style.opacity=.2">
+      <div class="ch-body">
+        <div class="ch-head">
+          <span class="badge">${escapeHtml(ch.name || 'قناة')}</span>
+          <span style="display:flex;gap:6px;flex-wrap:wrap">${tokBadge}${badge}</span>
+        </div>
 
-  function publishData() {
-    try {
-      setConn('saving', '💾 جاري الحفظ...');
-      adminClient.publish(TOPIC_DATA, JSON.stringify(categories), { retain: true }, () => {
-        setConn('online', '✅ متصل');
-        showSaved();
-      });
-    } catch (e) {}
-  }
-
-  function showSaved() {
-    const s = document.getElementById('saveIndicator');
-    s.classList.add('show');
-    setTimeout(() => s.classList.remove('show'), 1500);
-  }
-
-  function addCategory() {
-    categories.push({
-      id: 'cat_' + Date.now() + '_' + Math.random().toString(36).slice(2,5),
-      name: 'قسم جديد',
-      logo: '',
-      collapsed: false,
-      channels: []
-    });
-    render();
-    saveNow();
-    showStatus('✓ تمت إضافة القسم', 'ok');
-  }
-
-  function removeCategory(ci, e) {
-    e.stopPropagation();
-    if (!confirm('متأكد من حذف القسم "' + (categories[ci].name || '') + '" وكل قنواته؟')) return;
-    (categories[ci].channels || []).forEach(ch => {
-      if (ch.live) adminClient.publish(TOPIC_CMD, JSON.stringify({ action: 'stop', channelId: ch.id }));
-    });
-    categories.splice(ci, 1);
-    render();
-    saveNow();
-    showStatus('✓ تم حذف القسم', 'ok');
-  }
-
-  function addChannel(ci) {
-    if (!categories[ci].channels) categories[ci].channels = [];
-    categories[ci].channels.push({
-      id: 'ch_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
-      name: 'قناة جديدة',
-      logo: '',
-      url: '',
-      token: '',
-      _tokenUrl: '',
-      live: false
-    });
-    render();
-    saveNow();
-    showStatus('✓ تمت إضافة القناة', 'ok');
-  }
-
-  function removeChannel(ci, chi) {
-    const ch = categories[ci].channels[chi];
-    if (!confirm('حذف "' + (ch.name || '') + '"؟')) return;
-    if (ch.live) adminClient.publish(TOPIC_CMD, JSON.stringify({ action: 'stop', channelId: ch.id }));
-    categories[ci].channels.splice(chi, 1);
-    render();
-    saveNow();
-    showStatus('✓ تم الحذف', 'ok');
-  }
-
-  function testLink(ci, chi) {
-    const ch = categories[ci].channels[chi];
-    const url = (ch.url || '').trim();
-    if (!url) { showStatus('❌ اكتب رابط البث الأول', 'err'); return; }
-
-    const modal = document.getElementById('testModal');
-    const video = document.getElementById('testVideo');
-    modal.style.display = 'flex';
-
-    if (testHls) { testHls.destroy(); testHls = null; }
-    video.pause(); video.removeAttribute('src'); video.load();
-
-    if (Hls.isSupported()) {
-      testHls = new Hls({ lowLatencyMode: true, maxBufferLength: 30 });
-      testHls.loadSource(url);
-      testHls.attachMedia(video);
-      testHls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(e => console.log(e)));
-      testHls.on(Hls.Events.ERROR, (e, d) => {
-        if (d.fatal) showStatus('❌ الرابط لا يعمل أو به مشكلة: ' + d.details, 'err');
-      });
-    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-      video.src = url;
-      video.play().catch(e => console.log(e));
-    }
-  }
-
-  function closeTestModal() {
-    document.getElementById('testModal').style.display = 'none';
-    const video = document.getElementById('testVideo');
-    video.pause();
-    if (testHls) { testHls.destroy(); testHls = null; }
-    video.removeAttribute('src'); video.load();
-  }
-
-  async function genToken(ci, chi) {
-    const ch = categories[ci].channels[chi];
-    const origUrl = (ch.url || '').trim();
-    if (!origUrl) { showStatus('❌ اكتب رابط البث الأول', 'err'); return null; }
-
-    showStatus('🔐 جاري توليد التوكن...', 'info');
-    try {
-      const res = await fetch(
-        PROXY_BASE + '/token?key=' + encodeURIComponent(ADMIN_KEY) +
-        '&url=' + encodeURIComponent(origUrl)
-      );
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      const token = (await res.text()).trim();
-      if (!token || token.length < 20) throw new Error('توكن غير صالح');
-
-      ch.token = token;
-      ch._tokenUrl = origUrl;
-      saveNow();
-      render();
-      showStatus('✓ تم توليد التوكن ✅', 'ok');
-      return token;
-    } catch (err) {
-      showStatus('❌ فشل: ' + err.message, 'err');
-      return null;
-    }
-  }
-
-  async function setLive(ci, chi, status) {
-    const ch = categories[ci].channels[chi];
-
-    if (!status) {
-      ch.live = false;
-      render();
-      saveNow();
-      adminClient.publish(TOPIC_CMD, JSON.stringify({ action: 'stop', channelId: ch.id }));
-      showStatus('✓ تم الإيقاف', 'ok');
-      return;
-    }
-
-    const origUrl = (ch.url || '').trim();
-    if (!origUrl) { showStatus('❌ اكتب رابط البث الأول', 'err'); return; }
-
-    if (!ch.token || ch._tokenUrl !== origUrl) {
-      showStatus('🔐 جاري توليد التوكن...', 'info');
-      const tok = await genToken(ci, chi);
-      if (!tok) return;
-    }
-
-    ch.live = true;
-    render();
-    saveNow();
-
-    adminClient.publish(TOPIC_CMD, JSON.stringify({
-      action: 'play',
-      channelId: ch.id,
-      token: ch.token,
-      name: ch.name,
-      ts: Date.now()
-    }));
-
-    showStatus('✓ تم التشغيل، سيتم تحويل المشاهدين للقناة', 'ok');
-  }
-
-  function restart(ci, chi) {
-    const ch = categories[ci].channels[chi];
-    if (!ch.live) return;
-    adminClient.publish(TOPIC_CMD, JSON.stringify({
-      action: 'play',
-      channelId: ch.id,
-      token: ch.token,
-      name: ch.name,
-      ts: Date.now()
-    }));
-    showStatus('✓ تم إعادة التشغيل', 'ok');
-  }
-
-  function stopAll() {
-    if (!confirm('إيقاف كل البث؟')) return;
-    categories.forEach(cat => (cat.channels || []).forEach(ch => ch.live = false));
-    render();
-    saveNow();
-    adminClient.publish(TOPIC_CMD, JSON.stringify({ action: 'stopAll' }));
-    showStatus('✓ تم إيقاف الكل', 'ok');
-  }
-
-  function showStatus(msg, type) {
-    const s = document.getElementById('statusMsg');
-    s.textContent = msg;
-    s.className = 'status ' + type;
-    setTimeout(() => { s.className = 'status'; }, 4000);
-  }
-
-  function reloadFromServer() {
-    if (!confirm('إعادة تحميل من السيرفر؟')) return;
-    localStorage.removeItem('cats_data_v1');
-    location.reload();
-  }
-
-  function resetAll() {
-    if (!confirm('مسح كل الأقسام والقنوات؟')) return;
-    categories = [];
-    localStorage.setItem('cats_data_v1', JSON.stringify(categories));
-    render();
-    saveNow();
-    showStatus('✓ تم المسح', 'ok');
-  }
-
-  /* ============ 🎫 أكواد التفعيل ============ */
-  function generateCodes() {
-    const count = Math.min(100, Math.max(1, parseInt(document.getElementById('genCount').value) || 1));
-    const value = Math.min(99999, Math.max(1, parseInt(document.getElementById('genDuration').value) || 24));
-    const unit = document.getElementById('genUnit').value || 'hour';
-    const prefix = (document.getElementById('genPrefix').value || '')
-      .replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 4);
-
-    /* تحويل الوحدة إلى دقائق */
-    let durationMin;
-    if (unit === 'min')       durationMin = value;
-    else if (unit === 'day')  durationMin = value * 24 * 60;
-    else                      durationMin = value * 60;  // hour
-
-    if (!Array.isArray(activationCodes)) activationCodes = [];
-
-    const newCodes = [];
-    for (let i = 0; i < count; i++) {
-      let code;
-      let safety = 0;
-      do {
-        code = generateOneCode(prefix);
-        safety++;
-      } while (activationCodes.some(c => c.code === code) && safety < 50);
-      newCodes.push({
-        code: code,
-        durationMin: durationMin,
-        active: true,
-        createdAt: Date.now()
-      });
-    }
-
-    activationCodes = activationCodes.concat(newCodes);
-    publishCodes();
-    renderCodes();
-
-    const unitAr = unit === 'min' ? 'دقيقة' : (unit === 'day' ? 'يوم' : 'ساعة');
-    showCodesStatus(`✓ تم توليد ${count} كود بمدة ${value} ${unitAr}`, 'ok');
-  }
-
-  function generateOneCode(prefix) {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    let rand = '';
-    const total = 8 - (prefix ? prefix.length : 0);
-    for (let i = 0; i < total; i++) {
-      rand += chars[Math.floor(Math.random() * chars.length)];
-    }
-    const body = (prefix ? prefix : '') + rand;
-    return body.slice(0, 4).toUpperCase() + '-' + body.slice(4, 8).toUpperCase();
-  }
-
-  function toggleCode(index) {
-    if (!activationCodes[index]) return;
-    activationCodes[index].active = !activationCodes[index].active;
-    publishCodes();
-    renderCodes();
-    showCodesStatus(activationCodes[index].active ? '✓ تم تفعيل الكود' : '✓ تم تعطيل الكود', 'ok');
-  }
-
-  function removeCode(index) {
-    const c = activationCodes[index];
-    if (!c) return;
-    if (!confirm('حذف الكود "' + c.code + '"؟')) return;
-    activationCodes.splice(index, 1);
-    publishCodes();
-    renderCodes();
-    showCodesStatus('✓ تم حذف الكود', 'ok');
-  }
-
-  function deleteAllCodes() {
-    if (!activationCodes.length) return;
-    if (!confirm('حذف كل الأكواد (' + activationCodes.length + ')؟')) return;
-    activationCodes = [];
-    publishCodes();
-    renderCodes();
-    showCodesStatus('✓ تم حذف كل الأكواد', 'ok');
-  }
-
-  function copyCode(code) {
-    const doFallback = () => {
-      const ta = document.createElement('textarea');
-      ta.value = code;
-      document.body.appendChild(ta);
-      ta.select();
-      try { document.execCommand('copy'); } catch(e){}
-      document.body.removeChild(ta);
-      showCodesStatus('✓ تم نسخ الكود: ' + code, 'ok');
-    };
-    if (navigator.clipboard && window.isSecureContext) {
-      navigator.clipboard.writeText(code).then(() => {
-        showCodesStatus('✓ تم نسخ الكود: ' + code, 'ok');
-      }).catch(doFallback);
-    } else {
-      doFallback();
-    }
-  }
-
-  function publishCodes() {
-    try {
-      setConn('saving', '💾 جاري حفظ الأكواد...');
-      localStorage.setItem('activation_codes_v2', JSON.stringify(activationCodes));
-      adminClient.publish(TOPIC_CODES, JSON.stringify(activationCodes), { retain: true }, () => {
-        setConn('online', '✅ متصل');
-        showSaved();
-      });
-    } catch(e){}
-  }
-
-  function fmtDuration(min){
-    if(!min) return '—';
-    if(min >= 1440){
-      const d = Math.floor(min/1440);
-      const rest = min - d*1440;
-      if(rest === 0) return d + ' يوم';
-      const h = Math.floor(rest/60);
-      return d + ' يوم' + (h ? ' و' + h + ' س' : '');
-    }
-    if(min >= 60){
-      const h = Math.floor(min/60);
-      const m = min % 60;
-      return h + ' ساعة' + (m ? ' و' + m + ' د' : '');
-    }
-    return min + ' دقيقة';
-  }
-
-  function renderCodes() {
-    const wrap = document.getElementById('codesList');
-    const totalEl = document.getElementById('codeTotal');
-    const activeEl = document.getElementById('codeActive');
-    const disabledEl = document.getElementById('codeDisabled');
-
-    if (!Array.isArray(activationCodes)) activationCodes = [];
-
-    if (totalEl) totalEl.textContent = activationCodes.length;
-    if (activeEl) activeEl.textContent = activationCodes.filter(c => c.active !== false).length;
-    if (disabledEl) disabledEl.textContent = activationCodes.filter(c => c.active === false).length;
-
-    if (!wrap) return;
-
-    if (!activationCodes.length) {
-      wrap.innerHTML = '<div style="text-align:center;padding:30px;color:#8a8a9a;font-size:12.5px;grid-column:1/-1">لا توجد أكواد حالياً. اضغط "🎫 توليد الأكواد" للبدء.</div>';
-      return;
-    }
-
-    const sorted = activationCodes
-      .map((c, i) => ({ ...c, _i: i }))
-      .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-
-    wrap.innerHTML = sorted.map(c => {
-      const off = c.active === false ? ' off' : '';
-      const created = c.createdAt
-        ? new Date(c.createdAt).toLocaleString('ar-EG', { dateStyle:'short', timeStyle:'short' })
-        : '—';
-      const durMin = c.durationMin || (c.duration ? c.duration * 60 : 0);
-      return `
-        <div class="code-card${off}">
-          <div class="cc-code" onclick="copyCode('${c.code}')" title="اضغط للنسخ">
-            <span>${c.code}</span>
-            <svg class="copy-ic" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+        <div class="row2">
+          <div class="field">
+            <label>اسم القناة</label>
+            <input value="${escapeAttr(ch.name || '')}" oninput="updCh(${ci},${chi},'name',this.value)" onchange="saveNow()" placeholder="beIN Sports 1">
           </div>
-          <div class="cc-meta">
-            <span class="chip">⏱ ${fmtDuration(durMin)}</span>
-            <span class="chip">${c.active === false ? '🚫 معطّل' : '✅ فعّال'}</span>
-          </div>
-          <div class="cc-meta" style="margin-top:6px;font-size:10px;opacity:.7">
-            📅 ${created}
-          </div>
-          <div class="cc-actions">
-            <button class="btn ${c.active === false ? 'play' : 'ghost'} small" onclick="toggleCode(${c._i})">
-              ${c.active === false ? '✓ تفعيل' : '⏸ تعطيل'}
-            </button>
-            <button class="btn danger small" onclick="removeCode(${c._i})">🗑 حذف</button>
+          <div class="field">
+            <label>رابط اللوجو</label>
+            <input type="url" value="${escapeAttr(ch.logo || '')}" oninput="updCh(${ci},${chi},'logo',this.value)" onchange="saveNow()" placeholder="https://...png">
           </div>
         </div>
-      `;
-    }).join('');
+
+        <div class="field">
+          <label>🔒 رابط البث (m3u8) — للأدمن فقط</label>
+          <input type="url" value="${escapeAttr(ch.url || '')}" oninput="updCh(${ci},${chi},'url',this.value)" onchange="saveNow()" placeholder="https://example.com/stream.m3u8">
+        </div>
+
+        ${hasToken ? `<div class="token-box">${escapeHtml(ch.token)}</div>` : ''}
+
+        <div class="actions">
+          ${ch.live
+            ? `<button class="btn stop small" onclick="setLive(${ci},${chi},false)">■ إيقاف</button>
+               <button class="btn play small" onclick="restart(${ci},${chi})">🔄 إعادة</button>`
+            : `<button class="btn play small" onclick="setLive(${ci},${chi},true)">▶ تشغيل</button>`
+          }
+          <button class="btn blue small" onclick="genToken(${ci},${chi})">🔐 توكن</button>
+          <button class="btn danger small" onclick="removeChannel(${ci},${chi})">🗑</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, ch => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[ch]));
+}
+function escapeAttr(s) { return escapeHtml(s); }
+
+/* ================== Rendering: Codes ================== */
+function renderCodes() {
+  const badge = document.getElementById('codesCountBadge');
+  const stat = document.getElementById('codeCount');
+  if (badge) badge.textContent = codes.length;
+  if (stat) stat.textContent = codes.length;
+
+  const list = document.getElementById('codesList');
+  if (!list) return;
+
+  if (!codes.length) {
+    list.innerHTML = '<div class="empty-hint">🎟️<br>لا توجد أكواد بعد<br>اضغط "توليد ونشر الكود" لإضافة أول كود</div>';
+    return;
   }
 
-  function showCodesStatus(msg, type) {
-    const s = document.getElementById('codesStatus');
-    if (!s) return;
-    s.textContent = msg;
-    s.className = 'status ' + type;
-    setTimeout(() => { s.className = 'status'; }, 3500);
+  list.innerHTML = codes.map(c => `
+    <div class="code-item">
+      <div class="code-val">${escapeHtml(c)}</div>
+      <span class="code-tag">نشط</span>
+      <button class="code-del" onclick="deleteCode('${c}')">
+        <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+      </button>
+    </div>
+  `).join('');
+}
+
+/* ================== Actions: Categories ================== */
+function toggleCat(ci, e) {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
+  categories[ci].collapsed = !categories[ci].collapsed;
+  render();
+  localStorage.setItem(STORAGE_CATS, JSON.stringify(categories));
+}
+
+function updCat(ci, key, value) {
+  categories[ci][key] = value;
+  localStorage.setItem(STORAGE_CATS, JSON.stringify(categories));
+  scheduleSave();
+}
+
+function updCh(ci, chi, key, value) {
+  categories[ci].channels[chi][key] = value;
+  localStorage.setItem(STORAGE_CATS, JSON.stringify(categories));
+  scheduleSave();
+}
+
+function saveNow() {
+  localStorage.setItem(STORAGE_CATS, JSON.stringify(categories));
+  publishData();
+}
+
+function scheduleSave() {
+  clearTimeout(publishTimeout);
+  publishTimeout = setTimeout(saveNow, 800);
+}
+
+function publishData() {
+  try {
+    setConn('saving', '💾 جاري الحفظ...');
+    client.publish(TOPIC_DATA, JSON.stringify(categories), { retain: true }, () => {
+      setConn('online', '✅ متصل');
+      showSaved();
+    });
+  } catch (e) {}
+}
+
+function showSaved() {
+  const s = document.getElementById('saveIndicator');
+  s.classList.add('show');
+  setTimeout(() => s.classList.remove('show'), 1500);
+}
+
+function addCategory() {
+  categories.push({
+    id: 'cat_' + Date.now() + '_' + Math.random().toString(36).slice(2,5),
+    name: 'قسم جديد',
+    logo: '',
+    collapsed: false,
+    channels: []
+  });
+  render();
+  saveNow();
+  showStatus('✓ تمت إضافة القسم', 'ok');
+}
+
+function removeCategory(ci, e) {
+  e.stopPropagation();
+  if (!confirm('متأكد من حذف القسم "' + (categories[ci].name || '') + '" وكل قنواته؟')) return;
+  (categories[ci].channels || []).forEach(ch => {
+    if (ch.live) client.publish(TOPIC_CMD, JSON.stringify({ action: 'stop', channelId: ch.id }));
+  });
+  categories.splice(ci, 1);
+  render();
+  saveNow();
+  showStatus('✓ تم حذف القسم', 'ok');
+}
+
+function addChannel(ci) {
+  if (!categories[ci].channels) categories[ci].channels = [];
+  categories[ci].channels.push({
+    id: 'ch_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
+    name: 'قناة جديدة',
+    logo: '',
+    url: '',
+    token: '',
+    _tokenUrl: '',
+    live: false
+  });
+  render();
+  saveNow();
+  showStatus('✓ تمت إضافة القناة', 'ok');
+}
+
+function removeChannel(ci, chi) {
+  const ch = categories[ci].channels[chi];
+  if (!confirm('حذف "' + (ch.name || '') + '"؟')) return;
+  if (ch.live) client.publish(TOPIC_CMD, JSON.stringify({ action: 'stop', channelId: ch.id }));
+  categories[ci].channels.splice(chi, 1);
+  render();
+  saveNow();
+  showStatus('✓ تم الحذف', 'ok');
+}
+
+/* ================== Token Generation ================== */
+async function genToken(ci, chi) {
+  const ch = categories[ci].channels[chi];
+  const origUrl = (ch.url || '').trim();
+  if (!origUrl) { showStatus('❌ اكتب رابط البث الأول', 'err'); return null; }
+
+  showStatus('🔐 جاري توليد التوكن...', 'info');
+  try {
+    const res = await fetch(
+      PROXY_BASE + '/token?key=' + encodeURIComponent(ADMIN_KEY) +
+      '&url=' + encodeURIComponent(origUrl)
+    );
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const token = (await res.text()).trim();
+    if (!token || token.length < 20) throw new Error('توكن غير صالح');
+
+    ch.token = token;
+    ch._tokenUrl = origUrl;
+    saveNow();
+    render();
+    showStatus('✓ تم توليد التوكن ✅', 'ok');
+    return token;
+  } catch (err) {
+    showStatus('❌ فشل: ' + err.message, 'err');
+    return null;
   }
+}
+
+async function setLive(ci, chi, status) {
+  const ch = categories[ci].channels[chi];
+
+  if (!status) {
+    ch.live = false;
+    render();
+    saveNow();
+    client.publish(TOPIC_CMD, JSON.stringify({ action: 'stop', channelId: ch.id }));
+    showStatus('✓ تم الإيقاف', 'ok');
+    return;
+  }
+
+  const origUrl = (ch.url || '').trim();
+  if (!origUrl) { showStatus('❌ اكتب رابط البث الأول', 'err'); return; }
+
+  if (!ch.token || ch._tokenUrl !== origUrl) {
+    showStatus('🔐 جاري توليد التوكن...', 'info');
+    const tok = await genToken(ci, chi);
+    if (!tok) return;
+  }
+
+  ch.live = true;
+  render();
+  saveNow();
+
+  client.publish(TOPIC_CMD, JSON.stringify({
+    action: 'play',
+    channelId: ch.id,
+    token: ch.token,
+    name: ch.name
+  }));
+
+  showStatus('✓ تم التشغيل', 'ok');
+}
+
+function restart(ci, chi) {
+  const ch = categories[ci].channels[chi];
+  if (!ch.live) return;
+  client.publish(TOPIC_CMD, JSON.stringify({
+    action: 'play',
+    channelId: ch.id,
+    token: ch.token,
+    name: ch.name
+  }));
+  showStatus('✓ تم إعادة التشغيل', 'ok');
+}
+
+function stopAll() {
+  if (!confirm('إيقاف كل البث؟')) return;
+  categories.forEach(cat => (cat.channels || []).forEach(ch => ch.live = false));
+  render();
+  saveNow();
+  client.publish(TOPIC_CMD, JSON.stringify({ action: 'stopAll' }));
+  showStatus('✓ تم إيقاف الكل', 'ok');
+}
+
+function showStatus(msg, type) {
+  const s = document.getElementById('statusMsg');
+  s.textContent = msg;
+  s.className = 'status ' + type;
+  setTimeout(() => { s.className = 'status'; }, 4000);
+}
+
+/* ================== Codes: Actions ================== */
+function genRandom() {
+  const chars = '0123456789abcdef';
+  let out = '';
+  for (let i = 0; i < 8; i++) out += chars[Math.floor(Math.random() * chars.length)];
+  return out;
+}
+
+function generateCode() {
+  let val = document.getElementById('newCodeInput').value.trim().toLowerCase();
+  if (!val) val = genRandom();
+  if (!/^[a-z0-9_-]{3,30}$/.test(val)) {
+    alert('الكود غير صالح (استخدم حروف وأرقام فقط)');
+    return;
+  }
+  if (codes.includes(val)) {
+    alert('الكود موجود بالفعل');
+    return;
+  }
+  codes.push(val);
+  saveCodes();
+  publishCodes();
+  renderCodes();
+  document.getElementById('newCodeInput').value = '';
+}
+
+function deleteCode(code) {
+  if (!confirm('حذف الكود "' + code + '"؟ سيتم طرد كل من يستخدمه تلقائياً')) return;
+  codes = codes.filter(c => c !== code);
+  saveCodes();
+  publishCodes();
+  renderCodes();
+}
+
+function clearAllCodes() {
+  if (!codes.length) { alert('لا توجد أكواد'); return; }
+  if (!confirm('حذف كل الأكواد؟ سيتم طرد جميع المستخدمين!')) return;
+  codes = [];
+  saveCodes();
+  publishCodes();
+  renderCodes();
+}
+
+function saveCodes() {
+  try { localStorage.setItem(STORAGE_CODES, JSON.stringify(codes)); } catch (e) {}
+}
+
+function publishCodes() {
+  if (!client.connected) return;
+  client.publish(TOPIC_CODES, JSON.stringify({
+    codes: codes,
+    ts: Date.now()
+  }), { retain: true, qos: 1 });
+}
+
+function forceLoadCodes() {
+  if (!client.connected) { alert('غير متصل'); return; }
+  codesLoadedFromServer = false;
+  client.subscribe(TOPIC_CODES);
+}
+
+/* ================== Broadcast ================== */
+function broadcastPlay() {
+  const token = document.getElementById('broadcastToken').value.trim();
+  if (!token) { alert('اكتب التوكن'); return; }
+  client.publish(TOPIC_CMD, JSON.stringify({
+    action: 'play',
+    channelId: 'broadcast_' + Date.now(),
+    token: token,
+    ts: Date.now()
+  }), { qos: 1 });
+  document.getElementById('broadcastToken').value = '';
+  alert('✅ تم إرسال أمر التشغيل');
+}
+
+/* ================== Reload / Reset ================== */
+function reloadFromServer() {
+  if (!confirm('إعادة تحميل كل البيانات من السيرفر؟')) return;
+  localStorage.removeItem(STORAGE_CATS);
+  location.reload();
+}
+
+function resetAll() {
+  if (!confirm('مسح كل الأقسام والقنوات؟')) return;
+  categories = [];
+  localStorage.setItem(STORAGE_CATS, JSON.stringify(categories));
+  render();
+  saveNow();
+  showStatus('✓ تم المسح', 'ok');
+}
+
+/* ================== Before Unload ================== */
+window.addEventListener('beforeunload', () => {
+  if (categories.length) {
+    try { client.publish(TOPIC_DATA, JSON.stringify(categories), { retain: true }); } catch (e) {}
+  }
+  if (codes.length) {
+    try { client.publish(TOPIC_CODES, JSON.stringify({ codes: codes }), { retain: true }); } catch (e) {}
+  }
+});
 </script>
 </body>
 </html>
