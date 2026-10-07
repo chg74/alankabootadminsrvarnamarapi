@@ -2,775 +2,446 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>لوحة التحكم - Alankaboot Sport</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>العنكبوت ADMIN</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 <style>
-  *{box-sizing:border-box;font-family:'Cairo',sans-serif;margin:0;padding:0;
-    -webkit-font-smoothing:antialiased}
-  :root{
-    --card:rgba(255,255,255,0.035);--card-2:rgba(255,255,255,0.055);
-    --border:rgba(255,255,255,0.08);--border-hi:rgba(255,255,255,0.14);
-    --accent:#e11d2e;--accent-2:#ff3b52;--accent-glow:rgba(225,29,46,.45);
-    --green:#22c55e;--green-glow:rgba(34,197,94,.4);
-    --blue:#3b82f6;--blue-glow:rgba(59,130,246,.4);
-    --purple:#8b5cf6;--purple-glow:rgba(139,92,246,.4);
-    --text:#fff;--text-dim:#8a8a9a;--text-mute:#5a5a68;
-    --r-sm:10px;--r:16px;--r-lg:20px;--r-xl:26px;
-  }
-  body{background:
-      radial-gradient(1200px 600px at 50% -10%,rgba(225,29,46,.14),transparent 60%),
-      radial-gradient(900px 500px at 100% 100%,rgba(59,130,246,.08),transparent 60%),
-      #0a0a0f;
-    color:var(--text);padding:18px;min-height:100vh}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Cairo',sans-serif;}
+body{min-height:100vh;background:#050510;color:#fff;padding:20px;position:relative;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;z-index:-1;background:radial-gradient(ellipse 800px 600px at 15% 10%,rgba(139,92,246,.25),transparent 55%),radial-gradient(ellipse 700px 500px at 85% 90%,rgba(0,255,136,.18),transparent 55%),radial-gradient(ellipse 900px 700px at 50% 50%,rgba(59,130,246,.12),transparent 60%);}
+.app{width:100%;max-width:640px;margin:auto;position:relative;}
 
-  /* ========== Lock Screen ========== */
-  #adminLockScreen{position:fixed;inset:0;z-index:99999;
-    background:linear-gradient(135deg,#05050a 0%,#0a0a12 50%,#05050a 100%);
-    display:flex;justify-content:center;align-items:center;padding:20px}
-  #adminLockScreen.hide{display:none}
-  .lock-card{max-width:420px;width:100%;
-    background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));
-    border:1px solid rgba(255,255,255,.1);border-radius:24px;
-    padding:34px 24px 28px;text-align:center;
-    box-shadow:0 30px 60px rgba(0,0,0,.6);position:relative}
-  .lock-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;
-    background:linear-gradient(90deg,transparent,#e11d2e 20%,#8b5cf6 80%,transparent);
-    border-radius:24px 24px 0 0}
-  .lock-icon{width:72px;height:72px;border-radius:20px;
-    background:linear-gradient(135deg,rgba(225,29,46,.15),rgba(139,92,246,.15));
-    border:1px solid rgba(225,29,46,.3);
-    display:flex;justify-content:center;align-items:center;margin:0 auto 20px;
-    box-shadow:0 12px 30px rgba(225,29,46,.25)}
-  .lock-icon svg{width:34px;height:34px;fill:#ff3b52}
-  .lock-title{color:#fff;font-size:20px;font-weight:900;margin-bottom:6px}
-  .lock-sub{color:#8a8a9a;font-size:12.5px;font-weight:600;line-height:1.6;margin-bottom:22px}
-  .lock-input{width:100%;background:rgba(0,0,0,.5);
-    border:1.5px solid rgba(255,255,255,.1);border-radius:14px;
-    padding:16px 18px;color:#fff;font-size:14px;font-weight:700;
-    font-family:ui-monospace,monospace;outline:none;transition:.3s;
-    text-align:center;letter-spacing:2px;direction:ltr}
-  .lock-input::placeholder{color:#4a4a5a;font-weight:500;letter-spacing:0;
-    direction:rtl;font-family:'Cairo',sans-serif;font-size:12.5px}
-  .lock-input:focus{border-color:#e11d2e;
-    box-shadow:0 0 0 4px rgba(225,29,46,.12)}
-  .lock-btn{width:100%;margin-top:16px;
-    background:linear-gradient(135deg,#ff3b52 0%,#e11d2e 50%,#c41020 100%);
-    border:none;border-radius:14px;padding:16px;
-    color:#fff;font-size:15px;font-weight:900;font-family:'Cairo',sans-serif;
-    cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;
-    box-shadow:0 12px 28px rgba(225,29,46,.4);transition:.25s}
-  .lock-btn:active{transform:translateY(2px)}
-  .lock-btn svg{width:18px;height:18px;fill:currentColor}
-  .lock-status{margin-top:14px;font-size:13px;font-weight:700;min-height:20px;
-    text-align:center;padding:8px 12px;border-radius:10px}
-  .lock-status.error{color:#ff6b7a;background:rgba(225,29,46,.08);
-    border:1px solid rgba(225,29,46,.2)}
-  .lock-status.success{color:#4ade80;background:rgba(34,197,94,.08);
-    border:1px solid rgba(34,197,94,.2)}
-  .lock-status:empty{padding:0;background:transparent;border:none}
+.logo-wrap{display:flex;justify-content:center;margin-bottom:6px;}
+.logo-img{width:70px;height:70px;border-radius:18px;object-fit:contain;background:rgba(255,255,255,.04);border:1px solid rgba(0,255,136,.3);padding:8px;box-shadow:0 0 30px rgba(0,255,136,.35);}
+.logo{text-align:center;color:#fff;font-size:24px;font-weight:900;letter-spacing:1px;margin-top:12px;}
+.logo span{color:#00ff88;text-shadow:0 0 15px rgba(0,255,136,.6);}
+.sub{text-align:center;color:#6d6d8a;font-size:12px;margin:4px 0 22px;font-weight:600;}
 
-  /* ========== Admin ========== */
-  .admin-content{display:none}
-  .admin-content.show{display:block}
-  h1{text-align:center;color:#fff;font-size:24px;font-weight:800;margin-bottom:8px;
-    background:linear-gradient(180deg,#fff 40%,#b0b0be 100%);
-    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-  .sub{text-align:center;color:var(--text-dim);font-size:12.5px;margin-bottom:18px}
-  .conn{text-align:center;font-size:12.5px;padding:11px 14px;border-radius:var(--r);
-    background:var(--card);border:1px solid var(--border);margin-bottom:18px;
-    font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px;transition:.3s}
-  .conn::before{content:'';width:8px;height:8px;border-radius:50%;background:currentColor;
-    box-shadow:0 0 12px currentColor;animation:pulse 2s ease-in-out infinite}
-  @keyframes pulse{50%{opacity:.4;transform:scale(.85)}}
-  .conn.online{color:var(--green)}.conn.offline{color:#ef4444}.conn.saving{color:#fbbf24}
-  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
-    gap:12px;margin-bottom:18px}
-  .stat-card{background:linear-gradient(180deg,var(--card-2),var(--card));
-    padding:20px 16px;border-radius:var(--r-lg);border:1px solid var(--border);
-    text-align:center;transition:.3s}
-  .stat-card .num{font-size:30px;font-weight:800;color:var(--green);line-height:1}
-  .stat-card.live .num{color:var(--accent-2)}
-  .stat-card.codes .num{color:var(--purple)}
-  .stat-card .lbl{font-size:11.5px;color:var(--text-dim);margin-top:8px;font-weight:600}
-  .tabs{display:flex;gap:6px;margin-bottom:18px;background:rgba(255,255,255,.03);
-    padding:6px;border-radius:var(--r-lg);border:1px solid var(--border)}
-  .tab{flex:1;padding:11px 6px;border-radius:var(--r);background:transparent;
-    border:none;color:var(--text-dim);font-family:'Cairo',sans-serif;font-weight:800;
-    font-size:12.5px;cursor:pointer;transition:.25s;display:flex;align-items:center;
-    justify-content:center;gap:5px}
-  .tab.active{background:linear-gradient(180deg,var(--accent-2),var(--accent));color:#fff;
-    box-shadow:0 8px 24px var(--accent-glow)}
-  .tab-content{display:none}
-  .tab-content.active{display:block}
-  .section{background:linear-gradient(180deg,var(--card-2),var(--card));
-    border-radius:var(--r-xl);padding:20px;margin-bottom:18px;border:1px solid var(--border)}
-  .section h2{color:#fff;margin:0 0 16px;font-size:16px;font-weight:800;
-    display:flex;align-items:center;gap:10px;padding-bottom:14px;border-bottom:1px solid var(--border)}
-  .section h2::before{content:'';width:3px;height:18px;border-radius:4px;
-    background:linear-gradient(180deg,var(--accent-2),var(--accent))}
-  .section h2 .badge-cnt{background:rgba(225,29,46,.15);color:var(--accent-2);
-    font-size:11px;padding:3px 10px;border-radius:100px;
-    border:1px solid rgba(225,29,46,.3);margin-right:auto}
-  .info-box{background:linear-gradient(135deg,rgba(59,130,246,.08),rgba(59,130,246,.03));
-    border:1px solid rgba(59,130,246,.22);padding:14px 16px;border-radius:var(--r);
-    font-size:12.5px;color:#93b8f5;margin-bottom:16px;line-height:1.75;
-    display:flex;gap:10px;align-items:flex-start}
-  .info-box::before{content:'💡';font-size:16px;flex-shrink:0}
-  .cat-card{background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02));
-    padding:16px;border-radius:var(--r-lg);margin-bottom:14px;border:1px solid var(--border);
-    position:relative;overflow:hidden}
-  .cat-card::before{content:'';position:absolute;top:0;right:0;bottom:0;width:3px;
-    background:linear-gradient(180deg,var(--accent-2),var(--accent));
-    border-radius:0 var(--r-lg) var(--r-lg) 0}
-  .cat-head{display:flex;justify-content:space-between;align-items:center;gap:10px;
-    margin-bottom:12px;flex-wrap:wrap;cursor:pointer}
-  .cat-head .cat-title{display:flex;align-items:center;gap:12px;flex:1;min-width:180px}
-  .cat-head .cat-title img{width:48px;height:48px;object-fit:contain;background:rgba(255,255,255,.03);
-    border-radius:12px;padding:4px;border:1px solid var(--border)}
-  .cat-head .cat-title .info{display:flex;flex-direction:column;gap:3px;flex:1}
-  .cat-head .cat-title .info .nm{color:#fff;font-weight:800;font-size:14.5px}
-  .cat-head .cat-title .info .cnt{color:var(--text-dim);font-size:11.5px;font-weight:600}
-  .expand-arrow{color:var(--accent-2);font-size:14px;font-weight:900;transition:.3s;
-    width:28px;height:28px;display:flex;align-items:center;justify-content:center;
-    background:rgba(225,29,46,.12);border-radius:50%;border:1px solid rgba(225,29,46,.25)}
-  .cat-card.collapsed .expand-arrow{transform:rotate(-90deg)}
-  .cat-card.collapsed .cat-body{display:none}
-  .cat-body{padding-top:14px;border-top:1px dashed var(--border)}
-  .ch-card{background:rgba(0,0,0,.25);padding:14px;border-radius:var(--r);margin-bottom:12px;
-    border:1px solid var(--border);display:grid;grid-template-columns:76px 1fr;gap:14px;
-    position:relative;overflow:hidden}
-  .ch-card::before{content:'';position:absolute;top:0;right:0;bottom:0;width:3px;
-    background:#4a4a56;border-radius:0 var(--r) var(--r) 0;transition:.3s}
-  .ch-card.live::before{background:linear-gradient(180deg,#4ade80,#22c55e)}
-  .ch-card.has-token::before{background:linear-gradient(180deg,#60a5fa,#3b82f6)}
-  .ch-card.live{background:linear-gradient(135deg,rgba(34,197,94,.06),rgba(0,0,0,.25))}
-  .ch-card .logo-preview{width:76px;height:76px;object-fit:contain;background:rgba(255,255,255,.03);
-    border-radius:14px;padding:6px;border:1px solid var(--border)}
-  .ch-card .ch-body{display:flex;flex-direction:column;gap:9px}
-  .ch-card .ch-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
-  .badge{background:linear-gradient(135deg,var(--accent),#a30f1f);color:#fff;
-    padding:4px 12px;border-radius:100px;font-size:10.5px;font-weight:700}
-  .badge.live{background:linear-gradient(135deg,#4ade80,#16a34a);
-    display:inline-flex;align-items:center;gap:5px}
-  .badge.live::before{content:'';width:6px;height:6px;border-radius:50%;background:#fff;
-    animation:blink 1.2s infinite}
-  @keyframes blink{50%{opacity:.35}}
-  .badge.off{background:#2a2a34;color:#8a8a9a}
-  .badge.tok{background:linear-gradient(135deg,#60a5fa,#2563eb)}
-  .field{display:flex;flex-direction:column;gap:5px}
-  .field label{font-size:10.5px;color:var(--text-dim);font-weight:600}
-  .field input{width:100%;background:rgba(0,0,0,.4);border:1px solid var(--border);
-    color:#fff;padding:10px 12px;border-radius:var(--r-sm);font-size:12.5px;
-    font-family:'Cairo',sans-serif;transition:.25s;font-weight:500}
-  .field input::placeholder{color:var(--text-mute)}
-  .field input:focus{outline:none;border-color:var(--accent);
-    box-shadow:0 0 0 3px rgba(225,29,46,.12)}
-  .field input[type="url"]{direction:ltr;font-size:11.5px;text-align:left}
-  .field.mono input{font-family:ui-monospace,monospace;letter-spacing:1.5px;
-    text-align:center;direction:ltr}
-  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .token-box{background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.25);
-    padding:9px 11px;border-radius:var(--r-sm);font-size:10.5px;color:#93b8f5;
-    word-break:break-all;direction:ltr;text-align:left;
-    font-family:ui-monospace,monospace;line-height:1.5}
-  .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
-  .btn{background:linear-gradient(180deg,var(--accent-2),var(--accent));color:#fff;
-    border:none;padding:10px 18px;border-radius:100px;font-weight:700;cursor:pointer;
-    font-size:12.5px;font-family:'Cairo',sans-serif;transition:.25s;
-    display:inline-flex;align-items:center;justify-content:center;gap:6px;
-    box-shadow:0 4px 14px rgba(225,29,46,.3)}
-  .btn:active{transform:translateY(1px)}
-  .btn.play{background:linear-gradient(180deg,#4ade80,#16a34a);box-shadow:0 4px 14px var(--green-glow)}
-  .btn.stop{background:linear-gradient(180deg,#f87171,#dc2626)}
-  .btn.danger{background:linear-gradient(180deg,#a30f1f,#6b0a15)}
-  .btn.blue{background:linear-gradient(180deg,#60a5fa,#2563eb);box-shadow:0 4px 14px var(--blue-glow)}
-  .btn.purple{background:linear-gradient(180deg,#a78bfa,#7c3aed);box-shadow:0 4px 14px var(--purple-glow)}
-  .btn.ghost{background:rgba(255,255,255,.05);color:#fff;border:1px solid var(--border);box-shadow:none}
-  .btn.small{padding:7px 12px;font-size:11.5px}
-  .btn.block{width:100%}
-  .add-btn{width:100%;background:linear-gradient(180deg,#4ade80,#16a34a);color:#fff;
-    border:none;padding:15px;border-radius:var(--r);font-weight:800;font-size:14px;
-    cursor:pointer;font-family:'Cairo',sans-serif;margin-top:8px;
-    box-shadow:0 8px 24px var(--green-glow)}
-  .add-btn.sub{background:linear-gradient(180deg,#60a5fa,#2563eb);
-    box-shadow:0 6px 18px var(--blue-glow);padding:12px;font-size:12.5px;margin-top:8px}
-  .code-item{display:flex;align-items:center;gap:10px;background:rgba(0,0,0,.3);
-    border:1px solid var(--border);border-radius:var(--r);padding:13px 15px;
-    margin-bottom:9px;position:relative;overflow:hidden}
-  .code-item::before{content:'';position:absolute;top:0;right:0;bottom:0;width:3px;
-    background:linear-gradient(180deg,var(--purple),#6d28d9)}
-  .code-val{flex:1;font-family:ui-monospace,monospace;font-size:14.5px;font-weight:800;
-    color:#fff;letter-spacing:1.5px;direction:ltr;text-align:center}
-  .code-tag{background:rgba(34,197,94,.12);color:#4ade80;font-size:10px;font-weight:800;
-    padding:4px 10px;border-radius:100px;border:1px solid rgba(34,197,94,.3);
-    display:inline-flex;align-items:center;gap:4px}
-  .code-tag::before{content:'';width:5px;height:5px;border-radius:50%;background:#4ade80;
-    animation:blink 1.2s infinite}
-  .code-del{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);
-    color:#f87171;width:36px;height:36px;border-radius:var(--r-sm);cursor:pointer;
-    display:flex;justify-content:center;align-items:center;padding:0;flex-shrink:0}
-  .status{padding:12px 16px;border-radius:var(--r);font-size:12.5px;margin-top:12px;
-    text-align:center;font-weight:700;display:none}
-  .status.ok{background:rgba(34,197,94,.1);color:#4ade80;
-    border:1px solid rgba(34,197,94,.3);display:block}
-  .status.err{background:rgba(239,68,68,.1);color:#f87171;
-    border:1px solid rgba(239,68,68,.3);display:block}
-  .status.info{background:rgba(59,130,246,.1);color:#60a5fa;
-    border:1px solid rgba(59,130,246,.3);display:block}
-  .empty-hint{text-align:center;padding:36px 20px;color:var(--text-dim);
-    font-size:13px;line-height:1.9}
-  #loading{position:fixed;inset:0;background:#0a0a0f;z-index:9999;
-    display:flex;justify-content:center;align-items:center;gap:22px}
-  #loading.hide{display:none}
-  .spinner{width:52px;height:52px;border:3px solid rgba(225,29,46,.15);
-    border-top-color:var(--accent-2);border-radius:50%;animation:spin 1s linear infinite}
-  @keyframes spin{to{transform:rotate(360deg)}}
-  .save-indicator{position:fixed;bottom:20px;left:50%;
-    transform:translateX(-50%) translateY(10px);
-    background:linear-gradient(180deg,#4ade80,#16a34a);color:#fff;padding:11px 26px;
-    border-radius:100px;font-weight:800;font-size:13px;opacity:0;
-    transition:.35s cubic-bezier(.34,1.56,.64,1);pointer-events:none;z-index:99999}
-  .save-indicator.show{opacity:1;transform:translateX(-50%) translateY(0)}
-  @media(max-width:600px){
-    body{padding:14px}h1{font-size:20px}
-    .ch-card{grid-template-columns:1fr}.ch-card .logo-preview{margin:0 auto}
-    .row2{grid-template-columns:1fr}
-  }
+.card{background:linear-gradient(180deg,rgba(18,18,32,.95),rgba(10,10,22,.95));border:1px solid rgba(255,255,255,.08);border-radius:22px;padding:22px;margin-bottom:14px;box-shadow:0 12px 40px rgba(0,0,0,.5);position:relative;overflow:hidden;}
+.card::before{content:'';position:absolute;top:0;right:0;left:0;height:2px;background:linear-gradient(90deg,transparent,rgba(0,255,136,.5),transparent);}
+.title{color:#00ff88;font-weight:800;font-size:17px;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.title::before{content:'';width:4px;height:16px;background:linear-gradient(180deg,#00ff88,#8b5cf6);border-radius:4px;}
+label{display:block;color:#9a9ab5;font-size:12px;margin-bottom:7px;font-weight:700;}
+input,select{width:100%;background:#0a0a18;border:1.5px solid #232338;color:#fff;padding:14px;border-radius:13px;outline:none;margin-bottom:13px;font-size:14px;font-weight:600;transition:.2s;}
+input:focus,select:focus{border-color:#00ff88;box-shadow:0 0 0 3px rgba(0,255,136,.1);}
+button{width:100%;border:0;border-radius:13px;padding:14px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;transition:.2s;}
+.green{background:linear-gradient(135deg,#00ff88,#00cc6a);color:#001a0e;box-shadow:0 8px 24px rgba(0,255,136,.35);}
+.green:active{transform:scale(.98);}
+.dark{background:#0b110e;color:#aaa;border:1px solid #1d3028;}
+.red{background:linear-gradient(135deg,#3a0d12,#210909);color:#ff6868;border:1px solid #572020;}
+.msg{min-height:18px;text-align:center;font-size:12px;margin-top:10px;font-weight:700;}
+.ok{color:#00ff88;}
+.err{color:#ff5555;}
+#adminArea{display:none !important;}
+#adminArea.unlocked{display:block !important;}
+
+.status{display:flex;align-items:center;gap:7px;color:#00ff88;font-size:11px;margin-bottom:14px;font-weight:700;}
+.dot{width:8px;height:8px;background:#00ff88;border-radius:50%;box-shadow:0 0 10px #00ff88;animation:blink 1.5s infinite;}
+@keyframes blink{50%{opacity:.4}}
+
+.codeBox{margin-top:16px;padding:20px;border-radius:16px;background:linear-gradient(135deg,rgba(0,255,136,.12),rgba(139,92,246,.08));border:1.5px solid rgba(0,255,136,.5);text-align:center;display:none;}
+.codeBox.show{display:block;animation:pop .35s;}
+@keyframes pop{0%{transform:scale(.85);opacity:0}100%{transform:scale(1);opacity:1}}
+.codeBox .lbl{color:#9a9ab5;font-size:11px;margin-bottom:10px;font-weight:700;}
+.codeBox .cd{color:#00ff88;font-size:38px;font-weight:900;letter-spacing:8px;font-family:'Courier New',monospace;direction:ltr;text-shadow:0 0 25px rgba(0,255,136,.7);}
+
+.channel{padding:16px;margin-top:10px;background:linear-gradient(135deg,rgba(20,20,35,.95),rgba(12,12,22,.95));border:1px solid rgba(255,255,255,.08);border-radius:16px;display:flex;flex-direction:column;gap:10px;}
+.channel.off{opacity:.5;border-color:rgba(255,60,60,.3);}
+.channel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.channel-code{font-family:'Courier New',monospace;font-weight:900;color:#00ff88;font-size:20px;letter-spacing:4px;direction:ltr;background:rgba(0,255,136,.1);padding:8px 14px;border-radius:10px;border:1px solid rgba(0,255,136,.35);text-shadow:0 0 12px rgba(0,255,136,.4);}
+.channel-status{font-size:10px;padding:5px 12px;border-radius:100px;font-weight:800;}
+.channel-status.on{background:rgba(0,255,136,.15);color:#00ff88;border:1px solid rgba(0,255,136,.3);}
+.channel-status.off{background:rgba(255,60,60,.12);color:#ff6868;border:1px solid rgba(255,60,60,.3);}
+.channel-name{color:#fff;font-weight:800;font-size:14px;}
+.channel-url{direction:ltr;text-align:left;color:#6d6d8a;font-size:10.5px;word-break:break-all;background:#0a0a18;padding:9px 11px;border-radius:9px;border:1px solid #1a1a2e;font-family:monospace;}
+.channel-btns{display:flex;gap:8px;flex-wrap:wrap;}
+.channel-btns button{flex:1;min-width:80px;padding:10px;font-size:12px;border-radius:10px;}
+.empty{color:#5a5a75;text-align:center;padding:20px;font-size:12px;font-weight:600;}
+.badge{display:inline-block;background:rgba(0,255,136,.15);color:#00ff88;font-size:10px;padding:3px 9px;border-radius:6px;font-weight:800;margin-inline-start:6px;}
 </style>
 </head>
 <body>
 
-<!-- Lock Screen -->
-<div id="adminLockScreen">
-  <div class="lock-card">
-    <div class="lock-icon">
-      <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
-    </div>
-    <div class="lock-title">لوحة التحكم</div>
-    <div class="lock-sub">هذه اللوحة محمية، أدخل كود الإدارة للمتابعة</div>
-    <input type="password" class="lock-input" id="adminKeyInput" placeholder="أدخل كود الإدارة" autocomplete="off">
-    <button class="lock-btn" onclick="submitAdminKey()">
-      <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
-      <span>دخول</span>
-    </button>
-    <div class="lock-status" id="adminKeyStatus"></div>
-  </div>
+<div class="app">
+
+<!-- ═══ شاشة تسجيل الدخول (اللي بتظهر دايماً) ═══ -->
+<div id="loginScreen">
+
+<div class="logo-wrap">
+<img class="logo-img" src="https://i.postimg.cc/xT8rcsT1/file-000000008bb4820ebcd371e64fff0469.png" alt="">
+</div>
+<div class="logo">العنكبوت <span>ADMIN</span></div>
+<div class="sub">🔒 لوحة تحكم محمية — دخول للأدمن فقط</div>
+
+<div class="card">
+<div class="title">دخول لوحة الأدمن</div>
+
+<label>كود الأدمن</label>
+<input id="adminCode" type="password" placeholder="أدخل كود الأدمن" autocomplete="off" spellcheck="false">
+
+<button class="green" id="enterAdmin">🔓 دخول لوحة التحكم</button>
+<div class="msg err" id="loginMsg"></div>
 </div>
 
-<!-- Admin -->
-<div class="admin-content" id="adminContent">
-  <div id="loading"><div class="spinner"></div></div>
-
-  <h1>لوحة تحكم Alankaboot Sport</h1>
-  <div class="sub">إدارة الأقسام والقنوات وأكواد التفعيل</div>
-  <div class="conn offline" id="connStatus">جاري الاتصال...</div>
-
-  <div class="stats">
-    <div class="stat-card"><div class="num" id="viewerCount">0</div><div class="lbl">مشاهدين الآن</div></div>
-    <div class="stat-card live"><div class="num" id="liveCount">0</div><div class="lbl">قنوات مباشرة</div></div>
-    <div class="stat-card"><div class="num" id="chCount">0</div><div class="lbl">إجمالي القنوات</div></div>
-    <div class="stat-card codes"><div class="num" id="codeCount">0</div><div class="lbl">أكواد التفعيل</div></div>
-  </div>
-
-  <div class="tabs">
-    <button class="tab active" onclick="switchTab('channels',this)">📺 القنوات</button>
-    <button class="tab" onclick="switchTab('codes',this)">🎟️ الأكواد</button>
-    <button class="tab" onclick="switchTab('tools',this)">⚙️ أدوات</button>
-  </div>
-
-  <div class="tab-content active" id="tab-channels">
-    <div class="section">
-      <h2>الأقسام والقنوات</h2>
-      <div class="info-box"><div><b>الطريقة:</b> ضيف قسم → جواه ضيف القنوات → اضغط "▶ تشغيل مباشر".</div></div>
-      <div id="catsList"></div>
-      <button class="add-btn" onclick="addCategory()">➕ إضافة قسم جديد</button>
-      <div class="status" id="statusMsg"></div>
-    </div>
-  </div>
-
-  <div class="tab-content" id="tab-codes">
-    <div class="section">
-      <h2>توليد كود تفعيل جديد</h2>
-      <div class="info-box"><div><b>ملاحظة:</b> لما تحذف كود، كل المستخدمين اللي بيدخلوا بالكود ده هيتم طردهم.</div></div>
-      <div class="field mono" style="margin-bottom:14px">
-        <label>الكود (اتركه فاضي لتوليده تلقائياً)</label>
-        <input type="text" id="newCodeInput" placeholder="مثال: c4f19fc2" maxlength="30">
-      </div>
-      <button class="btn purple block" onclick="generateCode()" style="padding:14px;font-size:14px">🎟️ توليد ونشر الكود</button>
-      <div class="status" id="codeStatus"></div>
-    </div>
-    <div class="section">
-      <h2>الأكواد النشطة <span class="badge-cnt" id="codesCountBadge">0</span></h2>
-      <div id="codesList"></div>
-    </div>
-    <div class="section">
-      <h2>إجراءات سريعة</h2>
-      <button class="btn blue block" onclick="forceLoadCodes()" style="margin-bottom:8px">🔄 تحميل من السيرفر</button>
-      <button class="btn ghost block" onclick="publishCodes()" style="margin-bottom:8px">📡 إعادة نشر الأكواد</button>
-      <button class="btn danger block" onclick="clearAllCodes()">🗑 حذف كل الأكواد</button>
-    </div>
-  </div>
-
-  <div class="tab-content" id="tab-tools">
-    <div class="section">
-      <h2>إجراءات عامة</h2>
-      <button class="btn ghost block" onclick="reloadFromServer()" style="margin-bottom:8px">🔄 إعادة تحميل الكل</button>
-      <button class="btn ghost block" onclick="stopAll()" style="margin-bottom:8px">⏹ إيقاف كل البث</button>
-      <button class="btn ghost block" onclick="resetAll()">↺ مسح كل الأقسام</button>
-    </div>
-    <div class="section">
-      <h2>التشخيص</h2>
-      <div id="diag" style="font-size:12px;line-height:2;color:var(--text-dim)">-</div>
-    </div>
-  </div>
-
-  <div class="save-indicator" id="saveIndicator">✓ تم الحفظ</div>
 </div>
 
-<script>
-const ADMIN_ACCESS_KEY = 'ANKABOOT_ADMIN_2026_CHANGE_ME';
-const ADMIN_SESSION_KEY = 'alankaboot_admin_session';
-const PROXY_BASE = 'https://alankaboot-proxy.kamlnot61.workers.dev';
-const ADMIN_KEY = 'ANKABOOT_ADMIN_2026_CHANGE_ME';
+<!-- ═══ لوحة التحكم (مخفية، بتظهر بعد الدخول) ═══ -->
+<div id="adminArea">
 
-const BROKER = 'wss://broker.emqx.io:8084/mqtt';
-const TOPIC_CMD   = 'kwtspta_9f3a2b1c/cmd';
-const TOPIC_DATA  = 'kwtspta_9f3a2b1c/data';
-const TOPIC_HB    = 'kwtspta_9f3a2b1c/hb';
-const TOPIC_CODES = 'kwtspta_9f3a2b1c/codes';
+<div class="logo-wrap">
+<img class="logo-img" src="https://i.postimg.cc/xT8rcsT1/file-000000008bb4820ebcd371e64fff0469.png" alt="">
+</div>
+<div class="logo">العنكبوت <span>ADMIN</span></div>
+<div class="sub">LIVE STREAM CONTROL PANEL</div>
 
-const STORAGE_CATS = 'cats_data_v1';
-const STORAGE_CODES = 'admin_codes_v1';
+<div class="card">
+<div class="status"><span class="dot"></span> متصل بلوحة التحكم</div>
+<div class="title">➕ إضافة قناة جديدة</div>
 
-const adminLockScreen = document.getElementById('adminLockScreen');
-const adminContent = document.getElementById('adminContent');
-const adminKeyInput = document.getElementById('adminKeyInput');
-const adminKeyStatus = document.getElementById('adminKeyStatus');
+<label>رابط البث</label>
+<input id="chUrl" type="text" dir="ltr" placeholder="http://example.com/live.m3u8">
 
-function setLockStatus(t, c){
-  adminKeyStatus.textContent = t;
-  adminKeyStatus.className = 'lock-status ' + (c||'');
+<label>اسم القناة (اختياري)</label>
+<input id="chName" type="text" placeholder="مثال: beIN Sports 1">
+
+<label>نوع المشغل</label>
+<select id="chType">
+<option value="auto">AUTO — تلقائي</option>
+<option value="hls">HLS — M3U8</option>
+<option value="mp4">MP4</option>
+<option value="iframe">IFRAME</option>
+</select>
+
+<button class="green" id="addChannel">✨ إنشاء قناة وكود</button>
+<div class="msg" id="chMsg"></div>
+
+<div class="codeBox" id="newCodeBox">
+<div class="lbl">✓ تم إنشاء القناة — الكود الخاص بها:</div>
+<div class="cd" id="newCode">------</div>
+<button class="dark" style="margin-top:16px;" id="copyNewCode">📋 نسخ الكود</button>
+</div>
+</div>
+
+<div class="card">
+<div class="title">📺 القنوات المضافة <span class="badge" id="chCount">0</span></div>
+<div id="channelsList"><div class="empty">جاري التحميل...</div></div>
+</div>
+
+<div class="card">
+<button class="red" id="logout">🚪 تسجيل الخروج</button>
+</div>
+
+</div>
+
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+import { getDatabase, ref, set, get, onValue, remove, update } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-database.js";
+
+const firebaseConfig = {
+apiKey: "AIzaSyAUc2C9hG9VE7RECiW19QXjNZqVH96sFE",
+authDomain: "zezo-59a8d.firebaseapp.com",
+databaseURL: "https://zezo-59a8d-default-rtdb.firebaseio.com",
+projectId: "zezo-59a8d",
+storageBucket: "zezo-59a8d.firebasestorage.app",
+messagingSenderId: "49183098248",
+appId: "1:49183098248:web:37e3fb16744042a1bb263d"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+/* ═══════════════════════════════════════════════
+   🔒 كود الأدمن — هو اللي بيحمي اللوحة
+   ═══════════════════════════════════════════════ */
+const ADMIN_CODE = "ANKABOOT_ADMIN_2026_CHANGE_ME";
+
+/* ─── العناصر ─── */
+const loginScreen = document.getElementById("loginScreen");
+const adminArea = document.getElementById("adminArea");
+const adminCode = document.getElementById("adminCode");
+const loginMsg = document.getElementById("loginMsg");
+const chUrl = document.getElementById("chUrl");
+const chName = document.getElementById("chName");
+const chType = document.getElementById("chType");
+const chMsg = document.getElementById("chMsg");
+const channelsList = document.getElementById("channelsList");
+const chCount = document.getElementById("chCount");
+const newCodeBox = document.getElementById("newCodeBox");
+const newCode = document.getElementById("newCode");
+
+/* ═══════════════════════════════════════════════
+   🔐 جلسة الأدمن
+   ═══════════════════════════════════════════════ */
+let adminSession = false;
+
+try{
+    adminSession = sessionStorage.getItem("ank_admin") === "YES";
+}catch(e){}
+
+function showLoginScreen(){
+    loginScreen.style.display = "block";
+    adminArea.classList.remove("unlocked");
+    adminArea.style.setProperty("display", "none", "important");
+    /* تنظيف أي بيانات في اللوحة */
+    chUrl.value = "";
+    chName.value = "";
+    chMsg.textContent = "";
+    newCodeBox.classList.remove("show");
 }
 
-function submitAdminKey(){
-  const key = adminKeyInput.value.trim();
-  if(!key){ setLockStatus('من فضلك أدخل كود الإدارة', 'error'); return; }
-  if(key === ADMIN_ACCESS_KEY){
-    sessionStorage.setItem(ADMIN_SESSION_KEY, '1');
-    setLockStatus('تم التحقق بنجاح ✅', 'success');
-    setTimeout(()=>{
-      adminLockScreen.classList.add('hide');
-      adminContent.classList.add('show');
-      initAdmin();
-    }, 400);
-  } else {
-    setLockStatus('كود الإدارة غير صحيح ❌', 'error');
-    adminKeyInput.value = '';
-  }
+function showAdminPanel(){
+    loginScreen.style.display = "none";
+    adminArea.classList.add("unlocked");
 }
-adminKeyInput.addEventListener('keydown', e => { if(e.key === 'Enter') submitAdminKey(); });
 
-if(sessionStorage.getItem(ADMIN_SESSION_KEY) === '1'){
-  adminLockScreen.classList.add('hide');
-  adminContent.classList.add('show');
-  setTimeout(initAdmin, 100);
+/* لو مسجل دخول → افتح اللوحة، وإلا اعرض الشاشة */
+if(adminSession === true){
+    showAdminPanel();
 } else {
-  adminKeyInput.focus();
+    showLoginScreen();
 }
 
-let client = null, categories = [], codes = [];
-let isLoaded = false, publishTimeout = null, codesLoadedFromServer = false;
-let adminInitialized = false;
-const viewers = new Map();
-const connStatus = document.getElementById('connStatus');
+/* ═══════════════════════════════════════════════
+   🔓 الدخول
+   ═══════════════════════════════════════════════ */
+function tryLogin(){
+    const entered = String(adminCode.value || "").trim();
 
-function initAdmin(){
-  if(adminInitialized) return;
-  adminInitialized = true;
+    if(!entered){
+        loginMsg.textContent = "❌ اكتب كود الأدمن أولاً";
+        return;
+    }
 
-  try {
-    client = mqtt.connect(BROKER, {
-      clientId: 'admin_' + Math.random().toString(16).slice(2,10)
-    });
-
-    client.on('connect', () => {
-      setConn('online', '✅ متصل');
-      client.subscribe(TOPIC_HB);
-      client.subscribe(TOPIC_DATA);
-      client.subscribe(TOPIC_CODES);
-      setTimeout(() => {
-        if (!isLoaded) {
-          loadLocal();
-          isLoaded = true;
-          hideLoading();
-          render();
-          renderCodes();
-          if (!codesLoadedFromServer && codes.length) publishCodes();
-        }
-      }, 1500);
-    });
-
-    client.on('error', () => setConn('offline', '❌ فشل الاتصال'));
-
-    client.on('message', (topic, message) => {
-      try {
-        if (topic === TOPIC_HB) {
-          const d = JSON.parse(message.toString());
-          viewers.set(d.id, Date.now());
-          return;
-        }
-        if (topic === TOPIC_DATA && !isLoaded) {
-          const data = JSON.parse(message.toString());
-          if (Array.isArray(data)) {
-            categories = data;
-            isLoaded = true;
-            hideLoading();
-            render();
-          }
-          return;
-        }
-        if (topic === TOPIC_CODES) {
-          if (codesLoadedFromServer) return;
-          codesLoadedFromServer = true;
-          const data = JSON.parse(message.toString());
-          if (Array.isArray(data.codes)) {
-            if (!codes.length) codes = data.codes.map(c => String(c).toLowerCase());
-            else {
-              const merged = new Set([...codes, ...data.codes.map(c => String(c).toLowerCase())]);
-              codes = Array.from(merged);
-            }
-            saveCodes();
-            renderCodes();
-          }
-        }
-      } catch (e) {}
-    });
-  } catch(e){
-    setConn('offline', '❌ خطأ');
-    loadLocal(); isLoaded = true; hideLoading(); render(); renderCodes();
-  }
-
-  setInterval(() => {
-    const now = Date.now();
-    for (const [id, t] of viewers) if (now - t > 15000) viewers.delete(id);
-    document.getElementById('viewerCount').textContent = viewers.size;
-  }, 5000);
-
-  setTimeout(() => {
-    const d = document.getElementById('diag');
-    if (d) d.innerHTML = `
-      <b style="color:#22c55e">الأقسام:</b> ${categories.length}<br>
-      <b style="color:#8b5cf6">الأكواد:</b> ${codes.length}<br>
-      <b style="color:#3b82f6">من السيرفر:</b> ${codesLoadedFromServer ? '✅' : '❌'}<br>
-      <b style="color:#8a8a9a">MQTT:</b> ${(client && client.connected) ? '✅' : '❌'}
-    `;
-  }, 3000);
+    if(entered === ADMIN_CODE){
+        /* ✅ كود صح */
+        try{
+            sessionStorage.setItem("ank_admin", "YES");
+        }catch(e){}
+        adminSession = true;
+        loginMsg.textContent = "";
+        adminCode.value = "";
+        showAdminPanel();
+    } else {
+        /* ❌ كود غلط */
+        loginMsg.textContent = "❌ كود الأدمن غير صحيح";
+        adminCode.value = "";
+        adminCode.focus();
+        /* تأثير اهتزاز بسيط */
+        loginMsg.animate(
+            [{transform:"translateX(0)"},{transform:"translateX(-6px)"},{transform:"translateX(6px)"},{transform:"translateX(0)"}],
+            {duration:200}
+        );
+    }
 }
 
-function setConn(state, text) { connStatus.className = 'conn ' + state; connStatus.textContent = text; }
-function loadLocal() {
-  const sc = localStorage.getItem(STORAGE_CATS);
-  categories = sc ? (JSON.parse(sc) || []) : [];
-  const scd = localStorage.getItem(STORAGE_CODES);
-  codes = scd ? (JSON.parse(scd) || []) : [];
-}
-function hideLoading() {
-  const l = document.getElementById('loading');
-  if(l) l.classList.add('hide');
-}
+document.getElementById("enterAdmin").addEventListener("click", tryLogin);
 
-function render() {
-  const c = document.getElementById('catsList');
-  c.innerHTML = '';
-  if (!categories.length) {
-    c.innerHTML = '<div class="empty-hint">📺<br>لا توجد أقسام بعد<br>اضغط "➕ إضافة قسم" للبدء</div>';
-    document.getElementById('chCount').textContent = 0;
-    document.getElementById('liveCount').textContent = 0;
-    return;
-  }
-  let totalCh = 0, totalLive = 0;
-  categories.forEach((cat, ci) => {
-    const chCount = cat.channels ? cat.channels.length : 0;
-    const collapsed = cat.collapsed ? 'collapsed' : '';
-    const catDiv = document.createElement('div');
-    catDiv.className = 'cat-card ' + collapsed;
-    catDiv.innerHTML = `
-      <div class="cat-head" onclick="toggleCat(${ci}, event)">
-        <div class="cat-title">
-          <img src="${escapeAttr(cat.logo||'')}" onerror="this.style.opacity=.2">
-          <div class="info"><div class="nm">${escapeHtml(cat.name||'قسم')}</div><div class="cnt">${chCount} قناة</div></div>
-        </div>
-        <span class="expand-arrow">▼</span>
-        <button class="btn danger small" onclick="removeCategory(${ci}, event)">🗑 حذف</button>
-      </div>
-      <div class="cat-body">
-        <div class="row2">
-          <div class="field"><label>اسم القسم</label>
-            <input value="${escapeAttr(cat.name||'')}" oninput="updCat(${ci},'name',this.value)" onchange="saveNow()"></div>
-          <div class="field"><label>رابط لوجو القسم</label>
-            <input type="url" value="${escapeAttr(cat.logo||'')}" oninput="updCat(${ci},'logo',this.value)" onchange="saveNow()"></div>
-        </div>
-        <div style="margin-top:16px">
-          ${(cat.channels||[]).map((ch, chi) => renderChannel(ci, chi, ch)).join('')}
-        </div>
-        <button class="add-btn sub" onclick="addChannel(${ci})">➕ إضافة قناة</button>
-      </div>`;
-    c.appendChild(catDiv);
-    totalCh += chCount;
-    totalLive += (cat.channels||[]).filter(x => x.live).length;
-  });
-  document.getElementById('chCount').textContent = totalCh;
-  document.getElementById('liveCount').textContent = totalLive;
-}
-
-function renderChannel(ci, chi, ch) {
-  const hasToken = !!ch.token;
-  const badge = ch.live ? '<span class="badge live">مباشر</span>' : '<span class="badge off">متوقف</span>';
-  const tokBadge = hasToken ? '<span class="badge tok">🔐</span>' : '';
-  return `
-    <div class="ch-card ${ch.live?'live':''} ${hasToken?'has-token':''}">
-      <img class="logo-preview" src="${escapeAttr(ch.logo||'')}" onerror="this.style.opacity=.2">
-      <div class="ch-body">
-        <div class="ch-head">
-          <span class="badge">${escapeHtml(ch.name||'قناة')}</span>
-          <span style="display:flex;gap:6px;flex-wrap:wrap">${tokBadge}${badge}</span>
-        </div>
-        <div class="row2">
-          <div class="field"><label>اسم القناة</label>
-            <input value="${escapeAttr(ch.name||'')}" oninput="updCh(${ci},${chi},'name',this.value)" onchange="saveNow()"></div>
-          <div class="field"><label>رابط اللوجو</label>
-            <input type="url" value="${escapeAttr(ch.logo||'')}" oninput="updCh(${ci},${chi},'logo',this.value)" onchange="saveNow()"></div>
-        </div>
-        <div class="field"><label>🔒 رابط البث (m3u8)</label>
-          <input type="url" value="${escapeAttr(ch.url||'')}" oninput="updCh(${ci},${chi},'url',this.value)" onchange="saveNow()" placeholder="https://example.com/stream.m3u8"></div>
-        ${hasToken ? `<div class="token-box">${escapeHtml(ch.token)}</div>` : ''}
-        <div class="actions">
-          ${ch.live
-            ? `<button class="btn stop small" onclick="setLive(${ci},${chi},false)">■ إيقاف</button>
-               <button class="btn play small" onclick="restart(${ci},${chi})">🔄 إعادة</button>`
-            : `<button class="btn play small" onclick="setLive(${ci},${chi},true)">▶ تشغيل</button>`
-          }
-          <button class="btn blue small" onclick="genToken(${ci},${chi})">🔐 توكن</button>
-          <button class="btn danger small" onclick="removeChannel(${ci},${chi})">🗑</button>
-        </div>
-      </div>
-    </div>`;
-}
-
-function escapeHtml(s) { return String(s).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
-function escapeAttr(s) { return escapeHtml(s); }
-
-function renderCodes() {
-  const badge = document.getElementById('codesCountBadge');
-  const stat = document.getElementById('codeCount');
-  if (badge) badge.textContent = codes.length;
-  if (stat) stat.textContent = codes.length;
-  const list = document.getElementById('codesList');
-  if (!list) return;
-  if (!codes.length) {
-    list.innerHTML = '<div class="empty-hint">🎟️<br>لا توجد أكواد بعد</div>';
-    return;
-  }
-  list.innerHTML = codes.map(c => `
-    <div class="code-item">
-      <div class="code-val">${escapeHtml(c)}</div>
-      <span class="code-tag">نشط</span>
-      <button class="code-del" onclick="deleteCode('${c}')">
-        <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
-      </button>
-    </div>`).join('');
-}
-
-function toggleCat(ci, e) {
-  if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
-  categories[ci].collapsed = !categories[ci].collapsed;
-  render();
-  localStorage.setItem(STORAGE_CATS, JSON.stringify(categories));
-}
-function updCat(ci, key, value) { categories[ci][key] = value; localStorage.setItem(STORAGE_CATS, JSON.stringify(categories)); scheduleSave(); }
-function updCh(ci, chi, key, value) { categories[ci].channels[chi][key] = value; localStorage.setItem(STORAGE_CATS, JSON.stringify(categories)); scheduleSave(); }
-function saveNow() { localStorage.setItem(STORAGE_CATS, JSON.stringify(categories)); publishData(); }
-function scheduleSave() { clearTimeout(publishTimeout); publishTimeout = setTimeout(saveNow, 800); }
-
-function publishData() {
-  if(!client || !client.connected) return;
-  try {
-    setConn('saving', '💾 جاري الحفظ...');
-    client.publish(TOPIC_DATA, JSON.stringify(categories), { retain: true }, () => {
-      setConn('online', '✅ متصل');
-      showSaved();
-    });
-  } catch (e) {}
-}
-function showSaved() {
-  const s = document.getElementById('saveIndicator');
-  s.classList.add('show');
-  setTimeout(() => s.classList.remove('show'), 1500);
-}
-
-function addCategory() {
-  categories.push({ id: 'cat_' + Date.now(), name: 'قسم جديد', logo: '', collapsed: false, channels: [] });
-  render(); saveNow();
-  showStatus('✓ تمت إضافة القسم', 'ok');
-}
-function removeCategory(ci, e) {
-  e.stopPropagation();
-  if (!confirm('حذف القسم "' + (categories[ci].name||'') + '"؟')) return;
-  (categories[ci].channels||[]).forEach(ch => { if(ch.live && client) client.publish(TOPIC_CMD, JSON.stringify({action:'stop', channelId: ch.id})); });
-  categories.splice(ci, 1);
-  render(); saveNow();
-  showStatus('✓ تم الحذف', 'ok');
-}
-function addChannel(ci) {
-  if (!categories[ci].channels) categories[ci].channels = [];
-  categories[ci].channels.push({
-    id: 'ch_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
-    name: 'قناة جديدة', logo: '', url: '', token: '', _tokenUrl: '', live: false
-  });
-  render(); saveNow();
-  showStatus('✓ تمت إضافة القناة', 'ok');
-}
-function removeChannel(ci, chi) {
-  const ch = categories[ci].channels[chi];
-  if (!confirm('حذف "' + (ch.name||'') + '"؟')) return;
-  if (ch.live && client) client.publish(TOPIC_CMD, JSON.stringify({action:'stop', channelId: ch.id}));
-  categories[ci].channels.splice(chi, 1);
-  render(); saveNow();
-  showStatus('✓ تم الحذف', 'ok');
-}
-
-async function genToken(ci, chi) {
-  const ch = categories[ci].channels[chi];
-  const origUrl = (ch.url || '').trim();
-  if (!origUrl) { showStatus('❌ اكتب رابط البث', 'err'); return null; }
-  showStatus('🔐 جاري توليد التوكن...', 'info');
-  try {
-    const res = await fetch(PROXY_BASE + '/token?key=' + encodeURIComponent(ADMIN_KEY) + '&url=' + encodeURIComponent(origUrl));
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const token = (await res.text()).trim();
-    if (!token || token.length < 20) throw new Error('توكن غير صالح');
-    ch.token = token;
-    ch._tokenUrl = origUrl;
-    saveNow(); render();
-    showStatus('✓ تم توليد التوكن ✅', 'ok');
-    return token;
-  } catch (err) {
-    showStatus('❌ فشل: ' + err.message, 'err');
-    return null;
-  }
-}
-
-async function setLive(ci, chi, status) {
-  const ch = categories[ci].channels[chi];
-  if (!status) {
-    ch.live = false; render(); saveNow();
-    if(client) client.publish(TOPIC_CMD, JSON.stringify({action:'stop', channelId: ch.id}));
-    showStatus('✓ تم الإيقاف', 'ok');
-    return;
-  }
-  const origUrl = (ch.url || '').trim();
-  if (!origUrl) { showStatus('❌ اكتب رابط البث', 'err'); return; }
-  if (!ch.token || ch._tokenUrl !== origUrl) {
-    const tok = await genToken(ci, chi);
-    if (!tok) return;
-  }
-  ch.live = true; render(); saveNow();
-  if(client) client.publish(TOPIC_CMD, JSON.stringify({action:'play', channelId: ch.id, token: ch.token, name: ch.name}));
-  showStatus('✓ تم التشغيل', 'ok');
-}
-
-function restart(ci, chi) {
-  const ch = categories[ci].channels[chi];
-  if (!ch.live || !client) return;
-  client.publish(TOPIC_CMD, JSON.stringify({action:'play', channelId: ch.id, token: ch.token, name: ch.name}));
-  showStatus('✓ تم إعادة التشغيل', 'ok');
-}
-function stopAll() {
-  if (!confirm('إيقاف كل البث؟')) return;
-  categories.forEach(cat => (cat.channels||[]).forEach(ch => ch.live = false));
-  render(); saveNow();
-  if(client) client.publish(TOPIC_CMD, JSON.stringify({action:'stopAll'}));
-  showStatus('✓ تم إيقاف الكل', 'ok');
-}
-function showStatus(msg, type) {
-  const s = document.getElementById('statusMsg');
-  s.textContent = msg;
-  s.className = 'status ' + type;
-  setTimeout(() => { s.className = 'status'; }, 4000);
-}
-function showCodeStatus(msg, type) {
-  const s = document.getElementById('codeStatus');
-  s.textContent = msg;
-  s.className = 'status ' + type;
-  setTimeout(() => { s.className = 'status'; }, 4000);
-}
-
-function genRandom() {
-  const chars = '0123456789abcdef';
-  let out = '';
-  for (let i = 0; i < 8; i++) out += chars[Math.floor(Math.random() * chars.length)];
-  return out;
-}
-function generateCode() {
-  let val = document.getElementById('newCodeInput').value.trim().toLowerCase();
-  if (!val) val = genRandom();
-  if (!/^[a-z0-9_-]{3,30}$/.test(val)) { showCodeStatus('❌ الكود غير صالح', 'err'); return; }
-  if (codes.includes(val)) { showCodeStatus('❌ الكود موجود', 'err'); return; }
-  codes.push(val);
-  saveCodes(); publishCodes(); renderCodes();
-  document.getElementById('newCodeInput').value = '';
-  showCodeStatus('✓ تم إنشاء: ' + val, 'ok');
-}
-function deleteCode(code) {
-  if (!confirm('حذف الكود "' + code + '"؟ سيتم طرد كل من يستخدمه')) return;
-  codes = codes.filter(c => c !== code);
-  saveCodes(); publishCodes(); renderCodes();
-  showCodeStatus('✓ تم الحذف', 'ok');
-}
-function clearAllCodes() {
-  if (!codes.length) { showCodeStatus('لا توجد أكواد', 'err'); return; }
-  if (!confirm('حذف كل الأكواد؟')) return;
-  codes = [];
-  saveCodes(); publishCodes(); renderCodes();
-  showCodeStatus('✓ تم المسح', 'ok');
-}
-function saveCodes() { try { localStorage.setItem(STORAGE_CODES, JSON.stringify(codes)); } catch (e) {} }
-function publishCodes() {
-  if(!client || !client.connected) return;
-  client.publish(TOPIC_CODES, JSON.stringify({ codes: codes, ts: Date.now() }), { retain: true, qos: 1 });
-}
-function forceLoadCodes() {
-  if (!client || !client.connected) { showCodeStatus('غير متصل', 'err'); return; }
-  codesLoadedFromServer = false;
-  client.subscribe(TOPIC_CODES);
-  showCodeStatus('🔄 جاري التحميل...', 'info');
-}
-
-function switchTab(name, el) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('tab-' + name).classList.add('active');
-}
-function reloadFromServer() {
-  if (!confirm('إعادة تحميل كل البيانات؟')) return;
-  localStorage.removeItem(STORAGE_CATS);
-  location.reload();
-}
-function resetAll() {
-  if (!confirm('مسح كل الأقسام؟')) return;
-  categories = [];
-  localStorage.setItem(STORAGE_CATS, '[]');
-  render(); saveNow();
-  showStatus('✓ تم المسح', 'ok');
-}
-
-window.addEventListener('beforeunload', () => {
-  if (categories.length && client && client.connected) { try { client.publish(TOPIC_DATA, JSON.stringify(categories), { retain: true }); } catch (e) {} }
-  if (codes.length && client && client.connected) { try { client.publish(TOPIC_CODES, JSON.stringify({ codes: codes }), { retain: true }); } catch (e) {} }
+adminCode.addEventListener("keydown", e=>{
+    if(e.key === "Enter") tryLogin();
 });
+
+/* ═══════════════════════════════════════════════
+   🚪 تسجيل الخروج
+   ═══════════════════════════════════════════════ */
+document.getElementById("logout").addEventListener("click", ()=>{
+    try{ sessionStorage.removeItem("ank_admin"); }catch(e){}
+    adminSession = false;
+    adminCode.value = "";
+    loginMsg.textContent = "";
+    showLoginScreen();
+    /* اختياري: اخرج من الـ listener */
+    try{ if(adminCode) adminCode.focus(); }catch(e){}
+});
+
+/* ═══════════════════════════════════════════════
+   🎲 توليد كود قصير فريد
+   ═══════════════════════════════════════════════ */
+function generateShortCode(){
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    let r = "";
+    for(let i = 0; i < 6; i++) r += chars[Math.floor(Math.random() * chars.length)];
+    return r;
+}
+
+async function getUniqueCode(){
+    for(let attempt = 0; attempt < 30; attempt++){
+        const code = generateShortCode();
+        const snap = await get(ref(db, "channels/" + code));
+        if(!snap.exists()) return code;
+    }
+    throw new Error("تعذر توليد كود فريد");
+}
+
+/* ═══════════════════════════════════════════════
+   ➕ إنشاء قناة + كود
+   ═══════════════════════════════════════════════ */
+document.getElementById("addChannel").addEventListener("click", async ()=>{
+
+    if(adminSession !== true){
+        alert("⛔ يجب تسجيل الدخول أولاً");
+        showLoginScreen();
+        return;
+    }
+
+    const url = chUrl.value.trim();
+    const name = chName.value.trim();
+    const type = chType.value;
+
+    if(!url){
+        chMsg.className = "msg err";
+        chMsg.textContent = "اكتب رابط البث";
+        return;
+    }
+
+    try{ new URL(url); }
+    catch{
+        chMsg.className = "msg err";
+        chMsg.textContent = "الرابط غير صحيح";
+        return;
+    }
+
+    chMsg.className = "msg";
+    chMsg.textContent = "جاري الإنشاء...";
+
+    try{
+        const code = await getUniqueCode();
+
+        await set(ref(db, "channels/" + code), {
+            url: url,
+            name: name || ("قناة " + code),
+            type: type,
+            active: true,
+            createdAt: Date.now()
+        });
+
+        newCode.textContent = code;
+        newCodeBox.classList.add("show");
+
+        chMsg.className = "msg ok";
+        chMsg.textContent = "تم إنشاء القناة بنجاح ✓";
+
+        chUrl.value = "";
+        chName.value = "";
+        chType.value = "auto";
+
+        try{
+            await navigator.clipboard.writeText(code);
+            chMsg.textContent = "✓ تم الإنشاء ونسخ الكود تلقائياً";
+        }catch(e){}
+
+    } catch(error){
+        console.error(error);
+        chMsg.className = "msg err";
+        chMsg.textContent = "حدث خطأ: " + error.message;
+    }
+
+});
+
+document.getElementById("copyNewCode").addEventListener("click", async ()=>{
+    try{
+        await navigator.clipboard.writeText(newCode.textContent);
+        alert("✓ تم نسخ الكود: " + newCode.textContent);
+    }catch{
+        alert("تعذر النسخ — انسخه يدوياً: " + newCode.textContent);
+    }
+});
+
+/* ═══════════════════════════════════════════════
+   📺 عرض القنوات (محمي)
+   ═══════════════════════════════════════════════ */
+onValue(ref(db, "channels"), snapshot=>{
+
+    /* ⛔ لو مش الأدمن، متعرضش حاجة */
+    if(adminSession !== true) return;
+
+    const data = snapshot.val();
+    channelsList.innerHTML = "";
+
+    if(!data){
+        channelsList.innerHTML = '<div class="empty">لا توجد قنوات — أضف قناة من الأعلى</div>';
+        chCount.textContent = "0";
+        return;
+    }
+
+    const entries = Object.entries(data).sort((a,b) => (b[1].createdAt || 0) - (a[1].createdAt || 0));
+    chCount.textContent = entries.length;
+
+    entries.forEach(([code, item])=>{
+
+        const div = document.createElement("div");
+        div.className = "channel" + (item.active ? "" : " off");
+
+        div.innerHTML = `
+<div class="channel-head">
+<div class="channel-code">${code}</div>
+<span class="channel-status ${item.active ? "on" : "off"}">${item.active ? "● مفعّل" : "○ موقوف"}</span>
+</div>
+<div class="channel-name">${item.name || "بدون اسم"}</div>
+<div class="channel-url">${item.url}</div>
+<div class="channel-btns">
+<button class="dark" onclick="copyCode('${code}')">📋 نسخ</button>
+<button class="${item.active ? "dark" : "green"}" onclick="toggleCode('${code}', ${item.active})">${item.active ? "⏸ إيقاف" : "▶ تفعيل"}</button>
+<button class="red" onclick="deleteCode('${code}')">🗑 حذف</button>
+</div>
+`;
+
+        channelsList.appendChild(div);
+    });
+
+});
+
+/* ═══════════════════════════════════════════════
+   🛠 العمليات
+   ═══════════════════════════════════════════════ */
+window.copyCode = async function(code){
+    if(adminSession !== true){ alert("⛔ يجب تسجيل الدخول"); return; }
+    try{
+        await navigator.clipboard.writeText(code);
+        alert("✓ تم نسخ الكود: " + code);
+    }catch{
+        alert("تعذر النسخ — الكود: " + code);
+    }
+};
+
+window.toggleCode = async function(code, current){
+    if(adminSession !== true){ alert("⛔ يجب تسجيل الدخول"); return; }
+    try{
+        await update(ref(db, "channels/" + code), { active: !current });
+    }catch(e){ console.error(e); }
+};
+
+window.deleteCode = async function(code){
+    if(adminSession !== true){ alert("⛔ يجب تسجيل الدخول"); return; }
+    if(!confirm("⚠️ هل تريد حذف القناة " + code + " نهائياً؟\n\nلن يعمل هذا الكود عند أي مستخدم.")) return;
+    try{
+        await remove(ref(db, "channels/" + code));
+    }catch(e){ console.error(e); }
+};
+
+/* ═══════════════════════════════════════════════
+   🛡 حماية إضافية — منع الاتصال من لوحة التحكم بدون جلسة
+   ═══════════════════════════════════════════════ */
+/* لو أي حد حاول يشوف الـ adminArea من الـ console */
+Object.defineProperty(window, "_adminArea", {
+    get(){ return adminSession ? "unlocked" : "locked"; }
+});
+
+/* كشف عند فتح الأدوات (اختياري — ممكن يزعج) */
+/* document.addEventListener("keydown", e=>{
+    if(e.key === "F12" || (e.ctrlKey && e.shiftKey && (e.key === "I" || e.key === "J"))){
+        e.preventDefault();
+    }
+}); */
+
+/* مسح الجلسة لو الصفحة اتقفلت لمدة */
+window.addEventListener("beforeunload", ()=>{
+    /* الجلسة موجودة في sessionStorage — بتتمسح لوحده لما تاب يتقفل */
+});
+
 </script>
+
 </body>
 </html>
