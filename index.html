@@ -32,8 +32,12 @@ button{width:100%;border:0;border-radius:13px;padding:14px;font-size:14px;font-w
 .msg{min-height:18px;text-align:center;font-size:12px;margin-top:10px;font-weight:700;}
 .ok{color:#00ff88;}
 .err{color:#ff5555;}
-#adminArea{display:none !important;}
-#adminArea.unlocked{display:block !important;}
+
+/* ✅ الحل: مخفي بـ CSS بس، ومفيش inline style */
+#loginScreen{ display:block; }
+#adminArea{ display:none; }
+#adminArea.unlocked{ display:block; }
+#loginScreen.hidden{ display:none; }
 
 .status{display:flex;align-items:center;gap:7px;color:#00ff88;font-size:11px;margin-bottom:14px;font-weight:700;}
 .dot{width:8px;height:8px;background:#00ff88;border-radius:50%;box-shadow:0 0 10px #00ff88;animation:blink 1.5s infinite;}
@@ -48,7 +52,7 @@ button{width:100%;border:0;border-radius:13px;padding:14px;font-size:14px;font-w
 .channel{padding:16px;margin-top:10px;background:linear-gradient(135deg,rgba(20,20,35,.95),rgba(12,12,22,.95));border:1px solid rgba(255,255,255,.08);border-radius:16px;display:flex;flex-direction:column;gap:10px;}
 .channel.off{opacity:.5;border-color:rgba(255,60,60,.3);}
 .channel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;}
-.channel-code{font-family:'Courier New',monospace;font-weight:900;color:#00ff88;font-size:20px;letter-spacing:4px;direction:ltr;background:rgba(0,255,136,.1);padding:8px 14px;border-radius:10px;border:1px solid rgba(0,255,136,.35);text-shadow:0 0 12px rgba(0,255,136,.4);}
+.channel-code{font-family:'Courier New',monospace;font-weight:900;color:#00ff88;font-size:22px;letter-spacing:4px;direction:ltr;background:rgba(0,255,136,.1);padding:8px 14px;border-radius:10px;border:1px solid rgba(0,255,136,.35);text-shadow:0 0 12px rgba(0,255,136,.4);}
 .channel-status{font-size:10px;padding:5px 12px;border-radius:100px;font-weight:800;}
 .channel-status.on{background:rgba(0,255,136,.15);color:#00ff88;border:1px solid rgba(0,255,136,.3);}
 .channel-status.off{background:rgba(255,60,60,.12);color:#ff6868;border:1px solid rgba(255,60,60,.3);}
@@ -64,7 +68,7 @@ button{width:100%;border:0;border-radius:13px;padding:14px;font-size:14px;font-w
 
 <div class="app">
 
-<!-- ═══ شاشة تسجيل الدخول (اللي بتظهر دايماً) ═══ -->
+<!-- ═══════ شاشة الدخول ═══════ -->
 <div id="loginScreen">
 
 <div class="logo-wrap">
@@ -75,17 +79,15 @@ button{width:100%;border:0;border-radius:13px;padding:14px;font-size:14px;font-w
 
 <div class="card">
 <div class="title">دخول لوحة الأدمن</div>
-
 <label>كود الأدمن</label>
 <input id="adminCode" type="password" placeholder="أدخل كود الأدمن" autocomplete="off" spellcheck="false">
-
 <button class="green" id="enterAdmin">🔓 دخول لوحة التحكم</button>
 <div class="msg err" id="loginMsg"></div>
 </div>
 
 </div>
 
-<!-- ═══ لوحة التحكم (مخفية، بتظهر بعد الدخول) ═══ -->
+<!-- ═══════ لوحة التحكم ═══════ -->
 <div id="adminArea">
 
 <div class="logo-wrap">
@@ -96,7 +98,7 @@ button{width:100%;border:0;border-radius:13px;padding:14px;font-size:14px;font-w
 
 <div class="card">
 <div class="status"><span class="dot"></span> متصل بلوحة التحكم</div>
-<div class="title">➕ إضافة قناة جديدة</div>
+<div class="title">🔴 البث المباشر — إضافة قناة</div>
 
 <label>رابط البث</label>
 <input id="chUrl" type="text" dir="ltr" placeholder="http://example.com/live.m3u8">
@@ -123,7 +125,7 @@ button{width:100%;border:0;border-radius:13px;padding:14px;font-size:14px;font-w
 </div>
 
 <div class="card">
-<div class="title">📺 القنوات المضافة <span class="badge" id="chCount">0</span></div>
+<div class="title">📺 الأكواد التي تم إنشاؤها <span class="badge" id="chCount">0</span></div>
 <div id="channelsList"><div class="empty">جاري التحميل...</div></div>
 </div>
 
@@ -153,12 +155,12 @@ appId: "1:49183098248:web:37e3fb16744042a1bb263d"
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-/* ═══════════════════════════════════════════════
-   🔒 كود الأدمن — هو اللي بيحمي اللوحة
-   ═══════════════════════════════════════════════ */
+/* ═══════════════════════════════════════
+   🔒 كود الأدمن
+   ═══════════════════════════════════════ */
 const ADMIN_CODE = "ANKABOOT_ADMIN_2026_CHANGE_ME";
 
-/* ─── العناصر ─── */
+/* العناصر */
 const loginScreen = document.getElementById("loginScreen");
 const adminArea = document.getElementById("adminArea");
 const adminCode = document.getElementById("adminCode");
@@ -172,20 +174,13 @@ const chCount = document.getElementById("chCount");
 const newCodeBox = document.getElementById("newCodeBox");
 const newCode = document.getElementById("newCode");
 
-/* ═══════════════════════════════════════════════
-   🔐 جلسة الأدمن
-   ═══════════════════════════════════════════════ */
 let adminSession = false;
+try{ adminSession = sessionStorage.getItem("ank_admin") === "YES"; }catch(e){}
 
-try{
-    adminSession = sessionStorage.getItem("ank_admin") === "YES";
-}catch(e){}
-
+/* ✅ الحل النهائي: نبدل classList بس بدون أي inline style */
 function showLoginScreen(){
-    loginScreen.style.display = "block";
+    loginScreen.classList.remove("hidden");
     adminArea.classList.remove("unlocked");
-    adminArea.style.setProperty("display", "none", "important");
-    /* تنظيف أي بيانات في اللوحة */
     chUrl.value = "";
     chName.value = "";
     chMsg.textContent = "";
@@ -193,43 +188,28 @@ function showLoginScreen(){
 }
 
 function showAdminPanel(){
-    loginScreen.style.display = "none";
+    loginScreen.classList.add("hidden");
     adminArea.classList.add("unlocked");
 }
 
-/* لو مسجل دخول → افتح اللوحة، وإلا اعرض الشاشة */
-if(adminSession === true){
-    showAdminPanel();
-} else {
-    showLoginScreen();
-}
+/* تشغيل أولي */
+if(adminSession === true){ showAdminPanel(); } else { showLoginScreen(); }
 
-/* ═══════════════════════════════════════════════
-   🔓 الدخول
-   ═══════════════════════════════════════════════ */
+/* دخول */
 function tryLogin(){
     const entered = String(adminCode.value || "").trim();
-
-    if(!entered){
-        loginMsg.textContent = "❌ اكتب كود الأدمن أولاً";
-        return;
-    }
+    if(!entered){ loginMsg.textContent = "❌ اكتب كود الأدمن أولاً"; return; }
 
     if(entered === ADMIN_CODE){
-        /* ✅ كود صح */
-        try{
-            sessionStorage.setItem("ank_admin", "YES");
-        }catch(e){}
+        try{ sessionStorage.setItem("ank_admin", "YES"); }catch(e){}
         adminSession = true;
         loginMsg.textContent = "";
         adminCode.value = "";
         showAdminPanel();
     } else {
-        /* ❌ كود غلط */
         loginMsg.textContent = "❌ كود الأدمن غير صحيح";
         adminCode.value = "";
         adminCode.focus();
-        /* تأثير اهتزاز بسيط */
         loginMsg.animate(
             [{transform:"translateX(0)"},{transform:"translateX(-6px)"},{transform:"translateX(6px)"},{transform:"translateX(0)"}],
             {duration:200}
@@ -238,27 +218,18 @@ function tryLogin(){
 }
 
 document.getElementById("enterAdmin").addEventListener("click", tryLogin);
+adminCode.addEventListener("keydown", e=>{ if(e.key === "Enter") tryLogin(); });
 
-adminCode.addEventListener("keydown", e=>{
-    if(e.key === "Enter") tryLogin();
-});
-
-/* ═══════════════════════════════════════════════
-   🚪 تسجيل الخروج
-   ═══════════════════════════════════════════════ */
+/* خروج */
 document.getElementById("logout").addEventListener("click", ()=>{
     try{ sessionStorage.removeItem("ank_admin"); }catch(e){}
     adminSession = false;
     adminCode.value = "";
     loginMsg.textContent = "";
     showLoginScreen();
-    /* اختياري: اخرج من الـ listener */
-    try{ if(adminCode) adminCode.focus(); }catch(e){}
 });
 
-/* ═══════════════════════════════════════════════
-   🎲 توليد كود قصير فريد
-   ═══════════════════════════════════════════════ */
+/* توليد كود */
 function generateShortCode(){
     const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     let r = "";
@@ -275,9 +246,7 @@ async function getUniqueCode(){
     throw new Error("تعذر توليد كود فريد");
 }
 
-/* ═══════════════════════════════════════════════
-   ➕ إنشاء قناة + كود
-   ═══════════════════════════════════════════════ */
+/* ➕ إضافة قناة */
 document.getElementById("addChannel").addEventListener("click", async ()=>{
 
     if(adminSession !== true){
@@ -337,7 +306,6 @@ document.getElementById("addChannel").addEventListener("click", async ()=>{
         chMsg.className = "msg err";
         chMsg.textContent = "حدث خطأ: " + error.message;
     }
-
 });
 
 document.getElementById("copyNewCode").addEventListener("click", async ()=>{
@@ -349,19 +317,16 @@ document.getElementById("copyNewCode").addEventListener("click", async ()=>{
     }
 });
 
-/* ═══════════════════════════════════════════════
-   📺 عرض القنوات (محمي)
-   ═══════════════════════════════════════════════ */
+/* 📺 قائمة الأكواد */
 onValue(ref(db, "channels"), snapshot=>{
 
-    /* ⛔ لو مش الأدمن، متعرضش حاجة */
     if(adminSession !== true) return;
 
     const data = snapshot.val();
     channelsList.innerHTML = "";
 
     if(!data){
-        channelsList.innerHTML = '<div class="empty">لا توجد قنوات — أضف قناة من الأعلى</div>';
+        channelsList.innerHTML = '<div class="empty">لا توجد أكواد — أضف رابط بث من الأعلى</div>';
         chCount.textContent = "0";
         return;
     }
@@ -390,12 +355,9 @@ onValue(ref(db, "channels"), snapshot=>{
 
         channelsList.appendChild(div);
     });
-
 });
 
-/* ═══════════════════════════════════════════════
-   🛠 العمليات
-   ═══════════════════════════════════════════════ */
+/* نسخ */
 window.copyCode = async function(code){
     if(adminSession !== true){ alert("⛔ يجب تسجيل الدخول"); return; }
     try{
@@ -406,6 +368,7 @@ window.copyCode = async function(code){
     }
 };
 
+/* تفعيل/إيقاف */
 window.toggleCode = async function(code, current){
     if(adminSession !== true){ alert("⛔ يجب تسجيل الدخول"); return; }
     try{
@@ -413,6 +376,7 @@ window.toggleCode = async function(code, current){
     }catch(e){ console.error(e); }
 };
 
+/* 🗑 حذف */
 window.deleteCode = async function(code){
     if(adminSession !== true){ alert("⛔ يجب تسجيل الدخول"); return; }
     if(!confirm("⚠️ هل تريد حذف القناة " + code + " نهائياً؟\n\nلن يعمل هذا الكود عند أي مستخدم.")) return;
@@ -420,26 +384,6 @@ window.deleteCode = async function(code){
         await remove(ref(db, "channels/" + code));
     }catch(e){ console.error(e); }
 };
-
-/* ═══════════════════════════════════════════════
-   🛡 حماية إضافية — منع الاتصال من لوحة التحكم بدون جلسة
-   ═══════════════════════════════════════════════ */
-/* لو أي حد حاول يشوف الـ adminArea من الـ console */
-Object.defineProperty(window, "_adminArea", {
-    get(){ return adminSession ? "unlocked" : "locked"; }
-});
-
-/* كشف عند فتح الأدوات (اختياري — ممكن يزعج) */
-/* document.addEventListener("keydown", e=>{
-    if(e.key === "F12" || (e.ctrlKey && e.shiftKey && (e.key === "I" || e.key === "J"))){
-        e.preventDefault();
-    }
-}); */
-
-/* مسح الجلسة لو الصفحة اتقفلت لمدة */
-window.addEventListener("beforeunload", ()=>{
-    /* الجلسة موجودة في sessionStorage — بتتمسح لوحده لما تاب يتقفل */
-});
 
 </script>
 
