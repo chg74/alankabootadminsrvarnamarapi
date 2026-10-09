@@ -32,13 +32,7 @@ button{width:100%;border:0;border-radius:13px;padding:14px;font-size:14px;font-w
 .msg{min-height:18px;text-align:center;font-size:12px;margin-top:10px;font-weight:700;}
 .ok{color:#00ff88;}
 .err{color:#ff5555;}
-
-/* ✅ الحل: مخفي بـ CSS بس، ومفيش inline style */
-#loginScreen{ display:block; }
-#adminArea{ display:none; }
-#adminArea.unlocked{ display:block; }
-#loginScreen.hidden{ display:none; }
-
+.hidden{display:none!important;}
 .status{display:flex;align-items:center;gap:7px;color:#00ff88;font-size:11px;margin-bottom:14px;font-weight:700;}
 .dot{width:8px;height:8px;background:#00ff88;border-radius:50%;box-shadow:0 0 10px #00ff88;animation:blink 1.5s infinite;}
 @keyframes blink{50%{opacity:.4}}
@@ -49,10 +43,10 @@ button{width:100%;border:0;border-radius:13px;padding:14px;font-size:14px;font-w
 .codeBox .lbl{color:#9a9ab5;font-size:11px;margin-bottom:10px;font-weight:700;}
 .codeBox .cd{color:#00ff88;font-size:38px;font-weight:900;letter-spacing:8px;font-family:'Courier New',monospace;direction:ltr;text-shadow:0 0 25px rgba(0,255,136,.7);}
 
-.channel{padding:16px;margin-top:10px;background:linear-gradient(135deg,rgba(20,20,35,.95),rgba(12,12,22,.95));border:1px solid rgba(255,255,255,.08);border-radius:16px;display:flex;flex-direction:column;gap:10px;}
+.channel{padding:16px;margin-top:10px;background:linear-gradient(135deg,rgba(20,20,35,.95),rgba(12,12,22,.95));border:1px solid rgba(255,255,255,.08);border-radius:16px;display:flex;flex-direction:column;gap:10px;transition:.2s;}
 .channel.off{opacity:.5;border-color:rgba(255,60,60,.3);}
 .channel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;}
-.channel-code{font-family:'Courier New',monospace;font-weight:900;color:#00ff88;font-size:22px;letter-spacing:4px;direction:ltr;background:rgba(0,255,136,.1);padding:8px 14px;border-radius:10px;border:1px solid rgba(0,255,136,.35);text-shadow:0 0 12px rgba(0,255,136,.4);}
+.channel-code{font-family:'Courier New',monospace;font-weight:900;color:#00ff88;font-size:20px;letter-spacing:4px;direction:ltr;background:rgba(0,255,136,.1);padding:8px 14px;border-radius:10px;border:1px solid rgba(0,255,136,.35);text-shadow:0 0 12px rgba(0,255,136,.4);}
 .channel-status{font-size:10px;padding:5px 12px;border-radius:100px;font-weight:800;}
 .channel-status.on{background:rgba(0,255,136,.15);color:#00ff88;border:1px solid rgba(0,255,136,.3);}
 .channel-status.off{background:rgba(255,60,60,.12);color:#ff6868;border:1px solid rgba(255,60,60,.3);}
@@ -66,29 +60,71 @@ button{width:100%;border:0;border-radius:13px;padding:14px;font-size:14px;font-w
 </head>
 <body>
 
+<!-- ═══════════════════════════════════════════════════
+     🛡️ حماية الأدمن
+     ═══════════════════════════════════════════════════ -->
+<script>
+(function(){
+    'use strict';
+    
+    document.addEventListener('contextmenu', function(e){ e.preventDefault(); return false; }, true);
+    
+    document.addEventListener('keydown', function(e){
+        const k = e.key;
+        const kc = e.keyCode;
+        if(kc === 123 || k === 'F12'){ e.preventDefault(); e.stopPropagation(); return false; }
+        if(e.ctrlKey && e.shiftKey && ['I','J','C','i','j','c'].includes(k)){ e.preventDefault(); e.stopPropagation(); return false; }
+        if(e.ctrlKey && (k === 'u' || k === 'U')){ e.preventDefault(); e.stopPropagation(); return false; }
+        if(e.ctrlKey && (k === 's' || k === 'S')){ e.preventDefault(); e.stopPropagation(); return false; }
+        if(e.ctrlKey && (k === 'p' || k === 'P')){ e.preventDefault(); e.stopPropagation(); return false; }
+        if(e.metaKey && e.altKey && ['I','J','C','i','j','c'].includes(k)){ e.preventDefault(); e.stopPropagation(); return false; }
+    }, true);
+    
+    document.addEventListener('selectstart', function(e){ e.preventDefault(); }, true);
+    document.addEventListener('dragstart', function(e){ e.preventDefault(); }, true);
+    
+    try{
+        const noop = function(){};
+        ['log','debug','info','warn','error','table','trace','dir',
+         'group','groupEnd','time','timeEnd','count','assert','clear'
+        ].forEach(function(m){ try{ console[m] = noop; }catch(e){} });
+    }catch(e){}
+    
+    const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+    
+    if(!isMobile){
+        let devtoolsOpen = false;
+        const threshold = 200;
+        function destroyPage(){
+            try{
+                document.documentElement.innerHTML = 
+                '<html><head><title>⚠️ ممنوع</title></head>' +
+                '<body style="margin:0;background:#050510;color:#fff;font-family:Cairo,Tahoma,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;text-align:center;flex-direction:column;gap:20px;padding:20px;">' +
+                '<div style="font-size:80px;">⛔</div>' +
+                '<div style="font-size:26px;font-weight:900;color:#ff3b52;">ممنوع!</div>' +
+                '<div style="font-size:15px;color:#8b8ba7;max-width:420px;line-height:1.9;">تم اكتشاف محاولة فتح أدوات المطور<br>يرجى إغلاق الأدوات وإعادة تحميل الصفحة</div>' +
+                '<div style="font-size:12px;color:#5a5a75;margin-top:20px;">ANKABOOT SECURITY SYSTEM</div>' +
+                '</body></html>';
+            }catch(e){}
+        }
+        function checkDevTools(){
+            try{
+                const wDiff = window.outerWidth - window.innerWidth;
+                const hDiff = window.outerHeight - window.innerHeight;
+                if((wDiff > threshold || hDiff > threshold) && !devtoolsOpen){
+                    devtoolsOpen = true;
+                    destroyPage();
+                }
+            }catch(e){}
+        }
+        setTimeout(function(){ setInterval(checkDevTools, 1500); }, 3000);
+    }
+    
+    try{ if(window.top !== window.self){ window.top.location = window.self.location; } }catch(e){}
+})();
+</script>
+
 <div class="app">
-
-<!-- ═══════ شاشة الدخول ═══════ -->
-<div id="loginScreen">
-
-<div class="logo-wrap">
-<img class="logo-img" src="https://i.postimg.cc/xT8rcsT1/file-000000008bb4820ebcd371e64fff0469.png" alt="">
-</div>
-<div class="logo">العنكبوت <span>ADMIN</span></div>
-<div class="sub">🔒 لوحة تحكم محمية — دخول للأدمن فقط</div>
-
-<div class="card">
-<div class="title">دخول لوحة الأدمن</div>
-<label>كود الأدمن</label>
-<input id="adminCode" type="password" placeholder="أدخل كود الأدمن" autocomplete="off" spellcheck="false">
-<button class="green" id="enterAdmin">🔓 دخول لوحة التحكم</button>
-<div class="msg err" id="loginMsg"></div>
-</div>
-
-</div>
-
-<!-- ═══════ لوحة التحكم ═══════ -->
-<div id="adminArea">
 
 <div class="logo-wrap">
 <img class="logo-img" src="https://i.postimg.cc/xT8rcsT1/file-000000008bb4820ebcd371e64fff0469.png" alt="">
@@ -96,9 +132,19 @@ button{width:100%;border:0;border-radius:13px;padding:14px;font-size:14px;font-w
 <div class="logo">العنكبوت <span>ADMIN</span></div>
 <div class="sub">LIVE STREAM CONTROL PANEL</div>
 
+<div class="card" id="loginBox">
+<div class="title">دخول لوحة الأدمن</div>
+<label>كود الأدمن</label>
+<input id="adminCode" type="password" placeholder="أدخل كود الأدمن" autocomplete="off">
+<button class="green" id="enterAdmin">🔓 دخول لوحة التحكم</button>
+<div class="msg err" id="loginMsg"></div>
+</div>
+
+<div id="adminArea" class="hidden">
+
 <div class="card">
 <div class="status"><span class="dot"></span> متصل بلوحة التحكم</div>
-<div class="title">🔴 البث المباشر — إضافة قناة</div>
+<div class="title">➕ إضافة قناة جديدة</div>
 
 <label>رابط البث</label>
 <input id="chUrl" type="text" dir="ltr" placeholder="http://example.com/live.m3u8">
@@ -125,7 +171,7 @@ button{width:100%;border:0;border-radius:13px;padding:14px;font-size:14px;font-w
 </div>
 
 <div class="card">
-<div class="title">📺 الأكواد التي تم إنشاؤها <span class="badge" id="chCount">0</span></div>
+<div class="title">📺 القنوات المضافة <span class="badge" id="chCount">0</span></div>
 <div id="channelsList"><div class="empty">جاري التحميل...</div></div>
 </div>
 
@@ -134,7 +180,6 @@ button{width:100%;border:0;border-radius:13px;padding:14px;font-size:14px;font-w
 </div>
 
 </div>
-
 </div>
 
 <script type="module">
@@ -155,13 +200,10 @@ appId: "1:49183098248:web:37e3fb16744042a1bb263d"
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-/* ═══════════════════════════════════════
-   🔒 كود الأدمن
-   ═══════════════════════════════════════ */
+/* ⚠️ غيّر كود الأدمن ده لكود سري خاص بيك */
 const ADMIN_CODE = "ANKABOOT_ADMIN_2026_CHANGE_ME";
 
-/* العناصر */
-const loginScreen = document.getElementById("loginScreen");
+const loginBox = document.getElementById("loginBox");
 const adminArea = document.getElementById("adminArea");
 const adminCode = document.getElementById("adminCode");
 const loginMsg = document.getElementById("loginMsg");
@@ -174,62 +216,100 @@ const chCount = document.getElementById("chCount");
 const newCodeBox = document.getElementById("newCodeBox");
 const newCode = document.getElementById("newCode");
 
-let adminSession = false;
-try{ adminSession = sessionStorage.getItem("ank_admin") === "YES"; }catch(e){}
+let adminSession = sessionStorage.getItem("ank_admin");
 
-/* ✅ الحل النهائي: نبدل classList بس بدون أي inline style */
-function showLoginScreen(){
-    loginScreen.classList.remove("hidden");
-    adminArea.classList.remove("unlocked");
-    chUrl.value = "";
-    chName.value = "";
-    chMsg.textContent = "";
-    newCodeBox.classList.remove("show");
+function showAdmin(){ loginBox.classList.add("hidden"); adminArea.classList.remove("hidden"); }
+function showLogin(){ loginBox.classList.remove("hidden"); adminArea.classList.add("hidden"); }
+
+/* ═══════════════════════════════════════════════════
+   📺 بدء مراقبة القنوات — يمكن استدعاؤها بعد الدخول
+   ═══════════════════════════════════════════════════ */
+function startChannelsListener(){
+    onValue(ref(db, "channels"), snapshot=>{
+        
+        if(adminSession !== "YES") return;
+        
+        const data = snapshot.val();
+        channelsList.innerHTML = "";
+        
+        if(!data){
+            channelsList.innerHTML = '<div class="empty">لا توجد قنوات — أضف قناة من الأعلى</div>';
+            chCount.textContent = "0";
+            return;
+        }
+        
+        const entries = Object.entries(data).sort((a,b) => (b[1].createdAt || 0) - (a[1].createdAt || 0));
+        chCount.textContent = entries.length;
+        
+        entries.forEach(([code, item])=>{
+            
+            const div = document.createElement("div");
+            div.className = "channel" + (item.active ? "" : " off");
+            
+            div.innerHTML = `
+<div class="channel-head">
+<div class="channel-code">${code}</div>
+<span class="channel-status ${item.active ? "on" : "off"}">${item.active ? "● مفعّل" : "○ موقوف"}</span>
+</div>
+<div class="channel-name">${item.name || "بدون اسم"}</div>
+<div class="channel-url">${item.url}</div>
+<div class="channel-btns">
+<button class="dark" onclick="copyCode('${code}')">📋 نسخ</button>
+<button class="${item.active ? "dark" : "green"}" onclick="toggleCode('${code}', ${item.active})">${item.active ? "⏸ إيقاف" : "▶ تفعيل"}</button>
+<button class="red" onclick="deleteCode('${code}')">🗑 حذف</button>
+</div>
+`;
+            
+            channelsList.appendChild(div);
+        });
+    });
 }
 
-function showAdminPanel(){
-    loginScreen.classList.add("hidden");
-    adminArea.classList.add("unlocked");
+/* ═══════════════════════════════════════════════════
+   🔐 تشغيل أولي — لو مسجل دخول، يفتح اللوحة + يشغّل المراقبة
+   ═══════════════════════════════════════════════════ */
+if(adminSession === "YES"){
+    showAdmin();
+    startChannelsListener();
+} else {
+    showLogin();
 }
 
-/* تشغيل أولي */
-if(adminSession === true){ showAdminPanel(); } else { showLoginScreen(); }
-
-/* دخول */
-function tryLogin(){
-    const entered = String(adminCode.value || "").trim();
-    if(!entered){ loginMsg.textContent = "❌ اكتب كود الأدمن أولاً"; return; }
-
-    if(entered === ADMIN_CODE){
-        try{ sessionStorage.setItem("ank_admin", "YES"); }catch(e){}
-        adminSession = true;
+/* ═══════════════════════════════════════════════════
+   🔓 دخول
+   ═══════════════════════════════════════════════════ */
+document.getElementById("enterAdmin").addEventListener("click", ()=>{
+    if(adminCode.value === ADMIN_CODE){
+        sessionStorage.setItem("ank_admin","YES");
+        adminSession = "YES";
         loginMsg.textContent = "";
         adminCode.value = "";
-        showAdminPanel();
+        showAdmin();
+        
+        /* ✅ نشغّل مراقبة القنوات بعد الدخول مباشرة */
+        startChannelsListener();
+        
     } else {
         loginMsg.textContent = "❌ كود الأدمن غير صحيح";
-        adminCode.value = "";
-        adminCode.focus();
-        loginMsg.animate(
-            [{transform:"translateX(0)"},{transform:"translateX(-6px)"},{transform:"translateX(6px)"},{transform:"translateX(0)"}],
-            {duration:200}
-        );
     }
-}
-
-document.getElementById("enterAdmin").addEventListener("click", tryLogin);
-adminCode.addEventListener("keydown", e=>{ if(e.key === "Enter") tryLogin(); });
-
-/* خروج */
-document.getElementById("logout").addEventListener("click", ()=>{
-    try{ sessionStorage.removeItem("ank_admin"); }catch(e){}
-    adminSession = false;
-    adminCode.value = "";
-    loginMsg.textContent = "";
-    showLoginScreen();
 });
 
-/* توليد كود */
+adminCode.addEventListener("keydown", e=>{
+    if(e.key === "Enter") document.getElementById("enterAdmin").click();
+});
+
+/* ═══════════════════════════════════════════════════
+   🚪 خروج
+   ═══════════════════════════════════════════════════ */
+document.getElementById("logout").addEventListener("click", ()=>{
+    sessionStorage.removeItem("ank_admin");
+    adminSession = null;
+    showLogin();
+});
+
+/* ═══════════════════════════════════════════════════
+   🎲 توليد كود
+   ═══════════════════════════════════════════════════ */
 function generateShortCode(){
     const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     let r = "";
@@ -246,14 +326,12 @@ async function getUniqueCode(){
     throw new Error("تعذر توليد كود فريد");
 }
 
-/* ➕ إضافة قناة */
+/* ═══════════════════════════════════════════════════
+   ➕ إضافة قناة
+   ═══════════════════════════════════════════════════ */
 document.getElementById("addChannel").addEventListener("click", async ()=>{
 
-    if(adminSession !== true){
-        alert("⛔ يجب تسجيل الدخول أولاً");
-        showLoginScreen();
-        return;
-    }
+    if(adminSession !== "YES") return;
 
     const url = chUrl.value.trim();
     const name = chName.value.trim();
@@ -317,49 +395,10 @@ document.getElementById("copyNewCode").addEventListener("click", async ()=>{
     }
 });
 
-/* 📺 قائمة الأكواد */
-onValue(ref(db, "channels"), snapshot=>{
-
-    if(adminSession !== true) return;
-
-    const data = snapshot.val();
-    channelsList.innerHTML = "";
-
-    if(!data){
-        channelsList.innerHTML = '<div class="empty">لا توجد أكواد — أضف رابط بث من الأعلى</div>';
-        chCount.textContent = "0";
-        return;
-    }
-
-    const entries = Object.entries(data).sort((a,b) => (b[1].createdAt || 0) - (a[1].createdAt || 0));
-    chCount.textContent = entries.length;
-
-    entries.forEach(([code, item])=>{
-
-        const div = document.createElement("div");
-        div.className = "channel" + (item.active ? "" : " off");
-
-        div.innerHTML = `
-<div class="channel-head">
-<div class="channel-code">${code}</div>
-<span class="channel-status ${item.active ? "on" : "off"}">${item.active ? "● مفعّل" : "○ موقوف"}</span>
-</div>
-<div class="channel-name">${item.name || "بدون اسم"}</div>
-<div class="channel-url">${item.url}</div>
-<div class="channel-btns">
-<button class="dark" onclick="copyCode('${code}')">📋 نسخ</button>
-<button class="${item.active ? "dark" : "green"}" onclick="toggleCode('${code}', ${item.active})">${item.active ? "⏸ إيقاف" : "▶ تفعيل"}</button>
-<button class="red" onclick="deleteCode('${code}')">🗑 حذف</button>
-</div>
-`;
-
-        channelsList.appendChild(div);
-    });
-});
-
-/* نسخ */
+/* ═══════════════════════════════════════════════════
+   🛠 العمليات على الأكواد
+   ═══════════════════════════════════════════════════ */
 window.copyCode = async function(code){
-    if(adminSession !== true){ alert("⛔ يجب تسجيل الدخول"); return; }
     try{
         await navigator.clipboard.writeText(code);
         alert("✓ تم نسخ الكود: " + code);
@@ -368,17 +407,15 @@ window.copyCode = async function(code){
     }
 };
 
-/* تفعيل/إيقاف */
 window.toggleCode = async function(code, current){
-    if(adminSession !== true){ alert("⛔ يجب تسجيل الدخول"); return; }
+    if(adminSession !== "YES") return;
     try{
         await update(ref(db, "channels/" + code), { active: !current });
     }catch(e){ console.error(e); }
 };
 
-/* 🗑 حذف */
 window.deleteCode = async function(code){
-    if(adminSession !== true){ alert("⛔ يجب تسجيل الدخول"); return; }
+    if(adminSession !== "YES") return;
     if(!confirm("⚠️ هل تريد حذف القناة " + code + " نهائياً؟\n\nلن يعمل هذا الكود عند أي مستخدم.")) return;
     try{
         await remove(ref(db, "channels/" + code));
