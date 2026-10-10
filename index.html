@@ -42,10 +42,12 @@ body{background:radial-gradient(1200px 600px at 50% -10%,rgba(225,29,46,.14),tra
 .admin-content.show{display:block}
 h1{text-align:center;color:#fff;font-size:24px;font-weight:800;margin-bottom:8px;background:linear-gradient(180deg,#fff 40%,#b0b0be 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 .sub{text-align:center;color:var(--text-dim);font-size:12.5px;margin-bottom:18px}
-.conn{text-align:center;font-size:12.5px;padding:11px 14px;border-radius:var(--r);background:var(--card);border:1px solid var(--border);margin-bottom:18px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px}
+.conn{text-align:center;font-size:12.5px;padding:11px 14px;border-radius:var(--r);background:var(--card);border:1px solid var(--border);margin-bottom:18px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px;transition:0.3s}
 .conn::before{content:'';width:8px;height:8px;border-radius:50%;background:currentColor;box-shadow:0 0 12px currentColor;animation:pulse 2s ease-in-out infinite}
 @keyframes pulse{50%{opacity:.4;transform:scale(.85)}}
-.conn.online{color:var(--green)}.conn.offline{color:#ef4444}
+.conn.online{color:var(--green)}
+.conn.connecting{color:#fbbf24} /* لون أصفر أثناء الاتصال */
+.conn.offline{color:#ef4444}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:18px}
 .stat-card{background:linear-gradient(180deg,var(--card-2),var(--card));padding:20px 16px;border-radius:var(--r-lg);border:1px solid var(--border);text-align:center}
 .stat-card .num{font-size:30px;font-weight:800;color:var(--green);line-height:1}
@@ -129,7 +131,8 @@ h1{text-align:center;color:#fff;font-size:24px;font-weight:800;margin-bottom:8px
 <div class="admin-content" id="adminContent">
 <h1>لوحة تحكم Alankaboot Sport</h1>
 <div class="sub">إدارة الأقسام والقنوات</div>
-<div class="conn offline" id="connStatus">جاري الاتصال...</div>
+<!-- تعديل الحالة الافتراضية لتبدو إيجابية -->
+<div class="conn connecting" id="connStatus">⏳ جاري الاتصال بالسيرفر...</div>
 
 <div class="stats">
 <div class="stat-card"><div class="num" id="viewerCount">0</div><div class="lbl">مشاهدين الآن</div></div>
@@ -149,12 +152,12 @@ h1{text-align:center;color:#fff;font-size:24px;font-weight:800;margin-bottom:8px
 </div>
 
 <script>
-const ADMIN_ACCESS_KEY = 'ANKABOOT_ADMIN_2026_CHANGE_ME';
+const ADMIN_ACCESS_KEY = 'ANKABOOT_ADMIN_2026_CHANGE_ME'; // غير كود الإدارة من هنا
 const ADMIN_SESSION_KEY = 'alankaboot_admin_session';
 
 const BROKER = 'wss://broker.emqx.io:8084/mqtt';
 const TOPIC_CMD   = 'kwtspta_9f3a2b1c/cmd';
-const TOPIC_DATA  = 'kwtspta_9f3a2b1c/data';
+const TOPIC_DATA  = 'kwtspta_9f3a2b1c/data'; 
 const TOPIC_HB    = 'kwtspta_9f3a2b1c/hb';
 
 const STORAGE_CATS = 'cats_data_v2';
@@ -205,23 +208,36 @@ if(adminInitialized) return;
 adminInitialized = true;
 
 loadLocal();
+render();
 
 try {
 client = mqtt.connect(BROKER, {
 clientId: 'admin_' + Math.random().toString(16).slice(2,10),
 keepalive: 30,
-reconnectPeriod: 3000
+reconnectPeriod: 3000 // محاولة الاتصال كل 3 ثواني لو فشل
 });
 
+// عند الاتصال بنجاح
 client.on('connect', () => {
 setConn('online', '✅ متصل');
 client.subscribe(TOPIC_HB);
-client.subscribe(TOPIC_DATA);
-publishData();
-render();
+client.subscribe(TOPIC_DATA); 
 });
 
-client.on('error', () => setConn('offline', '❌ فشل الاتصال'));
+// عند حدوث خطأ
+client.on('error', () => {
+setConn('offline', '❌ فشل الاتصال');
+});
+
+// عند محاولة إعادة الاتصال
+client.on('reconnect', () => {
+setConn('connecting', '🔄 جاري إعادة الاتصال...');
+});
+
+// عند انقطاع الاتصال
+client.on('close', () => {
+setConn('offline', '❌ انقطع الاتصال');
+});
 
 client.on('message', (topic, message) => {
 try {
@@ -229,12 +245,20 @@ if (topic === TOPIC_HB) {
 const d = JSON.parse(message.toString());
 viewers.set(d.id, Date.now());
 }
+
+if (topic === TOPIC_DATA) {
+const cloudData = JSON.parse(message.toString());
+if (cloudData && Array.isArray(cloudData)) {
+categories = cloudData;
+localStorage.setItem(STORAGE_CATS, JSON.stringify(categories));
+render();
+}
+}
 } catch (e) {}
 });
 
 } catch(e){
 setConn('offline', '❌ خطأ في الاتصال');
-render();
 }
 
 setInterval(() => {
@@ -242,11 +266,12 @@ const now = Date.now();
 for (const [id, t] of viewers) if (now - t > 15000) viewers.delete(id);
 document.getElementById('viewerCount').textContent = viewers.size;
 }, 5000);
-
-render();
 }
 
-function setConn(state, text){ connStatus.className = 'conn ' + state; connStatus.textContent = text; }
+function setConn(state, text){ 
+connStatus.className = 'conn ' + state; 
+connStatus.textContent = text; 
+}
 
 function loadLocal(){
 try{
@@ -471,4 +496,4 @@ try { client.publish(TOPIC_DATA, JSON.stringify(categories), { retain: true }); 
 });
 </script>
 </body>
-                                        </html>
+</html>
