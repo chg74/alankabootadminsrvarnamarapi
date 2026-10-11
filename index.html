@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>لوحة التحكم - Alankaboot Sport</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 <style>
 *{box-sizing:border-box;font-family:'Cairo',sans-serif;margin:0;padding:0;-webkit-font-smoothing:antialiased}
 :root{
@@ -20,7 +21,6 @@
 }
 body{background:radial-gradient(1200px 600px at 50% -10%,rgba(225,29,46,.14),transparent 60%),radial-gradient(900px 500px at 100% 100%,rgba(59,130,246,.08),transparent 60%),#0a0a0f;color:var(--text);padding:18px;min-height:100vh}
 
-/* ========== Lock Screen ========== */
 #adminLockScreen{position:fixed;inset:0;z-index:99999;background:linear-gradient(135deg,#05050a 0%,#0a0a12 50%,#05050a 100%);display:flex;justify-content:center;align-items:center;padding:20px}
 #adminLockScreen.hide{display:none}
 .lock-card{max-width:420px;width:100%;background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.1);border-radius:24px;padding:34px 24px 28px;text-align:center;box-shadow:0 30px 60px rgba(0,0,0,.6);position:relative}
@@ -39,7 +39,6 @@ body{background:radial-gradient(1200px 600px at 50% -10%,rgba(225,29,46,.14),tra
 .lock-status.success{color:#4ade80;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2)}
 .lock-status:empty{padding:0;background:transparent;border:none}
 
-/* ========== Admin ========== */
 .admin-content{display:none}
 .admin-content.show{display:block}
 h1{text-align:center;color:#fff;font-size:24px;font-weight:800;margin-bottom:8px;background:linear-gradient(180deg,#fff 40%,#b0b0be 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
@@ -48,8 +47,6 @@ h1{text-align:center;color:#fff;font-size:24px;font-weight:800;margin-bottom:8px
 .conn::before{content:'';width:8px;height:8px;border-radius:50%;background:currentColor;box-shadow:0 0 12px currentColor;animation:pulse 2s ease-in-out infinite}
 @keyframes pulse{50%{opacity:.4;transform:scale(.85)}}
 .conn.online{color:var(--green)}
-.conn.connecting{color:#fbbf24}
-.conn.offline{color:#ef4444}
 
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:18px}
 .stat-card{background:linear-gradient(180deg,var(--card-2),var(--card));padding:20px 16px;border-radius:var(--r-lg);border:1px solid var(--border);text-align:center}
@@ -103,9 +100,7 @@ h1{text-align:center;color:#fff;font-size:24px;font-weight:800;margin-bottom:8px
 .btn.play{background:linear-gradient(180deg,#4ade80,#16a34a);box-shadow:0 4px 14px var(--green-glow)}
 .btn.stop{background:linear-gradient(180deg,#f87171,#dc2626)}
 .btn.danger{background:linear-gradient(180deg,#a30f1f,#6b0a15)}
-.btn.blue{background:linear-gradient(180deg,#60a5fa,#2563eb);box-shadow:0 4px 14px var(--blue-glow)}
 .btn.small{padding:7px 12px;font-size:11.5px}
-.btn.block{width:100%}
 
 .add-btn{width:100%;background:linear-gradient(180deg,#4ade80,#16a34a);color:#fff;border:none;padding:15px;border-radius:var(--r);font-weight:800;font-size:14px;cursor:pointer;font-family:'Cairo',sans-serif;margin-top:8px;box-shadow:0 8px 24px var(--green-glow);transition:.2s}
 .add-btn:active{transform:translateY(1px)}
@@ -114,7 +109,6 @@ h1{text-align:center;color:#fff;font-size:24px;font-weight:800;margin-bottom:8px
 .status{padding:12px 16px;border-radius:var(--r);font-size:12.5px;margin-top:12px;text-align:center;font-weight:700;display:none}
 .status.ok{background:rgba(34,197,94,.1);color:#4ade80;border:1px solid rgba(34,197,94,.3);display:block}
 .status.err{background:rgba(239,68,68,.1);color:#f87171;border:1px solid rgba(239,68,68,.3);display:block}
-.status.info{background:rgba(59,130,246,.1);color:#60a5fa;border:1px solid rgba(59,130,246,.3);display:block}
 
 .empty-hint{text-align:center;padding:36px 20px;color:var(--text-dim);font-size:13px;line-height:1.9}
 
@@ -132,7 +126,6 @@ h1{font-size:20px}
 </head>
 <body>
 
-<!-- ============ Lock Screen ============ -->
 <div id="adminLockScreen">
 <div class="lock-card">
 <div class="lock-icon"><svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg></div>
@@ -147,11 +140,10 @@ h1{font-size:20px}
 </div>
 </div>
 
-<!-- ============ Admin Content ============ -->
 <div class="admin-content" id="adminContent">
 <h1>لوحة تحكم Alankaboot Sport</h1>
 <div class="sub">إدارة الأقسام والقنوات</div>
-<div class="conn connecting" id="connStatus">⏳ جاري الاتصال بالسيرفر...</div>
+<div class="conn online" id="connStatus">✅ متصل</div>
 
 <div class="stats">
 <div class="stat-card"><div class="num" id="viewerCount">0</div><div class="lbl">مشاهدين الآن</div></div>
@@ -171,43 +163,43 @@ h1{font-size:20px}
 </div>
 
 <script>
-/* =================================
-   الإعدادات
-================================= */
+/* ═══════════════════════════════════════
+   🔐 إعدادات الإدارة
+═══════════════════════════════════════ */
 const ADMIN_ACCESS_KEY = 'ANKABOOT_ADMIN_2026_CHANGE_ME'; /* ⚠️ غيّر الكود ده */
 const ADMIN_SESSION_KEY = 'alankaboot_admin_session';
-
-const BROKER = 'wss://broker.emqx.io:8084/mqtt';
-const TOPIC_CMD   = 'kwtspta_9f3a2b1c/cmd';
-const TOPIC_DATA  = 'kwtspta_9f3a2b1c/data';
-const TOPIC_HB    = 'kwtspta_9f3a2b1c/hb';
-
 const STORAGE_CATS = 'cats_data_v2';
 
-/* =================================
-   عناصر
-================================= */
+/* ═══════════════════════════════════════
+   🔥 Firebase
+═══════════════════════════════════════ */
+const firebaseConfig = {
+apiKey: "AIzaSyAUc2C9hG9VE7RECiW19QXjNZqVH96sFE",
+authDomain: "zezo-59a8d.firebaseapp.com",
+databaseURL: "https://zezo-59a8d-default-rtdb.firebaseio.com",
+projectId: "zezo-59a8d",
+storageBucket: "zezo-59a8d.firebasestorage.app",
+messagingSenderId: "49183098248",
+appId: "1:49183098248:web:37e3fb16744042a1bb263d"
+};
+
+firebase.initializeApp(firebaseConfig);
+const fdb = firebase.database();
+
 const adminLockScreen = document.getElementById('adminLockScreen');
 const adminContent = document.getElementById('adminContent');
 const adminKeyInput = document.getElementById('adminKeyInput');
 const adminKeyStatus = document.getElementById('adminKeyStatus');
 const connStatus = document.getElementById('connStatus');
 
-/* =================================
-   متغيرات عامة
-================================= */
-let client = null;
 let categories = [];
 let adminInitialized = false;
-const viewers = new Map();
-
-/* ⭐ لمنع المزامنة أثناء الكتابة */
 let lastPublishTs = 0;
 let isEditingInput = false;
+let initialLoadDone = false;
+let saveTimeout = null;
 
-/* =================================
-   Lock Screen Logic
-================================= */
+/* ═══ Lock Logic ═══ */
 function setLockStatus(t, c){
 adminKeyStatus.textContent = t;
 adminKeyStatus.className = 'lock-status ' + (c||'');
@@ -239,85 +231,15 @@ setTimeout(initAdmin, 100);
 adminKeyInput.focus();
 }
 
-/* =================================
-   Init Admin
-================================= */
+/* ═══ Init Admin ═══ */
 function initAdmin(){
 if(adminInitialized) return;
 adminInitialized = true;
 
 loadLocal();
 render();
-
-try {
-client = mqtt.connect(BROKER, {
-clientId: 'admin_' + Math.random().toString(16).slice(2,10),
-keepalive: 30,
-reconnectPeriod: 3000,
-clean: true
-});
-
-client.on('connect', () => {
-setConn('online', '✅ متصل');
-client.subscribe(TOPIC_HB);
-client.subscribe(TOPIC_DATA);
-});
-
-client.on('error', () => {
-setConn('offline', '❌ فشل الاتصال');
-});
-
-client.on('reconnect', () => {
-setConn('connecting', '🔄 جاري إعادة الاتصال...');
-});
-
-client.on('close', () => {
-setConn('offline', '❌ انقطع الاتصال');
-});
-
-client.on('message', (topic, message) => {
-try {
-/* Heartbeat */
-if (topic === TOPIC_HB) {
-const d = JSON.parse(message.toString());
-viewers.set(d.id, Date.now());
-return;
-}
-
-/* Data من الأجهزة الأخرى */
-if (topic === TOPIC_DATA) {
-/* ⭐ تجاهل الرسالة لو هي من عندنا */
-if (Date.now() - lastPublishTs < 5000) return;
-
-/* ⭐ تجاهل الرسالة لو المستخدم بيكتب دلوقتي */
-if (isEditingInput) return;
-
-const cloudData = JSON.parse(message.toString());
-if (cloudData && Array.isArray(cloudData)) {
-categories = cloudData;
-localStorage.setItem(STORAGE_CATS, JSON.stringify(categories));
-render();
-}
-}
-} catch (e) {}
-});
-
-} catch(e){
-setConn('offline', '❌ خطأ في الاتصال');
-}
-
-/* تحديث عدد المشاهدين */
-setInterval(() => {
-const now = Date.now();
-for (const [id, t] of viewers) if (now - t > 15000) viewers.delete(id);
-const vc = document.getElementById('viewerCount');
-if(vc) vc.textContent = viewers.size;
-}, 5000);
-}
-
-function setConn(state, text){
-connStatus.className = 'conn ' + state;
-connStatus.textContent = text;
+initFirebaseListener();
+startViewersCounter();
 }
 
 function loadLocal(){
@@ -327,9 +249,137 @@ categories = sc ? (JSON.parse(sc) || []) : [];
 }catch(e){ categories = []; }
 }
 
-/* =================================
-   Render
-================================= */
+/* ═══════════════════════════════════════
+   🔥 Firebase — تحميل أولي + مزامنة
+═══════════════════════════════════════ */
+function initFirebaseListener(){
+
+/* ─── 1) تحميل أولي من Firebase ─── */
+fdb.ref('categories').once('value').then(snap => {
+try{
+const raw = snap.val();
+let fbData = [];
+
+if(raw){
+let parsed = null;
+try{ parsed = typeof raw === 'string' ? JSON.parse(raw) : raw; }catch(e){ parsed = null; }
+fbData = Array.isArray(parsed) ? parsed : [];
+}
+
+if(fbData.length > 0){
+/* ✅ Firebase فيه بيانات → استخدمها */
+categories = fbData;
+localStorage.setItem(STORAGE_CATS, JSON.stringify(categories));
+render();
+console.log('[Init] Loaded from Firebase:', categories.length, 'categories');
+} else if(categories.length > 0){
+/* ⚠️ Firebase فاضي بس عندنا بيانات محلية → ارفعها */
+console.log('[Init] Firebase empty, pushing local data...');
+lastPublishTs = Date.now();
+fdb.ref('categories').set(JSON.stringify(categories));
+}
+
+initialLoadDone = true;
+}catch(e){
+console.log('[Init] Load err', e);
+initialLoadDone = true;
+}
+}).catch(err => {
+console.log('[Init] Firebase err', err);
+initialLoadDone = true;
+});
+
+/* ─── 2) استقبال تحديثات مباشرة ─── */
+fdb.ref('categories').on('value', snap => {
+try{
+/* تجاهل لو لسه بنعمل التحميل الأولي */
+if(!initialLoadDone) return;
+/* تجاهل لو احنا اللي بعتنا آخر تحديث */
+if(Date.now() - lastPublishTs < 2500) return;
+/* تجاهل لو المستخدم بيكتب دلوقتي */
+if(isEditingInput) return;
+
+const raw = snap.val();
+let fbData = [];
+
+if(raw){
+let parsed = null;
+try{ parsed = typeof raw === 'string' ? JSON.parse(raw) : raw; }catch(e){ parsed = null; }
+fbData = Array.isArray(parsed) ? parsed : [];
+}
+
+/* مقارنة — لو نفس البيانات بالظبط، مفيش داعي نعمل render */
+const fbJson = JSON.stringify(fbData);
+const localJson = JSON.stringify(categories);
+if(fbJson === localJson) return;
+
+categories = fbData;
+localStorage.setItem(STORAGE_CATS, JSON.stringify(categories));
+render();
+console.log('[Sync] Updated from remote:', categories.length, 'categories');
+}catch(e){ console.log('[Sync] err', e); }
+}, err => {
+console.log('[Sync] Firebase read err', err);
+});
+}
+
+/* ═══════════════════════════════════════
+   💾 الحفظ — Firebase + localStorage
+═══════════════════════════════════════ */
+function saveNow(){
+/* حفظ محلي فوري */
+localStorage.setItem(STORAGE_CATS, JSON.stringify(categories));
+
+/* علامة إننا بنحفظ — عشان نتجاهل أي sync جاي */
+lastPublishTs = Date.now();
+
+/* حفظ في Firebase مع debounce (بعد 600ms من آخر حرف) */
+clearTimeout(saveTimeout);
+saveTimeout = setTimeout(() => {
+fdb.ref('categories').set(JSON.stringify(categories))
+.then(() => { showSaved(); })
+.catch(e => { console.log('publish err', e); });
+}, 600);
+}
+
+/* حفظ فوري (بدون debounce) — للأزرار المهمة */
+function saveNowImmediate(){
+localStorage.setItem(STORAGE_CATS, JSON.stringify(categories));
+lastPublishTs = Date.now();
+clearTimeout(saveTimeout);
+fdb.ref('categories').set(JSON.stringify(categories))
+.then(() => { showSaved(); })
+.catch(e => { console.log('publish err', e); });
+}
+
+function showSaved(){
+const s = document.getElementById('saveIndicator');
+s.classList.add('show');
+clearTimeout(showSaved._t);
+showSaved._t = setTimeout(() => s.classList.remove('show'), 1500);
+}
+
+/* ═══ عدّاد المشاهدين ═══ */
+function startViewersCounter(){
+function updateViewers(){
+fdb.ref('viewers').once('value').then((snap) => {
+const data = snap.val() || {};
+const now = Date.now();
+let count = 0;
+Object.keys(data).forEach(k => {
+if(typeof data[k] === 'number' && now - data[k] < 25000) count++;
+});
+const el = document.getElementById('viewerCount');
+if(el) el.textContent = count;
+}).catch(()=>{});
+}
+updateViewers();
+setInterval(updateViewers, 6000);
+}
+
+/* ═══════════════════════════════════════
+   🎨 Render
+═══════════════════════════════════════ */
 function render(){
 const c = document.getElementById('catsList');
 c.innerHTML = '';
@@ -363,13 +413,13 @@ catDiv.innerHTML = `
 <div class="field"><label>اسم القسم</label>
 <input value="${escapeAttr(cat.name||'')}"
 onfocus="isEditingInput=true"
-onblur="isEditingInput=false; saveNow();"
-oninput="updCat(${ci},'name',this.value)"></div>
+onblur="isEditingInput=false; saveNowImmediate();"
+oninput="updCat(${ci},'name',this.value); saveNow();"></div>
 <div class="field"><label>رابط لوجو القسم</label>
 <input type="url" value="${escapeAttr(cat.logo||'')}"
 onfocus="isEditingInput=true"
-onblur="isEditingInput=false; saveNow();"
-oninput="updCat(${ci},'logo',this.value)"></div>
+onblur="isEditingInput=false; saveNowImmediate();"
+oninput="updCat(${ci},'logo',this.value); saveNow();"></div>
 </div>
 <div style="margin-top:16px">
 ${(cat.channels||[]).map((ch, chi) => renderChannel(ci, chi, ch)).join('')}
@@ -400,19 +450,19 @@ return `
 <div class="field"><label>اسم القناة</label>
 <input value="${escapeAttr(ch.name||'')}"
 onfocus="isEditingInput=true"
-onblur="isEditingInput=false; saveNow();"
-oninput="updCh(${ci},${chi},'name',this.value)"></div>
+onblur="isEditingInput=false; saveNowImmediate();"
+oninput="updCh(${ci},${chi},'name',this.value); saveNow();"></div>
 <div class="field"><label>رابط اللوجو</label>
 <input type="url" value="${escapeAttr(ch.logo||'')}"
 onfocus="isEditingInput=true"
-onblur="isEditingInput=false; saveNow();"
-oninput="updCh(${ci},${chi},'logo',this.value)"></div>
+onblur="isEditingInput=false; saveNowImmediate();"
+oninput="updCh(${ci},${chi},'logo',this.value); saveNow();"></div>
 </div>
 <div class="field"><label>🔗 رابط البث (m3u8 / mp4 / أي رابط)</label>
 <input type="url" value="${escapeAttr(ch.url||'')}"
 onfocus="isEditingInput=true"
-onblur="isEditingInput=false; saveNow();"
-oninput="updCh(${ci},${chi},'url',this.value)"
+onblur="isEditingInput=false; saveNowImmediate();"
+oninput="updCh(${ci},${chi},'url',this.value); saveNow();"
 placeholder="https://example.com/stream.m3u8"></div>
 <div class="actions">
 ${ch.live
@@ -431,9 +481,6 @@ return String(s).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','
 }
 function escapeAttr(s) { return escapeHtml(s); }
 
-/* =================================
-   Toggle Category
-================================= */
 function toggleCat(ci, e) {
 if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
 categories[ci].collapsed = !categories[ci].collapsed;
@@ -441,9 +488,6 @@ localStorage.setItem(STORAGE_CATS, JSON.stringify(categories));
 render();
 }
 
-/* =================================
-   Update fields — حفظ محلي فقط
-================================= */
 function updCat(ci, key, value) {
 categories[ci][key] = value;
 localStorage.setItem(STORAGE_CATS, JSON.stringify(categories));
@@ -454,33 +498,7 @@ categories[ci].channels[chi][key] = value;
 localStorage.setItem(STORAGE_CATS, JSON.stringify(categories));
 }
 
-/* =================================
-   Save Now — حفظ + إرسال MQTT
-================================= */
-function saveNow(){
-localStorage.setItem(STORAGE_CATS, JSON.stringify(categories));
-publishData();
-}
-
-function publishData(){
-if(!client || !client.connected) return;
-try{
-lastPublishTs = Date.now();
-client.publish(TOPIC_DATA, JSON.stringify(categories), { retain: true });
-showSaved();
-}catch(e){}
-}
-
-function showSaved(){
-const s = document.getElementById('saveIndicator');
-s.classList.add('show');
-clearTimeout(showSaved._t);
-showSaved._t = setTimeout(() => s.classList.remove('show'), 1500);
-}
-
-/* =================================
-   Category Actions
-================================= */
+/* ═══ Category Actions ═══ */
 function addCategory() {
 categories.push({
 id: 'cat_' + Date.now(),
@@ -490,28 +508,20 @@ collapsed: false,
 channels: []
 });
 render();
-saveNow();
+saveNowImmediate();
 showStatus('✓ تمت إضافة القسم', 'ok');
 }
 
 function removeCategory(ci, e) {
 e.stopPropagation();
 if (!confirm('حذف القسم "' + (categories[ci].name||'') + '"؟')) return;
-
-/* إيقاف كل قنوات القسم */
-(categories[ci].channels||[]).forEach(ch => {
-if(ch.live && client) client.publish(TOPIC_CMD, JSON.stringify({action:'stop', channelId: ch.id}));
-});
-
 categories.splice(ci, 1);
 render();
-saveNow();
+saveNowImmediate();
 showStatus('✓ تم الحذف', 'ok');
 }
 
-/* =================================
-   Channel Actions
-================================= */
+/* ═══ Channel Actions ═══ */
 function addChannel(ci) {
 if (!categories[ci].channels) categories[ci].channels = [];
 categories[ci].channels.push({
@@ -522,21 +532,16 @@ url: '',
 live: false
 });
 render();
-saveNow();
+saveNowImmediate();
 showStatus('✓ تمت إضافة القناة', 'ok');
 }
 
 function removeChannel(ci, chi) {
 const ch = categories[ci].channels[chi];
 if (!confirm('حذف "' + (ch.name||'') + '"؟')) return;
-
-if (ch.live && client) {
-client.publish(TOPIC_CMD, JSON.stringify({action:'stop', channelId: ch.id}));
-}
-
 categories[ci].channels.splice(chi, 1);
 render();
-saveNow();
+saveNowImmediate();
 showStatus('✓ تم الحذف', 'ok');
 }
 
@@ -550,46 +555,28 @@ return;
 }
 
 if (!status) {
-/* إيقاف القناة */
 ch.live = false;
 render();
-saveNow();
-if(client) client.publish(TOPIC_CMD, JSON.stringify({action:'stop', channelId: ch.id}));
+saveNowImmediate();
 showStatus('✓ تم إيقاف القناة', 'ok');
 return;
 }
 
-/* تشغيل القناة */
 ch.live = true;
 render();
-saveNow();
-if(client) client.publish(TOPIC_CMD, JSON.stringify({
-action: 'play',
-channelId: ch.id,
-url: origUrl,
-name: ch.name,
-logo: ch.logo
-}));
+saveNowImmediate();
 showStatus('✓ تم تشغيل القناة', 'ok');
 }
 
 function restart(ci, chi) {
 const ch = categories[ci].channels[chi];
-if (!ch.live || !client) return;
-
-client.publish(TOPIC_CMD, JSON.stringify({
-action: 'play',
-channelId: ch.id,
-url: ch.url,
-name: ch.name,
-logo: ch.logo
-}));
+if (!ch.live) return;
+/* نجبر التحديث عشان المستخدمين يشوفوا التحديث */
+lastPublishTs = 0;
+saveNowImmediate();
 showStatus('✓ تم إعادة التشغيل', 'ok');
 }
 
-/* =================================
-   Status Message
-================================= */
 function showStatus(msg, type) {
 const s = document.getElementById('statusMsg');
 s.textContent = msg;
@@ -598,15 +585,15 @@ clearTimeout(showStatus._t);
 showStatus._t = setTimeout(() => { s.className = 'status'; }, 4000);
 }
 
-/* =================================
-   Before Unload — حفظ أخير
-================================= */
+/* ═══ حفظ أخير قبل الخروج ═══ */
 window.addEventListener('beforeunload', () => {
-if (categories.length && client && client.connected) {
-try {
-client.publish(TOPIC_DATA, JSON.stringify(categories), { retain: true });
-} catch (e) {}
+try{
+localStorage.setItem(STORAGE_CATS, JSON.stringify(categories));
+/* نحاول نحفظ في Firebase كمان */
+if(categories.length > 0){
+fdb.ref('categories').set(JSON.stringify(categories));
 }
+}catch(e){}
 });
 </script>
 </body>
