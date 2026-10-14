@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>لوحة التحكم - Alankaboot Sport</title>
+<title>TITANGO ADMIN</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
@@ -115,6 +115,11 @@ h1{text-align:center;color:#fff;font-size:24px;font-weight:800;margin-bottom:8px
 .save-indicator{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(10px);background:linear-gradient(180deg,#4ade80,#16a34a);color:#fff;padding:11px 26px;border-radius:100px;font-weight:800;font-size:13px;opacity:0;transition:.35s cubic-bezier(.34,1.56,.64,1);pointer-events:none;z-index:99999;box-shadow:0 10px 30px rgba(34,197,94,.5)}
 .save-indicator.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
+.code-hero{background:linear-gradient(135deg,rgba(251,191,36,.08),rgba(251,191,36,.02));border:1px solid rgba(251,191,36,.25);border-radius:var(--r);padding:16px;margin-bottom:16px;text-align:center}
+.code-hero .code-label{font-size:11px;color:#fbbf24;font-weight:800;letter-spacing:2px;margin-bottom:6px}
+.code-hero .code-value{font-size:22px;font-weight:900;color:#fff;font-family:ui-monospace,monospace;letter-spacing:4px;word-break:break-all}
+.code-hero .code-value.empty{color:#5a5a68;font-size:14px;letter-spacing:0;font-family:'Cairo',sans-serif}
+
 @media(max-width:600px){
 body{padding:14px}
 h1{font-size:20px}
@@ -129,7 +134,7 @@ h1{font-size:20px}
 <div id="adminLockScreen">
 <div class="lock-card">
 <div class="lock-icon"><svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg></div>
-<div class="lock-title">لوحة التحكم</div>
+<div class="lock-title">TITANGO ADMIN</div>
 <div class="lock-sub">هذه اللوحة محمية، أدخل كود الإدارة للمتابعة</div>
 <input type="password" class="lock-input" id="adminKeyInput" placeholder="أدخل كود الإدارة" autocomplete="off">
 <button class="lock-btn" onclick="submitAdminKey()">
@@ -141,14 +146,35 @@ h1{font-size:20px}
 </div>
 
 <div class="admin-content" id="adminContent">
-<h1>لوحة تحكم Alankaboot Sport</h1>
-<div class="sub">إدارة الأقسام والقنوات</div>
+<h1>TITANGO ADMIN</h1>
+<div class="sub">إدارة الأقسام والقنوات وأكواد التفعيل</div>
 <div class="conn online" id="connStatus">✅ متصل</div>
 
 <div class="stats">
 <div class="stat-card"><div class="num" id="viewerCount">0</div><div class="lbl">مشاهدين الآن</div></div>
 <div class="stat-card live"><div class="num" id="liveCount">0</div><div class="lbl">قنوات مباشرة</div></div>
 <div class="stat-card"><div class="num" id="chCount">0</div><div class="lbl">إجمالي القنوات</div></div>
+</div>
+
+<!-- ═══ ACTIVATION CODE SECTION ═══ -->
+<div class="section">
+<h2>🔐 كود تفعيل التطبيق</h2>
+<div class="info-box"><div><b>ملاحظة مهمة:</b> المستخدم لازم يدخل الكود ده أول ما يفتح التطبيق. لو غيّرت الكود، <b>كل المستخدمين هيخرجوا فوراً</b> وهيحتاجوا يدخلوا الكود الجديد. لو شلت الكود، التطبيق هيفتح للجميع.</div></div>
+
+<div class="code-hero">
+<div class="code-label">الكود الحالي</div>
+<div class="code-value" id="currentCodeDisplay">—</div>
+</div>
+
+<div class="field">
+<label>كود التفعيل الجديد</label>
+<input type="text" id="appCodeInput" placeholder="مثال: TITANGO2026" autocomplete="off" onfocus="isEditingInput=true" onblur="isEditingInput=false" style="font-family:ui-monospace,monospace;letter-spacing:2px;text-align:center;font-weight:800">
+</div>
+<div class="actions" style="margin-top:12px">
+<button class="btn play" onclick="saveAppCode()">💾 حفظ الكود الجديد</button>
+<button class="btn stop" onclick="clearAppCode()">🗑 إزالة الكود (تعطيل التفعيل)</button>
+</div>
+<div class="status" id="codeStatus"></div>
 </div>
 
 <div class="section">
@@ -166,13 +192,10 @@ h1{font-size:20px}
 /* ═══════════════════════════════════════
    🔐 إعدادات الإدارة
 ═══════════════════════════════════════ */
-const ADMIN_ACCESS_KEY = 'ANKABOOT_ADMIN_2026_CHANGE_ME'; /* ⚠️ غيّر الكود ده */
-const ADMIN_SESSION_KEY = 'alankaboot_admin_session';
+const ADMIN_ACCESS_KEY = 'TITANGO_ADMIN_2026';
+const ADMIN_SESSION_KEY = 'titango_admin_session';
 const STORAGE_CATS = 'cats_data_v2';
 
-/* ═══════════════════════════════════════
-   🔥 Firebase
-═══════════════════════════════════════ */
 const firebaseConfig = {
 apiKey: "AIzaSyAUc2C9hG9VE7RECiW19QXjNZqVH96sFE",
 authDomain: "zezo-59a8d.firebaseapp.com",
@@ -231,15 +254,14 @@ setTimeout(initAdmin, 100);
 adminKeyInput.focus();
 }
 
-/* ═══ Init Admin ═══ */
 function initAdmin(){
 if(adminInitialized) return;
 adminInitialized = true;
-
 loadLocal();
 render();
 initFirebaseListener();
 startViewersCounter();
+loadAppCode();
 }
 
 function loadLocal(){
@@ -249,107 +271,128 @@ categories = sc ? (JSON.parse(sc) || []) : [];
 }catch(e){ categories = []; }
 }
 
-/* ═══════════════════════════════════════
-   🔥 Firebase — تحميل أولي + مزامنة
-═══════════════════════════════════════ */
-function initFirebaseListener(){
+/* ═══ APP CODE MANAGEMENT ═══ */
+function loadAppCode(){
+fdb.ref('app_code').once('value').then(function(snap){
+var v = snap.val();
+var code = v == null ? '' : String(v).trim();
+var inp = document.getElementById('appCodeInput');
+if(inp) inp.value = code;
+updateCodeDisplay(code);
+}).catch(function(){});
+fdb.ref('app_code').on('value', function(snap){
+var v = snap.val();
+var code = v == null ? '' : String(v).trim();
+updateCodeDisplay(code);
+});
+}
 
-/* ─── 1) تحميل أولي من Firebase ─── */
+function updateCodeDisplay(code){
+var el = document.getElementById('currentCodeDisplay');
+if(!el) return;
+if(code){
+el.textContent = code;
+el.classList.remove('empty');
+} else {
+el.textContent = 'غير مُفعّل — التطبيق مفتوح للجميع';
+el.classList.add('empty');
+}
+}
+
+function saveAppCode(){
+var inp = document.getElementById('appCodeInput');
+var val = (inp.value || '').trim();
+if(!val){ showCodeStatus('اكتب كود أولاً أو اضغط إزالة', 'err'); return; }
+fdb.ref('app_code').set(val).then(function(){
+showCodeStatus('✓ تم حفظ الكود — كل المستخدمين هيحتاجوا الكود الجديد', 'ok');
+}).catch(function(){
+showCodeStatus('❌ فشل الحفظ — تأكد من الاتصال', 'err');
+});
+}
+
+function clearAppCode(){
+if(!confirm('إزالة كود التفعيل؟ التطبيق هيشتغل من غير تفعيل للجميع.')) return;
+fdb.ref('app_code').remove().then(function(){
+var inp = document.getElementById('appCodeInput');
+if(inp) inp.value = '';
+showCodeStatus('✓ تم إزالة الكود — التطبيق مفتوح للجميع', 'ok');
+}).catch(function(){
+showCodeStatus('❌ فشل الحذف', 'err');
+});
+}
+
+function showCodeStatus(msg, type){
+var s = document.getElementById('codeStatus');
+if(!s) return;
+s.textContent = msg;
+s.className = 'status ' + type;
+clearTimeout(showCodeStatus._t);
+showCodeStatus._t = setTimeout(function(){ s.className = 'status'; }, 3500);
+}
+
+/* ═══ Firebase — تحميل أولي + مزامنة ═══ */
+function initFirebaseListener(){
 fdb.ref('categories').once('value').then(snap => {
 try{
 const raw = snap.val();
 let fbData = [];
-
 if(raw){
 let parsed = null;
 try{ parsed = typeof raw === 'string' ? JSON.parse(raw) : raw; }catch(e){ parsed = null; }
 fbData = Array.isArray(parsed) ? parsed : [];
 }
-
 if(fbData.length > 0){
-/* ✅ Firebase فيه بيانات → استخدمها */
 categories = fbData;
 localStorage.setItem(STORAGE_CATS, JSON.stringify(categories));
 render();
-console.log('[Init] Loaded from Firebase:', categories.length, 'categories');
 } else if(categories.length > 0){
-/* ⚠️ Firebase فاضي بس عندنا بيانات محلية → ارفعها */
-console.log('[Init] Firebase empty, pushing local data...');
 lastPublishTs = Date.now();
 fdb.ref('categories').set(JSON.stringify(categories));
 }
+initialLoadDone = true;
+}catch(e){ initialLoadDone = true; }
+}).catch(err => { initialLoadDone = true; });
 
-initialLoadDone = true;
-}catch(e){
-console.log('[Init] Load err', e);
-initialLoadDone = true;
-}
-}).catch(err => {
-console.log('[Init] Firebase err', err);
-initialLoadDone = true;
-});
-
-/* ─── 2) استقبال تحديثات مباشرة ─── */
 fdb.ref('categories').on('value', snap => {
 try{
-/* تجاهل لو لسه بنعمل التحميل الأولي */
 if(!initialLoadDone) return;
-/* تجاهل لو احنا اللي بعتنا آخر تحديث */
 if(Date.now() - lastPublishTs < 2500) return;
-/* تجاهل لو المستخدم بيكتب دلوقتي */
 if(isEditingInput) return;
-
 const raw = snap.val();
 let fbData = [];
-
 if(raw){
 let parsed = null;
 try{ parsed = typeof raw === 'string' ? JSON.parse(raw) : raw; }catch(e){ parsed = null; }
 fbData = Array.isArray(parsed) ? parsed : [];
 }
-
-/* مقارنة — لو نفس البيانات بالظبط، مفيش داعي نعمل render */
 const fbJson = JSON.stringify(fbData);
 const localJson = JSON.stringify(categories);
 if(fbJson === localJson) return;
-
 categories = fbData;
 localStorage.setItem(STORAGE_CATS, JSON.stringify(categories));
 render();
-console.log('[Sync] Updated from remote:', categories.length, 'categories');
-}catch(e){ console.log('[Sync] err', e); }
-}, err => {
-console.log('[Sync] Firebase read err', err);
-});
+}catch(e){}
+}, err => {});
 }
 
-/* ═══════════════════════════════════════
-   💾 الحفظ — Firebase + localStorage
-═══════════════════════════════════════ */
 function saveNow(){
-/* حفظ محلي فوري */
 localStorage.setItem(STORAGE_CATS, JSON.stringify(categories));
-
-/* علامة إننا بنحفظ — عشان نتجاهل أي sync جاي */
 lastPublishTs = Date.now();
-
-/* حفظ في Firebase مع debounce (بعد 600ms من آخر حرف) */
 clearTimeout(saveTimeout);
 saveTimeout = setTimeout(() => {
 fdb.ref('categories').set(JSON.stringify(categories))
 .then(() => { showSaved(); })
-.catch(e => { console.log('publish err', e); });
+.catch(e => {});
 }, 600);
 }
 
-/* حفظ فوري (بدون debounce) — للأزرار المهمة */
 function saveNowImmediate(){
 localStorage.setItem(STORAGE_CATS, JSON.stringify(categories));
 lastPublishTs = Date.now();
 clearTimeout(saveTimeout);
 fdb.ref('categories').set(JSON.stringify(categories))
 .then(() => { showSaved(); })
-.catch(e => { console.log('publish err', e); });
+.catch(e => {});
 }
 
 function showSaved(){
@@ -359,7 +402,6 @@ clearTimeout(showSaved._t);
 showSaved._t = setTimeout(() => s.classList.remove('show'), 1500);
 }
 
-/* ═══ عدّاد المشاهدين ═══ */
 function startViewersCounter(){
 function updateViewers(){
 fdb.ref('viewers').once('value').then((snap) => {
@@ -377,9 +419,6 @@ updateViewers();
 setInterval(updateViewers, 6000);
 }
 
-/* ═══════════════════════════════════════
-   🎨 Render
-═══════════════════════════════════════ */
 function render(){
 const c = document.getElementById('catsList');
 c.innerHTML = '';
@@ -498,7 +537,6 @@ categories[ci].channels[chi][key] = value;
 localStorage.setItem(STORAGE_CATS, JSON.stringify(categories));
 }
 
-/* ═══ Category Actions ═══ */
 function addCategory() {
 categories.push({
 id: 'cat_' + Date.now(),
@@ -521,7 +559,6 @@ saveNowImmediate();
 showStatus('✓ تم الحذف', 'ok');
 }
 
-/* ═══ Channel Actions ═══ */
 function addChannel(ci) {
 if (!categories[ci].channels) categories[ci].channels = [];
 categories[ci].channels.push({
@@ -548,12 +585,7 @@ showStatus('✓ تم الحذف', 'ok');
 function setLive(ci, chi, status) {
 const ch = categories[ci].channels[chi];
 const origUrl = (ch.url || '').trim();
-
-if (!origUrl) {
-showStatus('❌ اكتب رابط البث أولاً', 'err');
-return;
-}
-
+if (!origUrl) { showStatus('❌ اكتب رابط البث أولاً', 'err'); return; }
 if (!status) {
 ch.live = false;
 render();
@@ -561,7 +593,6 @@ saveNowImmediate();
 showStatus('✓ تم إيقاف القناة', 'ok');
 return;
 }
-
 ch.live = true;
 render();
 saveNowImmediate();
@@ -571,7 +602,6 @@ showStatus('✓ تم تشغيل القناة', 'ok');
 function restart(ci, chi) {
 const ch = categories[ci].channels[chi];
 if (!ch.live) return;
-/* نجبر التحديث عشان المستخدمين يشوفوا التحديث */
 lastPublishTs = 0;
 saveNowImmediate();
 showStatus('✓ تم إعادة التشغيل', 'ok');
@@ -585,11 +615,9 @@ clearTimeout(showStatus._t);
 showStatus._t = setTimeout(() => { s.className = 'status'; }, 4000);
 }
 
-/* ═══ حفظ أخير قبل الخروج ═══ */
 window.addEventListener('beforeunload', () => {
 try{
 localStorage.setItem(STORAGE_CATS, JSON.stringify(categories));
-/* نحاول نحفظ في Firebase كمان */
 if(categories.length > 0){
 fdb.ref('categories').set(JSON.stringify(categories));
 }
